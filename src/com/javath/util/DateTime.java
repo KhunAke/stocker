@@ -7,9 +7,11 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.NoSuchElementException;
 
-import org.apache.commons.pool.BasePoolableObjectFactory;
-import org.apache.commons.pool.ObjectPool;
-import org.apache.commons.pool.impl.SoftReferenceObjectPool;
+import org.apache.commons.pool2.BasePooledObjectFactory;
+import org.apache.commons.pool2.ObjectPool;
+import org.apache.commons.pool2.PooledObject;
+import org.apache.commons.pool2.impl.DefaultPooledObject;
+import org.apache.commons.pool2.impl.GenericObjectPool;
 
 public class DateTime {
 	
@@ -19,35 +21,40 @@ public class DateTime {
 	public final static Date EPOCH;
 	
 	private final static ObjectPool<Calendar> pool;
-	private final static String Default_Date_Format;
-	private final static String Default_Time_Format;
-	private final static String Default_DateTime_Format;
-	private final static String Default_Timestamp_Format;
-	private final static String Default_Date_Parse;
-	private final static String Default_Time_Parse;
-	private final static String Default_DateTime_Parse;
-	private final static String Default_Timestamp_Parse;
-	private final static Locale Default_Locale;
+	public final static String Default_Date_Format;
+	public final static String Default_Time_Format;
+	public final static String Default_DateTime_Format;
+	public final static String Default_Timestamp_Format;
+	public final static String Default_Date_Parse;
+	public final static String Default_Time_Parse;
+	public final static String Default_DateTime_Parse;
+	public final static String Default_Timestamp_Parse;
+	public final static Locale Default_Locale;
 	
 	static {
 		EPOCH = new Date(0);
-		pool = new SoftReferenceObjectPool<Calendar>(
-				new BasePoolableObjectFactory<Calendar>() { 
-				    // for makeObject we'll simply return a new buffer 
-				    public Calendar makeObject() { 
-				        return Calendar.getInstance(); 
-				    } 
-				     
-				    // when an object is returned to the pool,  
-				    // we'll clear it out 
-				    public void passivateObject(Calendar calendar) { 
-				    	calendar.clear();
-				    } 
-				     
-				    // for all other methods, the no-op  
-				    // implementation in BasePoolableObjectFactory 
-				    // will suffice 
-				});
+		pool = new GenericObjectPool<Calendar>(new BasePooledObjectFactory<Calendar>() {
+				@Override
+				public Calendar create() throws Exception {
+					return Calendar.getInstance();
+				}
+				/**
+			     * Use the default PooledObject implementation.
+			     */
+				@Override
+				public PooledObject<Calendar> wrap(Calendar calendar) {
+					return new DefaultPooledObject<Calendar>(calendar);
+				}
+				/**
+			     * When an object is returned to the pool, clear the buffer.
+			     * /
+			    @Override
+			    public void passivateObject(PooledObject<StringBuffer> pooledObject) {
+			        pooledObject.getObject().setLength(0);
+			    }
+			    /**/
+			}
+		);
 		Default_Date_Format = "%1$tY-%1$tm-%1$td";
 		Default_Time_Format = "%1$tH:%1$tM:%1$tS";
 		Default_DateTime_Format = Default_Date_Format + " " + Default_Time_Format;
@@ -116,14 +123,14 @@ public class DateTime {
 		return format(locale, format, datetime.getTimeInMillis());
 	}
 	
-	// Method name : string
+	// Method name : string -> using "Default_DateTime_[Format|Parse]"
 	public static Date string(String datetime) {
 		return string(Default_Locale, datetime);
 	}
 	public static Date string(Locale locale, String datetime) {
 		return format(locale, Default_DateTime_Parse, datetime);
 	}
-	
+
 	public static String string(Date datetime) {
 		return string(Default_Locale, datetime);
 	}
@@ -145,7 +152,7 @@ public class DateTime {
 		return format(locale, Default_DateTime_Format, datetime.getTimeInMillis());
 	}
 
-	// Method name : date
+	// Method name : date -> using "Default_Date_[Format|Parse]"
 	public static Date date() {
 		Calendar calendar = borrowCalendar();
 		calendar.set(Calendar.HOUR_OF_DAY, 0);
@@ -184,7 +191,7 @@ public class DateTime {
 		return format(locale, Default_Date_Format, datetime.getTimeInMillis());
 	}
 
-	// Method name : time
+	// Method name : time -> using "Default_Time_[Format|Parse]"
 	public static Date time() {
 		Calendar calendar = borrowCalendar();
 		calendar.set(Calendar.DAY_OF_MONTH, 0);
@@ -222,7 +229,7 @@ public class DateTime {
 		return format(locale, Default_Time_Format, datetime.getTimeInMillis());
 	}
 	
-	// Method name : timestamp
+	// Method name : timestamp -> using "Default_Timestamp_[Format|Parse]"
 	public static Date timestamp() {
 		return new Date();
 	}
