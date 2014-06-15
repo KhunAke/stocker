@@ -64,9 +64,9 @@ public class Service extends Instance implements Daemon {
 	}
 	
 	public static void main(String[] args) {
-		
+		//Date date = new Date();
 		// TODO Auto-generated method stub
-		System.out.print("Hello");
+		System.out.println("Hello");
 	}
 
 }

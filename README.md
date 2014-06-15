@@ -1,6 +1,6 @@
 stocker
 =======
-JRE System Library (1.7.0_55)  
+JRE System Library (1.7.0_60)  
 Library requirements:  
 1. Apache Commons CLI (1.2)  
 2. Apache Commons Codec (1.9)  

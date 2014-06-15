@@ -47,10 +47,10 @@ public class DateTime {
 				}
 				/**
 			     * When an object is returned to the pool, clear the buffer.
-			     * /
+			     */
 			    @Override
-			    public void passivateObject(PooledObject<StringBuffer> pooledObject) {
-			        pooledObject.getObject().setLength(0);
+			    public void passivateObject(PooledObject<Calendar> pooled) {
+			    	pooled.getObject().clear();
 			    }
 			    /**/
 			}
@@ -58,19 +58,20 @@ public class DateTime {
 		Default_Date_Format = "%1$tY-%1$tm-%1$td";
 		Default_Time_Format = "%1$tH:%1$tM:%1$tS";
 		Default_DateTime_Format = Default_Date_Format + " " + Default_Time_Format;
-		Default_Timestamp_Format = Default_Date_Format + "T" + Default_Time_Format;
+		Default_Timestamp_Format = Default_Date_Format + "T" + Default_Time_Format + ".%1$tL";
 		Default_Date_Parse = "yyyy-MM-dd";
 		Default_Time_Parse = "HH:mm:ss";
 		Default_DateTime_Parse = Default_Date_Parse + " " + Default_Time_Parse;
-		Default_Timestamp_Parse = Default_Date_Parse + "'T'" + Default_Time_Parse;
+		Default_Timestamp_Parse = Default_Date_Parse + "'T'" + Default_Time_Parse + ".SSS";
 		Default_Locale = Locale.US;
 	}
 	
 	public static Calendar borrowCalendar() {
 		try {
-			Calendar calendar = pool.borrowObject();
-			calendar.setTime(new Date());
-			return calendar;
+			//Calendar calendar = pool.borrowObject();
+			//calendar.setTime(new Date());
+			//return calendar;
+			return pool.borrowObject();
 		} catch (NoSuchElementException e) {
 			throw new ObjectException(e);
 		} catch (IllegalStateException e) {
@@ -155,6 +156,7 @@ public class DateTime {
 	// Method name : date -> using "Default_Date_[Format|Parse]"
 	public static Date date() {
 		Calendar calendar = borrowCalendar();
+		calendar.setTime(new Date());
 		calendar.set(Calendar.HOUR_OF_DAY, 0);
 		calendar.set(Calendar.MINUTE, 0);
 		calendar.set(Calendar.SECOND, 0);
@@ -194,6 +196,7 @@ public class DateTime {
 	// Method name : time -> using "Default_Time_[Format|Parse]"
 	public static Date time() {
 		Calendar calendar = borrowCalendar();
+		calendar.setTime(new Date());
 		calendar.set(Calendar.DAY_OF_MONTH, 0);
 		calendar.set(Calendar.MONTH, 0);
 		calendar.set(Calendar.YEAR, 0);
