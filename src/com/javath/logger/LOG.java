@@ -5,7 +5,7 @@ import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.javath.util.Assignment;
+import com.javath.util.Assign;
 import com.javath.util.DateTime;
 import com.javath.util.ObjectException;
 
@@ -138,7 +138,7 @@ public class LOG {
 				String.format("%s: %s (%s:%d)", 
 						throwable.getClass().getCanonicalName(), throwable.getMessage(), 
 						filename, linenumber));
-		if (Assignment.debug)
+		if (Assign.debug)
 			synchronized (System.err) {
 				System.err.printf("%s Exception in thread \"%s\" %s: %s\n", 
 						DateTime.timestamp(new Date()), Thread.currentThread().getName(),
@@ -205,7 +205,7 @@ public class LOG {
 				String.format("%s: %s (%s:%d)", 
 						throwable.getClass().getCanonicalName(), throwable.getMessage(), 
 						filename, linenumber));
-		if (Assignment.debug)
+		if (Assign.debug)
 			synchronized (System.err) {
 				System.err.printf("%s Exception in thread \"%s\" ", 
 						DateTime.timestamp(new Date()), Thread.currentThread().getName());

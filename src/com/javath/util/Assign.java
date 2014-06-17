@@ -27,31 +27,51 @@ import org.apache.commons.codec.binary.Base64;
 
 import com.javath.logger.LOG;
 
-public final class Assignment extends Instance {
+public class Assign extends Instance {
 	
 	private static final Properties system;
-	private static final Preferences preferences;
-	private static final Map<File,Assignment> instances;
-	private static final File file_config;
-	private static final Options options;
+	private static final Map<File,Assign> instances;
+	//
+	public static final String FILE_SEPARATOR;
+	public static final String LINE_SEPARATOR;
+	public static final String PATH_SEPARATOR;
+	//
+	private static final File file_Properties;
 	//
 	public static final String application;
 	public static final boolean debug;
+	//
+	public static final String directory;
+	public static final String home;
+	public static final String temp;
+	public static final String etc;
+	public static final String var;
+	public static final String log;
+	//
+	public static final String charset;
+	//
+	private static final Preferences preferences;
 	private static final AES aes;
+	//
+	private static final Options options;
 	
 	static {
 		system = System.getProperties();
-		instances = new HashMap<File, Assignment>();
-		String default_config = system.getProperty("user.dir") + system.getProperty("file.separator") +
-				"etc" + system.getProperty("file.separator") +
-				"configuration.properties";
-		file_config = new File(system.getProperty("configuration", default_config));
-		options = buildOptions();
-		
+		instances = new HashMap<File, Assign>();
+		//
+		FILE_SEPARATOR = system.getProperty("file.separator");
+		LINE_SEPARATOR = system.getProperty("line.separator");
+		PATH_SEPARATOR = system.getProperty("path.separator");
+		//
+		String default_Properties = system.getProperty("user.dir") + FILE_SEPARATOR +
+				"etc" + FILE_SEPARATOR +
+				"util" + FILE_SEPARATOR +
+				"Assignment.properties";
+		file_Properties = new File(system.getProperty("com.javath.util.Assignment", default_Properties));
 		// Loading file properties
 		Properties properties = new Properties();
 		try {
-			FileInputStream file_properties = new FileInputStream(file_config);
+			FileInputStream file_properties = new FileInputStream(file_Properties);
 			properties.load(file_properties);
 			file_properties.close();
 		} catch (FileNotFoundException e) {
@@ -61,8 +81,25 @@ public final class Assignment extends Instance {
 		} finally {
 			application = properties.getProperty("application", 
 					system.getProperty("application", "java"));
-			debug = getLoggingDebug(properties);
-			
+			debug = getBooleanProperty(properties, "debug");
+			// System path
+			directory = properties.getProperty("directory",
+					system.getProperty("user.dir"));
+			home = properties.getProperty("home",
+					system.getProperty("user.home"));
+			temp = properties.getProperty("temp",
+					system.getProperty("java.io.tmpdir"));
+			// Custom path
+			String path_etc = directory + FILE_SEPARATOR + "etc";
+			etc = properties.getProperty("etc", path_etc);
+			String path_var = directory + FILE_SEPARATOR + "var";
+			var = properties.getProperty("var", path_var);
+			String path_log = var + FILE_SEPARATOR + "log";
+			log = properties.getProperty("log", path_log);
+			//
+			charset = properties.getProperty("charset",
+					system.getProperty("file.encoding"));
+			//
 			String root = properties.getProperty("preferences", 
 					system.getProperty("preferences", "user")).toLowerCase();
 			if (root.equals("system"))
@@ -78,163 +115,52 @@ public final class Assignment extends Instance {
 	        	shared_key = randomMD5();
 	        	preferences.put("SharedKey", shared_key);
 	        }
-	        
+	        //
 	        aes = new AES(md5(shared_key));
+	        instances.put(file_Properties, new Assign(properties));
+	        options = buildOptions();
 		}
 	}
-	private static boolean getLoggingDebug(Properties properties) {
-		String debug = properties.getProperty("debug", 
-				system.getProperty("debug", "false"));
-		if (debug.equals("1") || debug.equalsIgnoreCase("true"))
+	private static String getProperty(Properties properties, String key) {
+		return properties.getProperty(key, system.getProperty(key));
+	}
+	private static String getProperty(Properties properties, String key, String defaultValue) {
+		return properties.getProperty(key, system.getProperty(key, defaultValue));
+	}
+	private static boolean getBooleanProperty(Properties properties, String key) {
+		String value = properties.getProperty(key, 
+				system.getProperty(key, "0"));
+		if (    value.equals("1") || 
+				value.equalsIgnoreCase("true") || 
+				value.equalsIgnoreCase("t") ||
+				value.equalsIgnoreCase("on") )
 			return true;
-		if (debug.equals("0") || debug.equalsIgnoreCase("false"))
+		if (	value.equals("0") || 
+				value.equalsIgnoreCase("false") || 
+				value.equalsIgnoreCase("f") ||
+				value.equalsIgnoreCase("off") )
 			return false;
-		LOG.CONFIG("Unknow debug is \"%s\".", debug);
+		LOG.CONFIG("Type mismatch: cannot convert from \"%s\" to boolean", value);
+		return false;
+	}
+	private static boolean getBooleanProperty(Properties properties, String key, boolean defaultValue) {
+		String value = properties.getProperty(key, 
+				system.getProperty(key, defaultValue?"1":"0"));
+		if (    value.equals("1") || 
+				value.equalsIgnoreCase("true") || 
+				value.equalsIgnoreCase("t") ||
+				value.equalsIgnoreCase("on") )
+			return true;
+		if (	value.equals("0") || 
+				value.equalsIgnoreCase("false") || 
+				value.equalsIgnoreCase("f") ||
+				value.equalsIgnoreCase("off") )
+			return false;
+		LOG.CONFIG("Type mismatch: cannot convert from \"%s\" to boolean", value);
 		return false;
 	}
 	
-	public static Assignment getInstance() {
-		return getInstance(file_config);
-	}
-	public static Assignment getInstance(String file) {
-		if ((file == null) || (file == ""))
-			return getInstance();
-		else
-			return getInstance(new File(file));
-	}
-	public static Assignment getInstance(File file) {
-		Assignment result = instances.get(file);
-		if (result == null) {
-			result = new Assignment(file);
-			instances.put(file, result);
-		}
-		return result;
-	}
-	
-	private final Properties properties;
-	
-	public final String FILE_SEPARATOR;
-	public final String LINE_SEPARATOR;
-	public final String PATH_SEPARATOR;
-	
-	public final String directory;
-	public final String home;
-	public final String temp;
-	public final String etc;
-	public final String var;
-	public final String log;
-	
-	public final String charset;
-	
-	private Assignment(File file) {
-		properties = new Properties();
-		try {
-			FileInputStream file_properties = new FileInputStream(file);
-			properties.load(file_properties);
-			file_properties.close();
-		} catch (FileNotFoundException e) {
-			WARNING(e);
-		} catch (IOException e) {
-			WARNING(e);
-		} finally {
-			// Separator
-			FILE_SEPARATOR = getProperty("file.separator");
-			LINE_SEPARATOR = getProperty("line.separator");
-			PATH_SEPARATOR = getProperty("path.separator");
-			// System path
-			directory = getProperty("user.dir");
-			home = getProperty("user.home");
-			temp = getProperty("java.io.tmpdir");
-			// Custom path
-			String path_etc = directory + FILE_SEPARATOR + "etc";
-			etc = getProperty("user.etc", path_etc);
-			String path_var = directory + FILE_SEPARATOR + "var";
-			var = getProperty("user.var", path_var);
-			String path_log = var + FILE_SEPARATOR + "log";
-			log = getProperty("user.log", path_log);
-			
-			charset = getProperty("file.encoding");
-		}
-	}
-	
-	public String getProperty(String key) {
-		return properties.getProperty(key, system.getProperty(key));
-	}
-	public String getProperty(String key, String defaultValue) {
-		return properties.getProperty(key, system.getProperty(key, defaultValue));
-	}
-	public boolean getPropertyBoolean(String key) {
-		String value = getProperty(key);
-		if (value.equals("1") || value.equalsIgnoreCase("true"))
-			return true;
-		else
-			return false;
-	}
-	public boolean getPropertyBoolean(String key, boolean defaultValue) {
-		String value = getProperty(key, defaultValue?"1":"0");
-		if (value.equals("1") || value.equalsIgnoreCase("true"))
-			return true;
-		else
-			return false;
-	}
-	public long getPropertyLong(String key) {
-		return Long.valueOf(getProperty(key));
-	}
-	public long getPropertyLong(String key, long defaultValue) {
-		return Long.valueOf(getProperty(key, String.valueOf(defaultValue)));
-	}
-	public double getPropertyDouble(String key) {
-		return Double.valueOf(getProperty(key));
-	}
-	public double getPropertyDouble(String key, double defaultValue) {
-		return Double.valueOf(getProperty(key, String.valueOf(defaultValue)));
-	}
-	public String getPropertySecure(String key) {
-		String value = getProperty(key);
-		if ((value == null) || value.isEmpty())
-			return "";
-		else
-			return decrypt(value);
-	}
-	public String getPropertyConfigPath(String key) {
-		return getPropertyConfigPath(etc, key);
-	}
-	public String getPropertyConfigPath(String key, String defaultValue) {
-		return getPropertyReferencePath(etc, key, defaultValue);
-	}
-	public String getPropertyReferencePath(String reference, String key) {
-		String path = getProperty(key);
-		try {
-		if (path.indexOf(FILE_SEPARATOR) == -1)
-			path = reference + FILE_SEPARATOR + path;
-		} catch (NullPointerException e) {
-			return null;
-		}
-		return path;
-	}
-	public String getPropertyReferencePath(String reference, String key, String defaultValue) {
-		String path = getProperty(key, defaultValue);
-		if (path.indexOf(FILE_SEPARATOR) == -1)
-			path = reference + FILE_SEPARATOR + path;
-		return path;
-	}
-	
-	public void printProperty() {
-		Set<Object> keys = properties.keySet();
-		for (Iterator<Object> iterator = keys.iterator(); iterator.hasNext();) {
-			Object key = iterator.next();
-			System.out.printf("%s=%s\n", key, properties.get(key));
-		}
-	}
-	public void printSystem() {
-		Set<Object> keys = system.keySet();
-		for (Iterator<Object> iterator = keys.iterator(); iterator.hasNext();) {
-			Object key = iterator.next();
-			System.out.printf("%s=%s\n", key, system.get(key));
-		}
-	}
-	
- 	public static String md5(String message) {
+	public static String md5(String message) {
 		try {
 			byte[] bytesOfMessage = message.getBytes("UTF-8");
 			MessageDigest md = MessageDigest.getInstance("MD5");
@@ -263,8 +189,109 @@ public final class Assignment extends Instance {
 		return aes.decrypt(message);
 	}
 	
-	public static Preferences getPreferenceNode(String node) {
-		return preferences.node(node);
+	private final Properties properties;
+	
+	private Assign(Properties properties) {
+		this.properties = properties;
+	}
+	private Assign(File file) {
+		this(new Properties());
+		try {
+			FileInputStream file_properties = new FileInputStream(file);
+			properties.load(file_properties);
+			file_properties.close();
+		} catch (FileNotFoundException e) {
+			WARNING(e);
+		} catch (IOException e) {
+			WARNING(e);
+		} 
+	}
+	
+	public static Assign getInstance(File file) {
+		Assign result = instances.get(file);
+		if (result == null) {
+			result = new Assign(file);
+			instances.put(file, result);
+		}
+		return result;
+	}
+	public static Assign getInstance(String classname, String default_Properties) {
+		return getInstance(new File(system.getProperty(classname, default_Properties)));
+	}
+	public static Assign getInstance(String file_Properties) {
+		return getInstance(new File(file_Properties));
+	}
+	public static Assign getInstance() {
+		return getInstance(file_Properties);
+	}
+	
+	public String getProperty(String key) {
+		return getProperty(properties, key);
+	}
+	public String getProperty(String key, String defaultValue) {
+		return getProperty(properties, key, defaultValue);
+	}
+	public boolean getBooleanProperty(String key) {
+		return getBooleanProperty(properties, key);
+	}
+	public boolean getPropertyBoolean(String key, boolean defaultValue) {
+		return getBooleanProperty(properties, key, defaultValue);
+	}
+	public long getPropertyLong(String key) {
+		return Long.valueOf(getProperty(properties, key));
+	}
+	public long getPropertyLong(String key, long defaultValue) {
+		return Long.valueOf(getProperty(properties, key, String.valueOf(defaultValue)));
+	}
+	public double getPropertyDouble(String key) {
+		return Double.valueOf(getProperty(properties, key));
+	}
+	public double getPropertyDouble(String key, double defaultValue) {
+		return Double.valueOf(getProperty(properties, key, String.valueOf(defaultValue)));
+	}
+	public String getPropertySecure(String key) {
+		String value = getProperty(key);
+		if ((value == null) || value.isEmpty())
+			return "";
+		else
+			return decrypt(value);
+	}
+	public String getPropertyConfigPath(String key) {
+		return getPropertyReferencePath(etc, key);
+	}
+	public String getPropertyConfigPath(String key, String defaultValue) {
+		return getPropertyReferencePath(etc, key, defaultValue);
+	}
+	public String getPropertyReferencePath(String reference, String key) {
+		String path = getProperty(key);
+		try {
+			if (path.indexOf(FILE_SEPARATOR) == -1)
+				path = reference + FILE_SEPARATOR + path;
+		} catch (NullPointerException e) {
+			return null;
+		}
+		return path;
+	}
+	public String getPropertyReferencePath(String reference, String key, String defaultValue) {
+		String path = getProperty(key, defaultValue);
+		if (path.indexOf(FILE_SEPARATOR) == -1)
+			path = reference + FILE_SEPARATOR + path;
+		return path;
+	}
+	
+	public void printProperty() {
+		Set<Object> keys = properties.keySet();
+		for (Iterator<Object> iterator = keys.iterator(); iterator.hasNext();) {
+			Object key = iterator.next();
+			System.out.printf("%s=%s\n", key, properties.get(key));
+		}
+	}
+	public void printSystem() {
+		Set<Object> keys = system.keySet();
+		for (Iterator<Object> iterator = keys.iterator(); iterator.hasNext();) {
+			Object key = iterator.next();
+			System.out.printf("%s=%s\n", key, system.get(key));
+		}
 	}
 	
 	public static void main(String[] args) {
@@ -289,11 +316,11 @@ public final class Assignment extends Instance {
 		}
 		if (line.hasOption("property")) {
 			String key = line.getOptionValue("property");
-			Assignment assign;
+			Assign assign;
 			if (line.hasOption("file"))
-				assign = Assignment.getInstance(line.getOptionValue("file"));
+				assign = Assign.getInstance(line.getOptionValue("file"));
 			else
-				assign = Assignment.getInstance();
+				assign = Assign.getInstance();
 			String value = assign.getProperty(key);
 			if (value == null)
 				System.out.printf("%s=\n",key);
@@ -354,7 +381,7 @@ public final class Assignment extends Instance {
 	}
 	private static void usage() {
 		HelpFormatter formatter = new HelpFormatter();
-		formatter.printHelp("Assignment", options);
+		formatter.printHelp("Assign", options);
 	}
 	
 }

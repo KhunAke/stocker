@@ -15,7 +15,7 @@ public class Instance {
 	private final int logger_level;
 	protected final int InstanceId;
 	//protected final LogMessage message;
-	protected Assignment assign;
+	protected Assign assign;
 
 	private String classname;
 	private String packagename;
@@ -214,7 +214,7 @@ public class Instance {
 				String.format("[@%d] %s: %s (%s:%d)", InstanceId, 
 						throwable.getClass().getCanonicalName(), throwable.getMessage(), 
 						filename, linenumber));
-		if (Assignment.debug)
+		if (Assign.debug)
 			synchronized (System.err) {
 				System.err.printf("%s [@%d] ", DateTime.timestamp(new Date()), InstanceId);
 				throwable.printStackTrace(System.err);
