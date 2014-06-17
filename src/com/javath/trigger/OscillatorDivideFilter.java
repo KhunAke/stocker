@@ -10,18 +10,13 @@ public class OscillatorDivideFilter implements OscillatorListener {
 	private long period;
 	private long schedule;
 	
-	public OscillatorDivideFilter(Oscillator source, OscillatorListener destination, 
-			long period) 
-	{
+	public OscillatorDivideFilter(Oscillator source, OscillatorListener destination, long period) {
 		this.source = source;
 		this.destination = destination;
 		this.period = period;
 		this.source.addListener(this);
 	}
-	
-	public OscillatorDivideFilter(Oscillator source, OscillatorListener destination, 
-			long period, long  timestamp) 
-	{
+	public OscillatorDivideFilter(Oscillator source, OscillatorListener destination, long period, long  timestamp) {
 		this(source, destination, period);
 		setSchedule(timestamp);
 	}
@@ -33,7 +28,6 @@ public class OscillatorDivideFilter implements OscillatorListener {
 	public void setSchedule(long timestamp) {
 		this.schedule = timestamp / source.getPeriod();
 	}
-	
 	public long getSchedule() {
 		return schedule * source.getPeriod();
 	}

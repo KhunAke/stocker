@@ -1,5 +1,7 @@
 package com.javath.trigger;
 
+import com.javath.logger.LOG;
+import com.javath.util.DateTime;
 import com.javath.util.TaskManager;
 
 public class OscillatorScheduleFilter implements OscillatorListener {
@@ -34,10 +36,15 @@ public class OscillatorScheduleFilter implements OscillatorListener {
 	public void action(OscillatorEvent event) {
 		long timestamp = event.getTimestamp() / event.getPeriod();
 		//System.err.printf("%d = %d%n", schedule ,timestamp);
-		if (schedule == timestamp)
+		if (schedule == timestamp) {
 			TaskManager.create(destination, "action", event);
-		if (schedule <= timestamp)
 			source.removeListener(this);
+		} else if (schedule <= timestamp) {
+			TaskManager.create(destination, "action", event);
+			source.removeListener(this);
+			LOG.WARNING("Oscillator[Period=%d] Schedule mismatch at \"%s\"", 
+					source.getPeriod(), DateTime.timestamp(getSchedule()));
+		}
 	}
 	
 }

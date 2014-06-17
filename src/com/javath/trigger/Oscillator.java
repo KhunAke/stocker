@@ -13,7 +13,7 @@ import java.util.TimerTask;
 
 import com.javath.util.ObjectException;
 
-public class Oscillator extends TimerTask implements OscillatorSource, Runnable {
+public class Oscillator extends TimerTask implements Runnable {
 	
 	private static final Map<Long,Oscillator> instances;
 	
@@ -66,11 +66,9 @@ public class Oscillator extends TimerTask implements OscillatorSource, Runnable 
 		return period;
 	}
 	
-	@Override
 	public boolean addListener(OscillatorListener listener) {
 		return listeners.add(listener);
 	}
-	@Override
 	public boolean removeListener(OscillatorListener listener) {
 		return listeners.remove(listener);
 	}
@@ -91,6 +89,9 @@ public class Oscillator extends TimerTask implements OscillatorSource, Runnable 
 				if (listeners.length > 0 ) {
 					OscillatorEvent event = new OscillatorEvent( this, new Date().getTime());
 					MulticastEvent.send("action", listeners, event);
+				} else { // 
+					instances.remove(period);
+					timer.cancel();
 				}
 			} catch (NoSuchElementException e) {
 				throw new ObjectException(e);
