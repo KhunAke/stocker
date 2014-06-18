@@ -1,0 +1,1 @@
+create table public.bualuang_board_daily (symbol varchar(16) not null, date date not null, open float8, high float8, low float8, close float8, volume int8, value float8, primary key (symbol, date), unique (symbol, date));
