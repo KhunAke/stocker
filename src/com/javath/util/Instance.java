@@ -14,20 +14,18 @@ public class Instance {
 	protected final Logger logger;
 	private final int logger_level;
 	protected final int InstanceId;
-	//protected final LogMessage message;
-	protected Assign assign;
-
+	
 	private String classname;
 	private String packagename;
 	
 	public Instance() {
 		InstanceId = hashCode();
-		
 		try {
 			StackTraceElement[] stack = new Throwable().getStackTrace();
 			int index = 0;
 			//for (index = stack.length - 1; index > 0; index--) {
 			String supperclass = INIT;
+			
 			for (index = 0; index < stack.length; index++) {
 				classname = stack[index].getClassName();
 				if (!classname.equals(INIT))

@@ -103,4 +103,9 @@ public class Oscillator extends TimerTask implements Runnable {
 		}
 	}
 	
+	public void destroy() {
+		instances.remove(period);
+		timer.cancel();
+	}
+	
 }
