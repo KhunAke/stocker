@@ -1,12 +1,10 @@
 package com.javath.util;
 
-import java.io.File;
-import java.util.Set;
-
 import org.apache.commons.daemon.Daemon;
 import org.apache.commons.daemon.DaemonContext;
 import org.apache.commons.daemon.DaemonInitException;
 
+import com.javath.logger.LOG;
 import com.javath.trigger.Oscillator;
 import com.javath.trigger.OscillatorEvent;
 import com.javath.trigger.OscillatorListener;
@@ -23,7 +21,7 @@ public class Service extends Instance implements Daemon, OscillatorListener {
 				"util" + Assign.FILE_SEPARATOR +
 				"Service.properties";
 		assign = Assign.getInstance(Service.class.getCanonicalName(), default_Properties);
-		waiting = assign.getPropertyLong("waiting");
+		waiting = assign.getLongProperty("waiting");
 	}
 	
 	private Thread thread; 
@@ -31,8 +29,9 @@ public class Service extends Instance implements Daemon, OscillatorListener {
     //private boolean lastOneWasATick = false;
     
 	@Override
-	public void init(DaemonContext context) throws DaemonInitException, Exception {
-		INFO("Daemon initializing.");
+	public void init(DaemonContext context) 
+			throws DaemonInitException, Exception {
+		LOG.INFO("Daemon initializing.");
 		/*
          * Construct objects and initialize variables here.
          * You can access the command line arguments that would normally be passed to your main() 
@@ -64,13 +63,15 @@ public class Service extends Instance implements Daemon, OscillatorListener {
 		new TestOscillator();
 	}
 	@Override
-	public void start() throws Exception {
-		INFO("Daemon starting.");
+	public void start() 
+			throws Exception {
+		LOG.INFO("Daemon starting.");
 		//thread.start();
 	}
 	@Override
-	public void stop() throws Exception {
-		INFO("Daemon stopping.");
+	public void stop() 
+			throws Exception {
+		LOG.INFO("Daemon stopping.");
 		//stopped = true;
 		thread = Thread.currentThread();
 		try{
@@ -78,14 +79,14 @@ public class Service extends Instance implements Daemon, OscillatorListener {
             oscillator.addListener(this);
             oscillator.start();
             Thread.sleep(waiting);
-            WARNING("Thread force terminate.");
+            LOG.WARNING("Thread force terminate.");
         }catch(InterruptedException e){
-            INFO("Thread success terminate.");
+            LOG.INFO("Thread success terminate.");
         }
 	}
 	@Override
 	public void destroy() {
-		INFO("Daemon done.");
+		LOG.INFO("Daemon done.");
 		//thread = null;
 	}
 	

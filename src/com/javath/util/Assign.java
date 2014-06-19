@@ -36,10 +36,7 @@ public class Assign extends Instance {
 	public static final String LINE_SEPARATOR;
 	public static final String PATH_SEPARATOR;
 	//
-	private static final File file_Properties;
-	//
-	public static final String application;
-	public static final boolean debug;
+	private static final File assign_file;
 	//
 	public static final String directory;
 	public static final String home;
@@ -47,6 +44,9 @@ public class Assign extends Instance {
 	public static final String etc;
 	public static final String var;
 	public static final String log;
+	//
+	public static final String application;
+	public static boolean debug = true;
 	//
 	public static final String charset;
 	//
@@ -63,15 +63,15 @@ public class Assign extends Instance {
 		LINE_SEPARATOR = system.getProperty("line.separator");
 		PATH_SEPARATOR = system.getProperty("path.separator");
 		//
-		String default_Properties = system.getProperty("user.dir") + FILE_SEPARATOR +
+		String default_properties = system.getProperty("user.dir") + FILE_SEPARATOR +
 				"etc" + FILE_SEPARATOR +
 				"util" + FILE_SEPARATOR +
 				"Assignment.properties";
-		file_Properties = new File(system.getProperty("com.javath.util.Assignment", default_Properties));
+		assign_file = new File(system.getProperty("com.javath.util.Assignment", default_properties));
 		// Loading file properties
 		Properties properties = new Properties();
 		try {
-			FileInputStream file_properties = new FileInputStream(file_Properties);
+			FileInputStream file_properties = new FileInputStream(assign_file);
 			properties.load(file_properties);
 			file_properties.close();
 		} catch (FileNotFoundException e) {
@@ -79,9 +79,6 @@ public class Assign extends Instance {
 		} catch (IOException e) {
 			LOG.WARNING(e);
 		} finally {
-			application = properties.getProperty("application", 
-					system.getProperty("application", "java"));
-			debug = getBooleanProperty(properties, "debug");
 			// System path
 			directory = properties.getProperty("directory",
 					system.getProperty("user.dir"));
@@ -100,6 +97,16 @@ public class Assign extends Instance {
 			charset = properties.getProperty("charset",
 					system.getProperty("file.encoding"));
 			//
+			initVM_argument(properties);
+			application = properties.getProperty("application", 
+					system.getProperty("application", "java"));
+			try {
+				debug = getBooleanProperty(properties, "debug");
+			} catch (Exception e) {
+				LOG.CONFIG(new ObjectException(e,
+						"Type mismatch: \"%s\" in \"%s\"", "debug", assign_file.getAbsolutePath()));
+			} 
+			//
 			String root = properties.getProperty("preferences", 
 					system.getProperty("preferences", "user")).toLowerCase();
 			if (root.equals("system"))
@@ -117,9 +124,20 @@ public class Assign extends Instance {
 	        }
 	        //
 	        aes = new AES(md5(shared_key));
-	        instances.put(file_Properties, new Assign(properties));
+	        instances.put(assign_file, new Assign(assign_file, properties));
 	        options = buildOptions();
 		}
+	}
+	public static void initVM_argument(Properties properties) {
+		String vm_argument = null; // variable temporary 
+		vm_argument = getProperty(properties, "java.naming.factory.initial");
+		if (vm_argument == null)
+			system.setProperty("java.naming.factory.initial", 
+					"com.javath.ContextFactory");
+		vm_argument = getProperty(properties, "java.util.logging.config.file");
+		if (vm_argument == null)
+			system.setProperty("java.util.logging.config.file", 
+					etc + FILE_SEPARATOR + "logging.properties");
 	}
 	private static String getProperty(Properties properties, String key) {
 		return properties.getProperty(key, system.getProperty(key));
@@ -140,8 +158,7 @@ public class Assign extends Instance {
 				value.equalsIgnoreCase("f") ||
 				value.equalsIgnoreCase("off") )
 			return false;
-		LOG.CONFIG("Type mismatch: cannot convert from \"%s\" to boolean", value);
-		return false;
+		throw new ObjectException("For input string: \"%s\"", value);
 	}
 	private static boolean getBooleanProperty(Properties properties, String key, boolean defaultValue) {
 		String value = properties.getProperty(key, 
@@ -156,8 +173,7 @@ public class Assign extends Instance {
 				value.equalsIgnoreCase("f") ||
 				value.equalsIgnoreCase("off") )
 			return false;
-		LOG.CONFIG("Type mismatch: cannot convert from \"%s\" to boolean", value);
-		return false;
+		throw new ObjectException("For input string: \"%s\"", value);
 	}
 	
 	public static String md5(String message) {
@@ -189,22 +205,27 @@ public class Assign extends Instance {
 		return aes.decrypt(message);
 	}
 	
-	private final Properties properties;
+	private File file;
+	private Properties properties;
 	
-	private Assign(Properties properties) {
-		this.properties = properties;
+	private Assign(File file, Properties properties) {
+		setFile(file);
+		setProperties(properties);
 	}
 	private Assign(File file) {
-		this(new Properties());
+		Properties properties = new Properties();
 		try {
 			FileInputStream file_properties = new FileInputStream(file);
 			properties.load(file_properties);
 			file_properties.close();
 		} catch (FileNotFoundException e) {
-			WARNING(e);
+			CONFIG(e);
 		} catch (IOException e) {
-			WARNING(e);
-		} 
+			CONFIG(e);
+		} finally {
+			setFile(file);
+			setProperties(properties);
+		}
 	}
 	
 	public static Assign getInstance(File file) {
@@ -222,47 +243,89 @@ public class Assign extends Instance {
 		return getInstance(new File(file_Properties));
 	}
 	public static Assign getInstance() {
-		return getInstance(file_Properties);
+		return getInstance(assign_file);
 	}
 	
+	private void setFile(File file) {
+		this.file = file;
+	}
+	private void setProperties(Properties properties) {
+		this.properties = properties;
+	}
 	public String getProperty(String key) {
-		return getProperty(properties, key);
+		return getProperty(properties, key, "");
 	}
 	public String getProperty(String key, String defaultValue) {
 		return getProperty(properties, key, defaultValue);
 	}
 	public boolean getBooleanProperty(String key) {
-		return getBooleanProperty(properties, key);
+		try {
+			return getBooleanProperty(properties, key, false);
+		} catch (Exception e) {
+			LOG.CONFIG(new ObjectException(e,
+					"Type mismatch: \"%s\" in \"%s\"", key, file.getAbsolutePath()));
+			return false;
+		}
 	}
-	public boolean getPropertyBoolean(String key, boolean defaultValue) {
-		return getBooleanProperty(properties, key, defaultValue);
+	public boolean getBooleanProperty(String key, boolean defaultValue) {
+		try {
+			return getBooleanProperty(properties, key, defaultValue);
+		} catch (Exception e) {
+			LOG.CONFIG(new ObjectException(e,
+					"Type mismatch: \"%s\" in \"%s\"", key, file.getAbsolutePath()));
+			return false;
+		}
 	}
-	public long getPropertyLong(String key) {
-		return Long.valueOf(getProperty(properties, key));
+	public long getLongProperty(String key) {
+		try {
+			return Long.valueOf(getProperty(properties, key, "0"));
+		} catch (Exception e) {
+			LOG.CONFIG(new ObjectException(e,
+					"Type mismatch: \"%s\" in \"%s\"", key, file.getAbsolutePath()));
+			return 0;
+		}
 	}
-	public long getPropertyLong(String key, long defaultValue) {
-		return Long.valueOf(getProperty(properties, key, String.valueOf(defaultValue)));
+	public long getLongProperty(String key, long defaultValue) {
+		try {
+			return Long.valueOf(getProperty(properties, key, String.valueOf(defaultValue)));
+		} catch (Exception e) {
+			LOG.CONFIG(new ObjectException(e,
+					"Type mismatch: \"%s\" in \"%s\"", key, file.getAbsolutePath()));
+			return 0;
+		}
 	}
-	public double getPropertyDouble(String key) {
-		return Double.valueOf(getProperty(properties, key));
+	public double getDoubleProperty(String key) {
+		try {
+			return Double.valueOf(getProperty(properties, key, "0.0"));
+		} catch (Exception e) {
+			LOG.CONFIG(new ObjectException(e,
+					"Type mismatch: \"%s\" in \"%s\"", key, file.getAbsolutePath()));
+			return 0.0;
+		}
 	}
-	public double getPropertyDouble(String key, double defaultValue) {
-		return Double.valueOf(getProperty(properties, key, String.valueOf(defaultValue)));
+	public double getDoubleProperty(String key, double defaultValue) {
+		try {
+			return Double.valueOf(getProperty(properties, key, String.valueOf(defaultValue)));
+		} catch (Exception e) {
+			LOG.CONFIG(new ObjectException(e,
+					"Type mismatch: \"%s\" in \"%s\"", key, file.getAbsolutePath()));
+			return 0.0;
+		}
 	}
-	public String getPropertySecure(String key) {
+	public String getSecureProperty(String key) {
 		String value = getProperty(key);
 		if ((value == null) || value.isEmpty())
 			return "";
 		else
 			return decrypt(value);
 	}
-	public String getPropertyConfigPath(String key) {
-		return getPropertyReferencePath(etc, key);
+	public String getConfigPathProperty(String key) {
+		return getReferencePathProperty(etc, key);
 	}
-	public String getPropertyConfigPath(String key, String defaultValue) {
-		return getPropertyReferencePath(etc, key, defaultValue);
+	public String getConfigPathProperty(String key, String defaultValue) {
+		return getReferencePathProperty(etc, key, defaultValue);
 	}
-	public String getPropertyReferencePath(String reference, String key) {
+	public String getReferencePathProperty(String reference, String key) {
 		String path = getProperty(key);
 		try {
 			if (path.indexOf(FILE_SEPARATOR) == -1)
@@ -272,7 +335,7 @@ public class Assign extends Instance {
 		}
 		return path;
 	}
-	public String getPropertyReferencePath(String reference, String key, String defaultValue) {
+	public String getReferencePathProperty(String reference, String key, String defaultValue) {
 		String path = getProperty(key, defaultValue);
 		if (path.indexOf(FILE_SEPARATOR) == -1)
 			path = reference + FILE_SEPARATOR + path;

@@ -10,11 +10,14 @@ public class ObjectException extends RuntimeException {
 	public ObjectException(String format, java.lang.Object... value) {
 		this(String.format(format, value));
 	}
-	public ObjectException(String message, Throwable cause) {
+	public ObjectException(Throwable cause) {
+		this(cause, cause.getMessage(), cause);
+	}
+	public ObjectException(Throwable cause, String message) {
 		super(message, cause);
 	}
-	public ObjectException(Throwable cause) {
-		this(cause.getMessage(), cause);
-	} 
+	public ObjectException(Throwable cause, String format, java.lang.Object... value) {
+		this(cause, String.format(format, value));
+	}
 
 }
