@@ -11,16 +11,16 @@ public class SymbolEvent extends EventObject {
 	
 	private final String name;
 	private final Date date;
-	private final short decimalPrice;
+	private final short decimal_price;
 	private final long open;
 	private final long high;
 	private final long low;
 	private final long last;
 	private final long bid;
 	private final long offer;
-	private final short decimalVolume;
+	private final short decimal_volume;
 	private final long volume;
-	private final short decimalValue;
+	private final short decimal_value;
 	private final long value;
 	
 
@@ -29,22 +29,22 @@ public class SymbolEvent extends EventObject {
 	}
 	
 	public SymbolEvent(Object source,String name, Date date, 
-			short decimalPrice, long open, long high, long low, long last, long bid, long offer, 
-			short decimalVolume, long volume, 
-			short decimalValue, long value) {
+			short decimal_price, long open, long high, long low, long last, long bid, long offer, 
+			short decimal_volume, long volume, 
+			short decimal_value, long value) {
 		super(source);
 		this.name = name;
 		this.date = date;
-		this.decimalPrice = decimalPrice;
+		this.decimal_price = decimal_price;
 		this.open = open;
 		this.high = high;
 		this.low = low;
 		this.last = last;
 		this.bid = bid;
 		this.offer = offer;
-		this.decimalVolume = decimalVolume;
+		this.decimal_volume = decimal_volume;
 		this.volume = volume;
-		this.decimalValue = decimalValue;
+		this.decimal_value = decimal_value;
 		this.value = value;
 	}
 
@@ -94,15 +94,15 @@ public class SymbolEvent extends EventObject {
 	}
 	
 	public double price(long variable) {
-		return (double) variable / decimalPrice;
+		return (double) variable / decimal_price;
 	}
 	
 	public double volume(long variable) {
-		return (double) variable / decimalVolume;
+		return (double) variable / decimal_volume;
 	}
 	
 	public double value(long variable) {
-		return (double) variable / decimalValue;
+		return (double) variable / decimal_value;
 	}
 	
 }

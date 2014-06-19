@@ -21,7 +21,7 @@ public class ContextFactory implements InitialContextFactory, Context {
 		return context;
 	}
 
-	public java.lang.Object addToEnvironment(String propName, java.lang.Object propVal) 
+	public java.lang.Object addToEnvironment(String name, java.lang.Object value) 
 			throws NamingException {
 		// TODO Auto-generated method stub
 		return null;
@@ -151,17 +151,17 @@ public class ContextFactory implements InitialContextFactory, Context {
 		
 	}
 
-	public java.lang.Object removeFromEnvironment(String propName)
+	public java.lang.Object removeFromEnvironment(String name)
 			throws NamingException {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	public void rename(Name oldName, Name newName) 
+	public void rename(Name old_name, Name new_name) 
 			throws NamingException {
 		// TODO Auto-generated method stub
 	}
-	public void rename(String oldName, String newName) 
+	public void rename(String old_name, String new_name) 
 			throws NamingException {
 		// TODO Auto-generated method stub
 	}

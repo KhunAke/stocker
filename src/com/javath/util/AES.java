@@ -15,7 +15,7 @@ import org.apache.commons.codec.binary.StringUtils;
 
 public class AES extends Instance {
 	
-	private final static byte[] byteEmpty = new byte[] {};
+	private final static byte[] empty_byte = new byte[] {};
 	
 	private final Cipher cipher_encrypt;
 	private final Cipher cipher_decrypt;
@@ -40,7 +40,7 @@ public class AES extends Instance {
 	}
 	
 	public String encrypt(String message) {
-		byte[] encrypted = byteEmpty;
+		byte[] encrypted = empty_byte;
 		try {
 			encrypted = cipher_encrypt
 			        .doFinal(message.getBytes("UTF-8"));
@@ -54,7 +54,7 @@ public class AES extends Instance {
 		return Base64.encodeBase64String(encrypted);
 	}
 	public String decrypt(String encrypted) {
-		byte[] decrypted = byteEmpty;
+		byte[] decrypted = empty_byte;
 		try {
 			decrypted = cipher_decrypt
 			        .doFinal(Base64.decodeBase64(encrypted));

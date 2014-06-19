@@ -17,8 +17,8 @@ public class Service extends Instance implements Daemon, OscillatorListener {
 	private final static long waiting;
 	
 	static {
-		String default_Properties = Assign.etc + Assign.FILE_SEPARATOR +
-				"util" + Assign.FILE_SEPARATOR +
+		String default_Properties = Assign.etc + Assign.File_Separator +
+				"util" + Assign.File_Separator +
 				"Service.properties";
 		assign = Assign.getInstance(Service.class.getCanonicalName(), default_Properties);
 		waiting = assign.getLongProperty("waiting");

@@ -14,11 +14,11 @@ public class Hibernate {
 	private static final Assign assign;
 	
 	static {
-		String default_Properties = Assign.etc + Assign.FILE_SEPARATOR +
-				"util" + Assign.FILE_SEPARATOR +
+		String default_Properties = Assign.etc + Assign.File_Separator +
+				"util" + Assign.File_Separator +
 				"Hibernate.properties";
 		assign = Assign.getInstance(Hibernate.class.getCanonicalName(), default_Properties);
-		String default_configuration = Assign.etc + Assign.FILE_SEPARATOR + 
+		String default_configuration = Assign.etc + Assign.File_Separator + 
 				"hibernate.cfg.xml";
 		String hibernate_cfg = assign.getProperty("configuration", default_configuration);
 		Configuration configuration = new Configuration();
