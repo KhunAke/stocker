@@ -10,5 +10,7 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Hibernate"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JDBC PostgreSQL"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Apache Commons Logging"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JDBC MySQL"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/HttpClient"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>
