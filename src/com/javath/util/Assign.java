@@ -342,6 +342,11 @@ public class Assign extends Instance {
 		return path;
 	}
 	
+	public void warning(Throwable throwable, String key) {
+		LOG.CONFIG(new ObjectException(throwable,
+				"Type mismatch: \"%s\" in \"%s\"", key, file.getAbsolutePath()));
+	}
+	
 	public void printProperty() {
 		Set<Object> keys = properties.keySet();
 		for (Iterator<Object> iterator = keys.iterator(); iterator.hasNext();) {
