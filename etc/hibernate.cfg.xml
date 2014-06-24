@@ -5,24 +5,23 @@
 <hibernate-configuration>
     <session-factory>
         <property name="hibernate.bytecode.use_reflection_optimizer">false</property>
-        <property name="hibernate.connection.driver_class">org.postgresql.Driver</property>
+        <property name="hibernate.connection.driver_class">org.gjt.mm.mysql.Driver</property>
         <property name="hibernate.connection.password">stocker</property>
-        <property name="hibernate.connection.url">jdbc:postgresql://192.168.1.9/stocker</property>
+        <property name="hibernate.connection.url">jdbc:mysql://172.30.194.9/stocker</property>
         <property name="hibernate.connection.username">stocker</property>
-        <property name="hibernate.dialect">org.hibernate.dialect.PostgreSQLDialect</property>
+        <property name="hibernate.dialect">org.hibernate.dialect.MySQL5Dialect</property>
         <property name="hibernate.search.autoregister_listeners">false</property>
         
-    <property name="hibernate.connection.provider_class">org.hibernate.connection.C3P0ConnectionProvider</property>
-    <property name="hibernate.c3p0.acquire_increment">2</property>
-    <property name="hibernate.c3p0.idle_test_period">300</property>
-    <property name="hibernate.c3p0.timeout">1800</property>
-    <property name="hibernate.c3p0.max_size">25</property>
-    <property name="hibernate.c3p0.min_size" >3</property>
-    <property name="hibernate.c3p0.max_statement">0</property>
-    <property name="hibernate.c3p0.preferredTestQuery">select 1;</property>
-    <property name="hibernate.c3p0.testConnectionOnCheckout">true</property>
-    <property name="hibernate.c3p0.validate">true</property>
-    
+        <property name="hibernate.connection.provider_class">org.hibernate.connection.C3P0ConnectionProvider</property>
+	    <property name="hibernate.c3p0.acquire_increment">2</property>
+	    <property name="hibernate.c3p0.idle_test_period">300</property>
+	    <property name="hibernate.c3p0.timeout">1800</property>
+	    <property name="hibernate.c3p0.max_size">25</property>
+	    <property name="hibernate.c3p0.min_size" >3</property>
+	    <property name="hibernate.c3p0.max_statement">0</property>
+	    <property name="hibernate.c3p0.preferredTestQuery">select 1;</property>
+	    <property name="hibernate.c3p0.testConnectionOnCheckout">true</property>
+	    <property name="hibernate.c3p0.validate">true</property>
         <mapping resource="com/javath/mapping/BualuangBoardDaily.hbm.xml" />
     </session-factory>
 </hibernate-configuration>

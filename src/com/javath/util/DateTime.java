@@ -36,7 +36,9 @@ public class DateTime {
 		pool = new GenericObjectPool<Calendar>(new BasePooledObjectFactory<Calendar>() {
 				@Override
 				public Calendar create() throws Exception {
-					return Calendar.getInstance();
+					Calendar calendar = Calendar.getInstance();
+					calendar.clear();
+					return calendar;
 				}
 				/**
 			     * Use the default PooledObject implementation.
@@ -82,6 +84,7 @@ public class DateTime {
 	}
 	public static void returnCalendar(Calendar calendar) {
 		try {
+			calendar.clear();
 			pool.returnObject(calendar);
 		} catch (Exception e) {
 			throw new ObjectException(e);

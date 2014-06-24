@@ -25,7 +25,6 @@ public class TaskManager {
 		return create(name, object, methodName, arguments);
 	}
 	public final static Thread create(String name, java.lang.Object object, String methodName, java.lang.Object... arguments) {
-	
 		Thread thread = new Thread(new Runnable() {
 			private java.lang.Object object;
 			private Method method;
@@ -49,7 +48,6 @@ public class TaskManager {
 				}
 				return this;
 			}
-			
 			public void run() {
 				try {
 					method.invoke(object, arguments);
@@ -60,8 +58,7 @@ public class TaskManager {
 				} catch (InvocationTargetException e) {
 					throw new ObjectException(e);
 				} 
-			}
-			
+			}	
 		}.setExecute(object, methodName, arguments), name);
 		thread.start();
 		return thread;

@@ -364,10 +364,6 @@ public class Assign extends Instance {
 	
 	public static void main(String[] args) {
 		CommandLine line = commandline(args);
-		if (line.hasOption("help")) {
-			usage();
-			return;
-		}
 		// Main operation mode:
 		int main_option = 0;
 		if (line.hasOption("generate"))
