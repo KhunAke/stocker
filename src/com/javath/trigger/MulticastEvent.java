@@ -6,11 +6,9 @@ import java.util.EventListener;
 import java.util.EventObject;
 import java.util.NoSuchElementException;
 
-import org.apache.commons.pool2.BasePooledObjectFactory;
-import org.apache.commons.pool2.ObjectPool;
-import org.apache.commons.pool2.PooledObject;
-import org.apache.commons.pool2.impl.DefaultPooledObject;
-import org.apache.commons.pool2.impl.GenericObjectPool;
+import org.apache.commons.pool.ObjectPool;
+import org.apache.commons.pool.PoolableObjectFactory;
+import org.apache.commons.pool.impl.GenericObjectPool;
 
 import com.javath.util.Instance;
 import com.javath.util.ObjectException;
@@ -22,26 +20,25 @@ public class MulticastEvent extends Instance implements Runnable {
 	
 	static {
 		pool = new GenericObjectPool<MulticastEvent>(
-				new BasePooledObjectFactory<MulticastEvent>() {
+				new PoolableObjectFactory<MulticastEvent>() {
 					@Override
-					public MulticastEvent create() throws Exception {
+					public MulticastEvent makeObject() 
+							throws Exception {
 						return new MulticastEvent();
 					}
-					/**
-				     * Use the default PooledObject implementation.
-				     */
 					@Override
-					public PooledObject<MulticastEvent> wrap(MulticastEvent multicast) {
-						return new DefaultPooledObject<MulticastEvent>(multicast);
+					public void activateObject(MulticastEvent event) 
+							throws Exception {}
+					@Override
+					public void passivateObject(MulticastEvent event) 
+							throws Exception {}
+					@Override
+					public boolean validateObject(MulticastEvent event) {
+						return false;
 					}
-					/**
-				     * When an object is returned to the pool, clear the buffer.
-				     * /
-				    @Override
-				    public void passivateObject(PooledObject<MulticastEvent> pooled) {
-				    	pooled.getObject().clear();
-				    }
-				    /**/
+					@Override
+					public void destroyObject(MulticastEvent event) 
+							throws Exception {}
 				});
 	}
 

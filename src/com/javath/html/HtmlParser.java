@@ -5,11 +5,9 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.NoSuchElementException;
 
-import org.apache.commons.pool2.BasePooledObjectFactory;
-import org.apache.commons.pool2.ObjectPool;
-import org.apache.commons.pool2.PooledObject;
-import org.apache.commons.pool2.impl.DefaultPooledObject;
-import org.apache.commons.pool2.impl.GenericObjectPool;
+import org.apache.commons.pool.ObjectPool;
+import org.apache.commons.pool.PoolableObjectFactory;
+import org.apache.commons.pool.impl.GenericObjectPool;
 import org.apache.html.dom.HTMLDocumentImpl;
 import org.cyberneko.html.parsers.DOMFragmentParser;
 import org.w3c.dom.DocumentFragment;
@@ -34,50 +32,48 @@ public class HtmlParser extends Instance {
 	
 	private final static ObjectPool<DOMFragmentParser> initialPoolParser() {
 		return new GenericObjectPool<DOMFragmentParser>(
-				new BasePooledObjectFactory<DOMFragmentParser>() {
+				new PoolableObjectFactory<DOMFragmentParser>() {
 					@Override
-					public DOMFragmentParser create() throws Exception {
+					public DOMFragmentParser makeObject() 
+							throws Exception {
 						return new DOMFragmentParser();
 					}
-					/**
-				     * Use the default PooledObject implementation.
-				     */
 					@Override
-					public PooledObject<DOMFragmentParser> wrap(DOMFragmentParser parser) {
-						return new DefaultPooledObject<DOMFragmentParser>(parser);
+					public void activateObject(DOMFragmentParser parser) 
+							throws Exception {}
+					@Override
+					public void passivateObject(DOMFragmentParser parser) 
+							throws Exception {}
+					@Override
+					public boolean validateObject(DOMFragmentParser parser) {
+						return false;
 					}
-					/**
-				     * When an object is returned to the pool, clear the buffer.
-				     * /
-				    @Override
-				    public void passivateObject(PooledObject<MulticastEvent> pooled) {
-				    	pooled.getObject().clear();
-				    }
-				    /**/
+					@Override
+					public void destroyObject(DOMFragmentParser parser) 
+							throws Exception {}
 				});
 	}
 	private final static ObjectPool<HTMLDocument> initialPoolDocument() {
 		return new GenericObjectPool<HTMLDocument>(
-				new BasePooledObjectFactory<HTMLDocument>() {
+				new PoolableObjectFactory<HTMLDocument>() {
 					@Override
-					public HTMLDocument create() throws Exception {
+					public HTMLDocument makeObject() 
+							throws Exception {
 						return new HTMLDocumentImpl();
 					}
-					/**
-				     * Use the default PooledObject implementation.
-				     */
 					@Override
-					public PooledObject<HTMLDocument> wrap(HTMLDocument document) {
-						return new DefaultPooledObject<HTMLDocument>(document);
+					public void activateObject(HTMLDocument document) 
+							throws Exception {}
+					@Override
+					public void passivateObject(HTMLDocument document) 
+							throws Exception {}
+					@Override
+					public boolean validateObject(HTMLDocument document) {
+						return false;
 					}
-					/**
-				     * When an object is returned to the pool, clear the buffer.
-				     * /
-				    @Override
-				    public void passivateObject(PooledObject<MulticastEvent> pooled) {
-				    	pooled.getObject().clear();
-				    }
-				    /**/
+					@Override
+					public void destroyObject(HTMLDocument document) 
+							throws Exception {}
 				});
 	}
 

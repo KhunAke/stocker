@@ -2,11 +2,9 @@ package com.javath.http;
 
 import java.util.NoSuchElementException;
 
-import org.apache.commons.pool2.BasePooledObjectFactory;
-import org.apache.commons.pool2.ObjectPool;
-import org.apache.commons.pool2.PooledObject;
-import org.apache.commons.pool2.impl.DefaultPooledObject;
-import org.apache.commons.pool2.impl.GenericObjectPool;
+import org.apache.commons.pool.ObjectPool;
+import org.apache.commons.pool.PoolableObjectFactory;
+import org.apache.commons.pool.impl.GenericObjectPool;
 import org.apache.http.client.CookieStore;
 import org.apache.http.impl.client.BasicCookieStore;
 
@@ -23,26 +21,29 @@ public class State extends Instance {
 	
 	private final static ObjectPool<State> initialPoolState() {
 		return new GenericObjectPool<State>(
-				new BasePooledObjectFactory<State>() {
+				new PoolableObjectFactory<State>() {
 					@Override
-					public State create() throws Exception {
+					public State makeObject() 
+							throws Exception {
 						return new State();
 					}
-					/**
-				     * Use the default PooledObject implementation.
-				     */
 					@Override
-					public PooledObject<State> wrap(State state) {
-						return new DefaultPooledObject<State>(state);
+					public void activateObject(State state) 
+							throws Exception {
+						
 					}
-					/**
-				     * When an object is returned to the pool, clear the buffer.
-				     */
-				    @Override
-				    public void passivateObject(PooledObject<State> pooled) {
-				    	pooled.getObject().initial();
-				    }
-				    /**/
+					@Override
+					public void passivateObject(State state) 
+							throws Exception {
+						state.initial();
+					}
+					@Override
+					public boolean validateObject(State state) {
+						return false;
+					}
+					@Override
+					public void destroyObject(State state) 
+							throws Exception {}
 				});
 	}
 	

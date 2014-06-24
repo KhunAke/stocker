@@ -7,11 +7,9 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.NoSuchElementException;
 
-import org.apache.commons.pool2.BasePooledObjectFactory;
-import org.apache.commons.pool2.ObjectPool;
-import org.apache.commons.pool2.PooledObject;
-import org.apache.commons.pool2.impl.DefaultPooledObject;
-import org.apache.commons.pool2.impl.GenericObjectPool;
+import org.apache.commons.pool.ObjectPool;
+import org.apache.commons.pool.PoolableObjectFactory;
+import org.apache.commons.pool.impl.GenericObjectPool;
 
 public class DateTime {
 	
@@ -33,30 +31,29 @@ public class DateTime {
 	
 	static {
 		EPOCH = new Date(0);
-		pool = new GenericObjectPool<Calendar>(new BasePooledObjectFactory<Calendar>() {
-				@Override
-				public Calendar create() throws Exception {
-					Calendar calendar = Calendar.getInstance();
-					calendar.clear();
-					return calendar;
-				}
-				/**
-			     * Use the default PooledObject implementation.
-			     */
-				@Override
-				public PooledObject<Calendar> wrap(Calendar calendar) {
-					return new DefaultPooledObject<Calendar>(calendar);
-				}
-				/**
-			     * When an object is returned to the pool, clear the buffer.
-			     */
-			    @Override
-			    public void passivateObject(PooledObject<Calendar> pooled) {
-			    	pooled.getObject().clear();
-			    }
-			    /**/
-			}
-		);
+		pool = new GenericObjectPool<Calendar>(
+				new PoolableObjectFactory<Calendar>() {
+					@Override
+					public Calendar makeObject() 
+							throws Exception {
+						return Calendar.getInstance();
+					}
+					@Override
+					public void activateObject(Calendar calendar) 
+							throws Exception {
+						calendar.setTime(new Date());
+					}
+					@Override
+					public void passivateObject(Calendar calendar) 
+							throws Exception {}
+					@Override
+					public boolean validateObject(Calendar calendar) {
+						return false;
+					}
+					@Override
+					public void destroyObject(Calendar calendar) 
+							throws Exception {}
+				});
 		Default_Date_Format = "%1$tY-%1$tm-%1$td";
 		Default_Time_Format = "%1$tH:%1$tM:%1$tS";
 		Default_DateTime_Format = Default_Date_Format + " " + Default_Time_Format;
@@ -70,9 +67,6 @@ public class DateTime {
 	
 	public static Calendar borrowCalendar() {
 		try {
-			//Calendar calendar = pool.borrowObject();
-			//calendar.setTime(new Date());
-			//return calendar;
 			return pool.borrowObject();
 		} catch (NoSuchElementException e) {
 			throw new ObjectException(e);
@@ -159,7 +153,7 @@ public class DateTime {
 	// Method name : date -> using "Default_Date_[Format|Parse]"
 	public static Date date() {
 		Calendar calendar = borrowCalendar();
-		calendar.setTime(new Date());
+		//calendar.setTime(new Date());
 		calendar.set(Calendar.HOUR_OF_DAY, 0);
 		calendar.set(Calendar.MINUTE, 0);
 		calendar.set(Calendar.SECOND, 0);

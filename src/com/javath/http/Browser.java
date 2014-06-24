@@ -12,11 +12,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import org.apache.commons.pool2.BasePooledObjectFactory;
-import org.apache.commons.pool2.ObjectPool;
-import org.apache.commons.pool2.PooledObject;
-import org.apache.commons.pool2.impl.DefaultPooledObject;
-import org.apache.commons.pool2.impl.GenericObjectPool;
+import org.apache.commons.pool.ObjectPool;
+import org.apache.commons.pool.PoolableObjectFactory;
+import org.apache.commons.pool.impl.GenericObjectPool;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHost;
@@ -124,26 +122,27 @@ public class Browser extends Instance {
 	
 	private final static ObjectPool<Browser> initialPoolBrowser() {
 		return new GenericObjectPool<Browser>(
-				new BasePooledObjectFactory<Browser>() {
+				new PoolableObjectFactory<Browser>() {
 					@Override
-					public Browser create() throws Exception {
+					public Browser makeObject() 
+							throws Exception {
 						return new Browser();
 					}
-					/**
-				     * Use the default PooledObject implementation.
-				     */
 					@Override
-					public PooledObject<Browser> wrap(Browser browser) {
-						return new DefaultPooledObject<Browser>(browser);
+					public void activateObject(Browser browser) 
+							throws Exception {}
+					@Override
+					public void passivateObject(Browser browser) 
+							throws Exception {
+						browser.initial();
 					}
-					/**
-				     * When an object is returned to the pool, clear the buffer.
-				     */
-				    @Override
-				    public void passivateObject(PooledObject<Browser> pooled) {
-				    	pooled.getObject().initial();
-				    }
-				    /**/
+					@Override
+					public boolean validateObject(Browser browser) {
+						return false;
+					}
+					@Override
+					public void destroyObject(Browser browser) 
+							throws Exception {}
 				});
 	}
 		
