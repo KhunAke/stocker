@@ -138,7 +138,7 @@ public class Browser extends Instance {
 					}
 					@Override
 					public boolean validateObject(Browser browser) {
-						return false;
+						return true;
 					}
 					@Override
 					public void destroyObject(Browser browser) 

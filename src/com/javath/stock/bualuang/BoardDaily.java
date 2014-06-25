@@ -23,7 +23,7 @@ import com.javath.logger.LOG;
 import com.javath.trigger.Oscillator;
 import com.javath.trigger.OscillatorDivideFilter;
 import com.javath.trigger.OscillatorEvent;
-import com.javath.trigger.OscillatorSchedule;
+import com.javath.trigger.OscillatorLoader;
 import com.javath.trigger.OscillatorScheduleFilter;
 import com.javath.util.Assign;
 import com.javath.util.DateTime;
@@ -32,7 +32,7 @@ import com.javath.util.ObjectException;
 import com.javath.util.Service;
 import com.javath.util.TextSpliter;
 
-public class BoardDaily extends Instance implements OscillatorSchedule {
+public class BoardDaily extends Instance implements OscillatorLoader {
 	
 	private final static Assign assign;
 	private final static String date_board;
@@ -111,16 +111,17 @@ public class BoardDaily extends Instance implements OscillatorSchedule {
 	 * stock.settrade.Market.incorrect_path=<java.io.tmpdir>
 	 */
 	@Override
-	public boolean setSchedule() {
+	public void setupSchedule() {
 		// TODO Auto-generated method stub
 		long clock = assign.getLongProperty("clock", 900000);
 		Oscillator oscillator = Oscillator.getInstance(clock);
 		long date = DateTime.date().getTime();
 		long time = DateTime.time(
 				assign.getProperty("schedule", "18:30:00")).getTime();
-		schedule = new OscillatorDivideFilter(oscillator, this, 2, date + time);
-		oscillator.start();
-		return false;
+		System.out.printf("Schedule: \"%s\"%n", DateTime.timestamp(time));
+		long datetime = DateTime.merge(date, time).getTime();
+		System.out.printf("Schedule: \"%s\"%n", DateTime.timestamp(datetime));
+		schedule = new OscillatorDivideFilter(oscillator, this, 2, datetime);
 	}
 	
 	public static void main(String[] args) {
@@ -141,7 +142,8 @@ public class BoardDaily extends Instance implements OscillatorSchedule {
 		}
 		boolean show_name = line.hasOption("show");
 		if (line.hasOption("schedule")) {
-			BoardDaily.getInstance().setSchedule();
+			BoardDaily.getInstance().setupSchedule();
+			Oscillator.startAll();
 		} else if (line.hasOption("date")) {
 			Response response = BoardDaily.getInstance()
 					.getWebPage(DateTime.date(line.getOptionValue("date")));

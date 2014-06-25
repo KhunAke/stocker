@@ -46,7 +46,7 @@ public class HtmlParser extends Instance {
 							throws Exception {}
 					@Override
 					public boolean validateObject(DOMFragmentParser parser) {
-						return false;
+						return true;
 					}
 					@Override
 					public void destroyObject(DOMFragmentParser parser) 
@@ -69,7 +69,7 @@ public class HtmlParser extends Instance {
 							throws Exception {}
 					@Override
 					public boolean validateObject(HTMLDocument document) {
-						return false;
+						return true;
 					}
 					@Override
 					public void destroyObject(HTMLDocument document) 

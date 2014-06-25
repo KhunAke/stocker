@@ -39,7 +39,7 @@ public class State extends Instance {
 					}
 					@Override
 					public boolean validateObject(State state) {
-						return false;
+						return true;
 					}
 					@Override
 					public void destroyObject(State state) 

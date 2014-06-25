@@ -2,6 +2,7 @@ package com.javath.util;
 
 import org.apache.commons.daemon.Daemon;
 import org.apache.commons.daemon.DaemonContext;
+import org.apache.commons.daemon.DaemonController;
 import org.apache.commons.daemon.DaemonInitException;
 
 import com.javath.logger.LOG;
@@ -31,51 +32,24 @@ public class Service extends Instance implements Daemon, OscillatorListener {
 	@Override
 	public void init(DaemonContext context) 
 			throws DaemonInitException, Exception {
-		LOG.INFO("Daemon initializing.");
-		/*
-         * Construct objects and initialize variables here.
-         * You can access the command line arguments that would normally be passed to your main() 
-         * method as follows:
-         */
-		//String[] args = context.getArguments();
-		/*
-		thread = new Thread("tick_tock") {
-            private long lastTick = 0;
-            
-            @Override
-            public synchronized void start() {
-            	stopped = false;
-                super.start();
-            }
-
-            @Override
-            public void run() {             
-                while(!stopped){
-                    long now = System.currentTimeMillis();
-                    if(now - lastTick >= 1000){
-                        System.out.println(!lastOneWasATick ? "tick" : "tock");
-                        lastOneWasATick = !lastOneWasATick;
-                        lastTick = now; 
-                    }
-                }
-            }
-        };*/
-		new TestOscillator();
+		LOG.INFO("[@%d] Daemon initializing.", this.InstanceId);
+		Oscillator.loader();
 	}
 	@Override
 	public void start() 
 			throws Exception {
-		LOG.INFO("Daemon starting.");
-		//thread.start();
+		LOG.INFO("[@%d] Daemon starting.", this.InstanceId);
+		Oscillator.startAll();
 	}
 	@Override
 	public void stop() 
 			throws Exception {
-		LOG.INFO("Daemon stopping.");
+		LOG.INFO("[@%d] Daemon stopping.", this.InstanceId);
 		//stopped = true;
+		Oscillator.shutdown();
 		thread = Thread.currentThread();
 		try{
-			Oscillator oscillator = Oscillator.getInstance(240000);
+			Oscillator oscillator = Oscillator.getInstance(1000);
             oscillator.addListener(this);
             oscillator.start();
             Thread.sleep(waiting);
@@ -86,14 +60,35 @@ public class Service extends Instance implements Daemon, OscillatorListener {
 	}
 	@Override
 	public void destroy() {
-		LOG.INFO("Daemon done.");
+		LOG.INFO("[@%d] terminate.", this.InstanceId);
 		//thread = null;
 	}
 	
 	public static void main(String[] args) {
-		//Date date = new Date();
-		// TODO Auto-generated method stub
-		System.out.println("Hello");
+		try {
+			DaemonContext context = new DaemonContext() {
+					private String[] args;
+					@Override
+					public String[] getArguments() {
+						return args;
+					}
+					@Override
+					public DaemonController getController() {
+						return null;
+					}
+					public DaemonContext setArguments(String[] args) {
+						this.args = args;
+						return this;
+					}
+				}.setArguments(args);
+			Service service = new Service();
+			service.init(context);
+			service.start();
+		} catch (DaemonInitException e) {
+			LOG.SEVERE(e);
+		} catch (Exception e) {
+			LOG.SEVERE(e);
+		}
 	}
 	
 	@Override

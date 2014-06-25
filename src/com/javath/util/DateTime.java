@@ -6,6 +6,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.NoSuchElementException;
+import java.util.TimeZone;
 
 import org.apache.commons.pool.ObjectPool;
 import org.apache.commons.pool.PoolableObjectFactory;
@@ -31,6 +32,7 @@ public class DateTime {
 	
 	static {
 		EPOCH = new Date(0);
+		
 		pool = new GenericObjectPool<Calendar>(
 				new PoolableObjectFactory<Calendar>() {
 					@Override
@@ -48,7 +50,7 @@ public class DateTime {
 							throws Exception {}
 					@Override
 					public boolean validateObject(Calendar calendar) {
-						return false;
+						return true;
 					}
 					@Override
 					public void destroyObject(Calendar calendar) 
@@ -83,6 +85,14 @@ public class DateTime {
 		} catch (Exception e) {
 			throw new ObjectException(e);
 		}
+	}
+	
+	public static Date merge(long date, long time) {
+		Calendar calendar = borrowCalendar();
+		TimeZone  timezone = calendar.getTimeZone();
+		returnCalendar(calendar);
+		timezone.getRawOffset();
+		return new Date(date + time + (long) timezone.getRawOffset());
 	}
 	
 	// Method name : format
@@ -193,7 +203,7 @@ public class DateTime {
 	// Method name : time -> using "Default_Time_[Format|Parse]"
 	public static Date time() {
 		Calendar calendar = borrowCalendar();
-		calendar.setTime(new Date());
+		//calendar.setTime(new Date());
 		calendar.set(Calendar.DAY_OF_MONTH, 0);
 		calendar.set(Calendar.MONTH, 0);
 		calendar.set(Calendar.YEAR, 0);

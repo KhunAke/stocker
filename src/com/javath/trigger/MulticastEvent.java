@@ -34,7 +34,7 @@ public class MulticastEvent extends Instance implements Runnable {
 							throws Exception {}
 					@Override
 					public boolean validateObject(MulticastEvent event) {
-						return false;
+						return true;
 					}
 					@Override
 					public void destroyObject(MulticastEvent event) 
