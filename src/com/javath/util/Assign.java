@@ -66,8 +66,8 @@ public class Assign extends Instance {
 		String default_properties = system.getProperty("user.dir") + File_Separator +
 				"etc" + File_Separator +
 				"util" + File_Separator +
-				"Assignment.properties";
-		assign_file = new File(system.getProperty("com.javath.util.Assignment", default_properties));
+				"Assign.properties";
+		assign_file = new File(system.getProperty("com.javath.util.Assign", default_properties));
 		// Loading file properties
 		Properties properties = new Properties();
 		try {
