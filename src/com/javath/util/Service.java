@@ -1,6 +1,8 @@
 package com.javath.util;
 
+import java.util.Date;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.apache.commons.daemon.Daemon;
 import org.apache.commons.daemon.DaemonContext;
@@ -17,18 +19,21 @@ import util.TestOscillator;
 public class Service extends Instance implements Daemon, OscillatorListener {
 	
 	private final static Assign assign;
-	private final static long waiting;
+	private final static String[] ignore; 
 	
 	static {
 		String default_Properties = Assign.etc + Assign.File_Separator +
 				"util" + Assign.File_Separator +
 				"Service.properties";
 		assign = Assign.getInstance(Service.class.getCanonicalName(), default_Properties);
-		waiting = assign.getLongProperty("waiting", 300000);
+		ignore = new String[] {
+			"^com.javath.trigger.Oscillator\\[period=[\\p{Digit}]+\\]$",
+			"^com.javath.trigger.OscillatorEvent\\[timestamp=[\\p{Digit}]+\\]$"
+		};
 	}
 	
 	private Thread shutdown;
-	private Thread[] threads; 
+	private Thread[] threads = null; 
     //private boolean stopped = false;
     //private boolean lastOneWasATick = false;
     
@@ -36,8 +41,8 @@ public class Service extends Instance implements Daemon, OscillatorListener {
 	public void init(DaemonContext context) 
 			throws DaemonInitException, Exception {
 		INFO("Daemon initializing.");
-		Oscillator.loader();
 		monitor(false);
+		Oscillator.loader();
 	}
 	@Override
 	public void start() 
@@ -56,8 +61,10 @@ public class Service extends Instance implements Daemon, OscillatorListener {
 			Oscillator oscillator = Oscillator.getInstance(1000);
             oscillator.addListener(this);
             oscillator.start();
-            Thread.sleep(waiting);
+            shutdown.join(000);
+            //Thread.sleep(59900); // waitting time 1 min.
             LOG.WARNING("Thread force terminate.");
+            monitor(true);
         }catch(InterruptedException e){
             LOG.INFO("Thread success terminate.");
         }
@@ -68,14 +75,36 @@ public class Service extends Instance implements Daemon, OscillatorListener {
 		//thread = null;
 	}
 	
-	private void monitor(boolean member) {
+	private boolean monitor(boolean show) {
 		Map<Thread, StackTraceElement[]> map_thread = Thread.getAllStackTraces();
 		Thread[] threads = map_thread.keySet().toArray(new Thread[] {});
-		if (member)
+		if (this.threads == null) {
 			this.threads = threads;
-		for (int index = 0; index < threads.length; index++) {
-			System.out.printf("\"%s\" %s%n", threads[index].getName(), threads[index].getState());
+			return true;
+		} else {
+			boolean result = true;
+			for (int index = 0; index < threads.length; index++) {
+				if (!checkServiceThreads(threads[index])) {
+					result = false;
+					if (show)
+						WARNING("Thread: \"%s\" %s", 
+								threads[index].getName(), threads[index].getState());
+				}
+			}
+			return result;
 		}
+	}
+	private boolean checkServiceThreads(Thread thread) {
+		boolean result = false;
+		for (int index = 0; index < ignore.length; index++) 
+			if (Pattern.matches(ignore[index], thread.getName()))
+				return true;
+		for (int index = 0; index < threads.length; index++)
+			if (thread.getName().equals(threads[index].getName())) {
+				result = true;
+				break;
+			}
+		return result;
 	}
 	
 	public static void main(String[] args) {
@@ -107,7 +136,8 @@ public class Service extends Instance implements Daemon, OscillatorListener {
 	
 	@Override
 	public void action(OscillatorEvent event) {
-		shutdown.interrupt();
+		if (monitor(false))
+			shutdown.interrupt();
 	}
 
 }

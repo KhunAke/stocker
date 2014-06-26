@@ -99,7 +99,13 @@ public class BoardDaily extends Instance implements OscillatorLoader {
 	
 	@Override
 	public void action(OscillatorEvent event) {
-		System.out.println(DateTime.string(event.getTimestamp()));
+		System.out.printf("Begin: %s%n", DateTime.string(event.getTimestamp()));
+		try {
+			Thread.sleep(90000);
+		} catch (InterruptedException e) {
+			SEVERE(e);
+		}
+		System.out.printf("End: %s%n", DateTime.string(event.getTimestamp()));
 	}
 	/**
 	 * Default 
