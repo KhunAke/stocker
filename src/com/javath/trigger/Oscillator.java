@@ -16,6 +16,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.regex.Pattern;
 
 import com.javath.logger.LOG;
 import com.javath.util.Assign;
@@ -48,13 +49,16 @@ public class Oscillator extends TimerTask implements Runnable {
 	}
 	
 	public static void loader() {
-		String classloader_path = Assign.etc + Assign.File_Separator + "classloader";
+		String loader_path = Assign.etc + Assign.File_Separator + "OscillatorLoader";
 		BufferedReader reader = null;
 		try {
 			reader = new BufferedReader(
-					new FileReader(assign.getProperty("classloader", classloader_path)));
+					new FileReader(assign.getProperty("OscillatorLoader", loader_path)));
 			while (reader.ready()) {
-				String classname = reader.readLine();
+				String line = reader.readLine();
+				String pattern = "^\\w+(.\\w+)*\\(\\)$";
+				boolean argument = !Pattern.matches(pattern, line);
+				String classname = line.substring(0,line.indexOf('('));
 				try {
 					Class<?> clazz = Class.forName(classname);
 					if (OscillatorLoader.class.isAssignableFrom(clazz)) {
@@ -62,7 +66,15 @@ public class Oscillator extends TimerTask implements Runnable {
 						try {
 							Object object;
 							try {
-								object = clazz.newInstance();
+								if (argument) {
+									Object[] arguments = 
+											line.substring(line.indexOf('(') + 1, line.indexOf(')'))
+											.split(",\\s");
+									Class<?>[] types = new Class<?>[arguments.length];
+									Method method = clazz.getMethod("getInstance", types);
+									object = method.invoke(null, arguments);
+								} else
+									object = clazz.newInstance();
 							} catch (IllegalAccessException e) {
 								Method method = clazz.getMethod("getInstance");
 								object = method.invoke(null);
@@ -70,7 +82,7 @@ public class Oscillator extends TimerTask implements Runnable {
 								Method method = clazz.getMethod("getInstance");
 								object = method.invoke(null);
 							}
-							Method method = clazz.getMethod("setupSchedule");
+							Method method = clazz.getMethod("initOscillator");
 							method.invoke(object);
 						} catch (NoSuchMethodException e) {
 							LOG.CONFIG(e);
@@ -131,7 +143,6 @@ public class Oscillator extends TimerTask implements Runnable {
 	
 	private Oscillator() {
 		listeners = new HashSet<OscillatorListener>();
-		LOG.INFO("Create %d@%s",this.hashCode(), Oscillator.class.getCanonicalName());
 	}
 	
 	private void setPeriod(long period) {
@@ -149,7 +160,6 @@ public class Oscillator extends TimerTask implements Runnable {
 		return listeners.add(listener);
 	}
 	private void removeListener() {
-		LOG.INFO("Remove %d@%s",this.hashCode(), Oscillator.class.getCanonicalName());
 		listeners.clear();
 	}
 	public boolean removeListener(OscillatorListener listener) {

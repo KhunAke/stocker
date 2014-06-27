@@ -28,7 +28,7 @@ FILE_PATH="/usr/local/$NAME"
 JAVA_HOME="/usr/lib/jvm/jre"
 
 # Our classpath including our jar file and the Apache Commons Daemon library
-CLASS_PATH="$FILE_PATH/$NAME-$VERSION.jar:$FILE_PATH/lib/commons-daemon-1.0.15.jar"
+CLASS_PATH="$FILE_PATH/$NAME-$VERSION.jar"
 
 # The fully qualified name of the class to execute
 CLASS="com.javath.util.Service"
@@ -56,33 +56,33 @@ LOG_ERR="$FILE_PATH/var/log/$NAME.err"
 
 case "$1" in
      start)  
-         echo "Starting the $DESC..."        
+         printf "Starting $NAME:  " 
          
          # Start the service
          jsvc_exec
-         
-         echo "${?}: The $DESC has started."
+         test $? == 0 && echo "[ OK ]" || echo "[ FAIL ]"
      ;;
      stop)
-         echo "Stopping the $DESC..."
+         printf "Stopping $NAME:  "
          
          # Stop the service
          jsvc_exec "-stop"       
-         
-         echo "${?}: The $DESC has stopped."
+         test $? == 0 && echo "[ OK ]" || echo "[ FAIL ]"
      ;;
      restart)
          if [ -f "$PID" ]; then
              
-             echo "Restarting the $DESC..."
+             printf "Stopping $NAME:  "
              
              # Stop the service
              jsvc_exec "-stop"
-             
+             test $? == 0 && echo "[ OK ]" || echo "[ FAIL ]"
+
+             printf "Starting $NAME:  "
+
              # Start the service
              jsvc_exec
-             
-             echo "${?}: The $DESC has restarted."
+             test $? == 0 && echo "[ OK ]" || echo "[ FAIL ]"
          else
              echo "Daemon not running, no action taken"
              exit 1
@@ -93,3 +93,4 @@ case "$1" in
      exit 3
      ;;
 esac
+

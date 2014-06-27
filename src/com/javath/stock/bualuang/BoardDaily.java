@@ -24,7 +24,6 @@ import com.javath.trigger.Oscillator;
 import com.javath.trigger.OscillatorDivideFilter;
 import com.javath.trigger.OscillatorEvent;
 import com.javath.trigger.OscillatorLoader;
-import com.javath.trigger.OscillatorScheduleFilter;
 import com.javath.util.Assign;
 import com.javath.util.DateTime;
 import com.javath.util.Instance;
@@ -78,7 +77,7 @@ public class BoardDaily extends Instance implements OscillatorLoader {
 	}
 	
 	private final State state;
-	private OscillatorDivideFilter schedule;
+	private OscillatorDivideFilter oscillator;
 	
 	private BoardDaily() {
 		state = State.borrowObject();
@@ -101,7 +100,7 @@ public class BoardDaily extends Instance implements OscillatorLoader {
 	public void action(OscillatorEvent event) {
 		System.out.printf("Begin: %s%n", DateTime.string(event.getTimestamp()));
 		try {
-			Thread.sleep(90000);
+			Thread.sleep(120000);
 		} catch (InterruptedException e) {
 			SEVERE(e);
 		}
@@ -117,17 +116,18 @@ public class BoardDaily extends Instance implements OscillatorLoader {
 	 * stock.settrade.Market.incorrect_path=<java.io.tmpdir>
 	 */
 	@Override
-	public void setupSchedule() {
-		// TODO Auto-generated method stub
+	public void initOscillator() {
+		if (oscillator != null)
+			return;
 		long clock = assign.getLongProperty("clock", 900000);
-		Oscillator oscillator = Oscillator.getInstance(clock);
+		Oscillator source = Oscillator.getInstance(clock);
 		long date = DateTime.date().getTime();
 		long time = DateTime.time(
 				assign.getProperty("schedule", "18:30:00")).getTime();
 		System.out.printf("Schedule: \"%s\"%n", DateTime.timestamp(time));
 		long datetime = DateTime.merge(date, time).getTime();
 		System.out.printf("Schedule: \"%s\"%n", DateTime.timestamp(datetime));
-		schedule = new OscillatorDivideFilter(oscillator, this, 2, datetime);
+		oscillator = new OscillatorDivideFilter(source, this, 2, datetime);
 	}
 	
 	public static void main(String[] args) {
@@ -148,7 +148,7 @@ public class BoardDaily extends Instance implements OscillatorLoader {
 		}
 		boolean show_name = line.hasOption("show");
 		if (line.hasOption("schedule")) {
-			BoardDaily.getInstance().setupSchedule();
+			BoardDaily.getInstance().initOscillator();
 			Oscillator.startAll();
 		} else if (line.hasOption("date")) {
 			Response response = BoardDaily.getInstance()
