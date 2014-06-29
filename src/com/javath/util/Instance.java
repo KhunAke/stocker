@@ -1,5 +1,8 @@
 package com.javath.util;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.Locale;
 import java.util.logging.Level;
@@ -11,6 +14,107 @@ public class Instance {
 	
 	private static final String INIT = "com.javath.util.Instance";
 	
+	public static Object get(String classname, String... arguments) {
+		Class<?> clazz = null;
+		try {
+			clazz = Class.forName(classname);
+			return clazz.newInstance();
+		} catch (ClassNotFoundException e) {
+			return forMethod(classname.substring(0, classname.lastIndexOf('.')), 
+					classname.substring(classname.lastIndexOf('.') + 1), arguments);
+		} catch (InstantiationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		} catch (IllegalAccessException e) {
+			if (arguments.length == 0)
+				return forMethod(classname, "getInstance");
+			else
+				return forConstructor(clazz, arguments);
+		}
+	}
+	private static Object forConstructor(Class<?> clazz, Object... arguments) {
+		Object result = null;
+		Class<?>[] types = new Class<?>[arguments.length];
+		for (int index = 0; index < arguments.length; index++) {
+			Object argument = arguments[index];
+			types[index] = argument.getClass();
+		}
+		try {
+			Constructor<?> constructor = clazz.getConstructor(types);
+			return constructor.newInstance(arguments);
+		} catch (NoSuchMethodException e) {
+			try {
+				Constructor<?> constructor = clazz.getConstructor(String[].class);
+				return constructor.newInstance((Object) arguments);
+			} catch (NoSuchMethodException ex) {
+				LOG.SEVERE(ex);
+			} catch (SecurityException ex) {
+				LOG.SEVERE(ex);
+			} catch (InstantiationException ex) {
+				LOG.SEVERE(ex);
+			} catch (IllegalAccessException ex) {
+				LOG.SEVERE(ex);
+			} catch (IllegalArgumentException ex) {
+				LOG.SEVERE(ex);
+			} catch (InvocationTargetException ex) {
+				LOG.SEVERE(ex);
+			}
+		} catch (SecurityException e) {
+			LOG.SEVERE(e);
+		} catch (InstantiationException e) {
+			LOG.SEVERE(e);
+		} catch (IllegalAccessException e) {
+			LOG.SEVERE(e);
+		} catch (IllegalArgumentException e) {
+			LOG.SEVERE(e);
+		} catch (InvocationTargetException e) {
+			LOG.SEVERE(e);
+		}
+		return result;
+	}
+	private static Object forMethod(String classname, String method_name, String... arguments) {
+		Object result = null;
+		try {
+			Class<?> clazz = Class.forName(classname);
+			if (arguments.length == 0) {
+				Method method = clazz.getMethod(method_name);
+				return method.invoke(null);
+			} else {
+				Class<?>[] types = new Class<?>[arguments.length];
+				for (int index = 0; index < arguments.length; index++) {
+					Object argument = arguments[index];
+					types[index] = argument.getClass();
+				}
+				Method method = clazz.getMethod(method_name, types);
+				return method.invoke(null, (Object[]) arguments);
+			}
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchMethodException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return result;
+	}
+	private static Object forMethod(String clazz, String method_name, Class<?>[] type, Object... arguments) {
+		Object result = null;
+		return result;
+	}
+	
 	protected final Logger logger;
 	private final int logger_level;
 	protected final int InstanceId;
@@ -20,6 +124,7 @@ public class Instance {
 	
 	public Instance() {
 		InstanceId = hashCode();
+
 		try {
 			StackTraceElement[] stack = new Throwable().getStackTrace();
 			int index = 0;

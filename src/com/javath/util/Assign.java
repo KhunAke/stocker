@@ -23,9 +23,12 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.Hex;
 
 import com.javath.logger.LOG;
+import com.mysql.fabric.xmlrpc.base.Array;
 
 public class Assign extends Instance {
 	
@@ -203,6 +206,30 @@ public class Assign extends Instance {
 	}
 	private static String decrypt(String message) {
 		return aes.decrypt(message);
+	}
+	public static String hex(long data) {
+		return Long.toHexString(data);
+	}
+	public static long hex(String data) {
+		try {
+			char[] char_buffer = data.toCharArray();
+			if ((char_buffer.length % 2) != 0) {
+				char[] temp_buffer = new char[char_buffer.length + 1];
+				System.arraycopy(char_buffer, 0, temp_buffer, 1, char_buffer.length);
+				temp_buffer[0] = '0';
+				char_buffer = temp_buffer;
+			}
+			byte[] buffer = Hex.decodeHex(char_buffer);
+			long result = 0;
+			for (int index = 0; index < buffer.length; index++) {
+				result = result << 8;
+				result += ((int) buffer[index] & 0x00FF);
+			}
+			return result;
+		} catch (DecoderException e) {
+			throw new ObjectException(e);
+		}
+		
 	}
 	
 	private File file;
