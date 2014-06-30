@@ -18,50 +18,55 @@ public class Instance {
 		Class<?> clazz = null;
 		try {
 			clazz = Class.forName(classname);
-			return clazz.newInstance();
+			if (arguments.length == 0)
+				return clazz.newInstance();
+			else
+				return forConstructor(clazz, arguments);
 		} catch (ClassNotFoundException e) {
 			return forMethod(classname.substring(0, classname.lastIndexOf('.')), 
 					classname.substring(classname.lastIndexOf('.') + 1), arguments);
 		} catch (InstantiationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return null;
+			return forMethod(classname, "getInstance");
 		} catch (IllegalAccessException e) {
-			if (arguments.length == 0)
-				return forMethod(classname, "getInstance");
-			else
-				return forConstructor(clazz, arguments);
+			return forMethod(classname, "getInstance");
 		}
 	}
-	private static Object forConstructor(Class<?> clazz, Object... arguments) {
-		Object result = null;
-		Class<?>[] types = new Class<?>[arguments.length];
-		for (int index = 0; index < arguments.length; index++) {
-			Object argument = arguments[index];
-			types[index] = argument.getClass();
+	private static Object forConstructor(Class<?> clazz, String... arguments) {
+		boolean array = false;
+		Class<?>[] type_arguments = null;
+		Class<?>[] types = null;
+		Constructor<?> constructor = null;
+		while (true) {
+			if (array) {
+				types = new Class<?>[1];
+				types[0] = String[].class;
+			} else {
+				types = new Class<?>[arguments.length];
+				for (int index = 0; index < arguments.length; index++) {
+					Object argument = arguments[index];
+					types[index] = argument.getClass();
+				}
+				type_arguments = types;
+			}
+			try {
+				constructor = clazz.getConstructor(types);
+				break;
+			} catch (NoSuchMethodException e) {
+				if (!array) {
+					array = true;
+					continue;
+				} else
+					return forMethod(clazz, "getInstance", type_arguments, arguments);
+			} catch (SecurityException e) {
+				LOG.SEVERE(e);
+			}
+			break;
 		}
 		try {
-			Constructor<?> constructor = clazz.getConstructor(types);
-			return constructor.newInstance(arguments);
-		} catch (NoSuchMethodException e) {
-			try {
-				Constructor<?> constructor = clazz.getConstructor(String[].class);
+			if (array)
 				return constructor.newInstance((Object) arguments);
-			} catch (NoSuchMethodException ex) {
-				LOG.SEVERE(ex);
-			} catch (SecurityException ex) {
-				LOG.SEVERE(ex);
-			} catch (InstantiationException ex) {
-				LOG.SEVERE(ex);
-			} catch (IllegalAccessException ex) {
-				LOG.SEVERE(ex);
-			} catch (IllegalArgumentException ex) {
-				LOG.SEVERE(ex);
-			} catch (InvocationTargetException ex) {
-				LOG.SEVERE(ex);
-			}
-		} catch (SecurityException e) {
-			LOG.SEVERE(e);
+			else 
+				return constructor.newInstance((Object[]) arguments);
 		} catch (InstantiationException e) {
 			LOG.SEVERE(e);
 		} catch (IllegalAccessException e) {
@@ -71,48 +76,64 @@ public class Instance {
 		} catch (InvocationTargetException e) {
 			LOG.SEVERE(e);
 		}
-		return result;
+		return null;
 	}
-	private static Object forMethod(String classname, String method_name, String... arguments) {
-		Object result = null;
+	private static Object forMethod(String classname, String name, String... arguments) {
 		try {
 			Class<?> clazz = Class.forName(classname);
-			if (arguments.length == 0) {
-				Method method = clazz.getMethod(method_name);
-				return method.invoke(null);
-			} else {
+			if (arguments.length == 0)
+				return forMethod(clazz, name, new Class<?>[] {});
+			else {
 				Class<?>[] types = new Class<?>[arguments.length];
 				for (int index = 0; index < arguments.length; index++) {
 					Object argument = arguments[index];
 					types[index] = argument.getClass();
 				}
-				Method method = clazz.getMethod(method_name, types);
-				return method.invoke(null, (Object[]) arguments);
-			}
+				return forMethod(clazz, name, types, arguments);
+			}		
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchMethodException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InvocationTargetException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LOG.SEVERE(
+					new ObjectException(e, String.format("Classloader \"%1$s\" and \"%1$s.%2$s\" not found", classname, name)));
 		}
-		return result;
+		return null;
 	}
-	private static Object forMethod(String clazz, String method_name, Class<?>[] type, Object... arguments) {
-		Object result = null;
-		return result;
+	private static Object forMethod(Class<?> classname, String name, Class<?>[] types, String... arguments) {
+		Method method = null;
+		boolean array = false;
+		while (true) {
+			if (array) {
+				types = new Class<?>[1];
+				types[0] = String[].class;
+			}
+			try {
+				if (arguments.length == 0)
+					method = classname.getMethod(name);
+				else 
+					method = classname.getMethod(name, types);
+			} catch (NoSuchMethodException e) {
+				if ((arguments.length != 0) && !(array)) {
+					array = true;
+					continue;
+				} 
+				LOG.SEVERE(e);
+			} catch (SecurityException e) {
+				LOG.SEVERE(e);
+			}
+			break;
+		}
+		try {
+			if (array)
+				return method.invoke(null, (Object) arguments);
+			else 
+				return method.invoke(null, (Object[]) arguments);
+		} catch (IllegalAccessException e) {
+			LOG.SEVERE(e);
+		} catch (IllegalArgumentException e) {
+			LOG.SEVERE(e);
+		} catch (InvocationTargetException e) {
+			LOG.SEVERE(e);
+		}
+		return null;
 	}
 	
 	protected final Logger logger;

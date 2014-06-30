@@ -59,12 +59,18 @@ public class Oscillator extends TimerTask implements Runnable {
 				String pattern = "^\\w+(.\\w+)*\\(\\)$";
 				boolean argument = !Pattern.matches(pattern, line);
 				String classname = line.substring(0,line.indexOf('('));
+				Object object = null;
+				if (argument) {
+					String[] arguments = 
+							line.substring(line.indexOf('(') + 1, line.indexOf(')'))
+							.split(",\\s");
+				}
 				try {
 					Class<?> clazz = Class.forName(classname);
 					if (OscillatorLoader.class.isAssignableFrom(clazz)) {
 						LOG.INFO("\"%s\" loaded.", classname);
 						try {
-							Object object;
+							//Object object;
 							try {
 								if (argument) {
 									Object[] arguments = 
