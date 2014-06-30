@@ -4,8 +4,6 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.EventListener;
 import java.util.HashMap;
@@ -56,15 +54,53 @@ public class Oscillator extends TimerTask implements Runnable {
 					new FileReader(assign.getProperty("OscillatorLoader", loader_path)));
 			while (reader.ready()) {
 				String line = reader.readLine();
-				String pattern = "^\\w+(.\\w+)*\\(\\)$";
-				boolean argument = !Pattern.matches(pattern, line);
-				String classname = line.substring(0,line.indexOf('('));
-				Object object = null;
-				if (argument) {
-					String[] arguments = 
-							line.substring(line.indexOf('(') + 1, line.indexOf(')'))
+				String classname = null;
+				String method_name = null;
+				String[] arguments = null;
+				String pattern_not_arguments = "^\\w+(.\\w+)*\\(\\s*\\)$";
+				String pattern_arguments = "^\\w+(.\\w+)*\\(\\s*\\w+\\s*(\\s*,\\s*\\w+)*\\)$";
+				if (Pattern.matches(pattern_not_arguments, line)) {
+					classname = line.substring(0,line.indexOf('('));
+					method_name = "getInstance";
+				} else if (Pattern.matches(pattern_arguments, line)) {
+					classname = line.substring(0,line.indexOf('('));
+					method_name = "getInstance";
+					arguments = line.substring(line.indexOf('(') + 1, line.indexOf(')'))
 							.split(",\\s");
 				}
+				Class<?> clazz = null;
+				OscillatorLoader object = null;
+				try {
+					clazz = Class.forName(classname);
+					if (OscillatorLoader.class.isAssignableFrom(clazz)) {
+						if (arguments == null)
+							object = (OscillatorLoader) Assign.forConstructor(classname);
+						else
+							object = (OscillatorLoader) Assign.forConstructor(classname, arguments);
+					}
+				} catch (ClassNotFoundException e) {
+					method_name = classname.substring(classname.lastIndexOf('.'));
+					classname = classname.substring(0, classname.lastIndexOf('.'));
+					try {
+						clazz = Class.forName(classname);
+						if (OscillatorLoader.class.isAssignableFrom(clazz)) {
+							if (arguments == null)
+								object = (OscillatorLoader) Assign.forMethod(classname, method_name);
+							else
+								object = (OscillatorLoader) Assign.forMethod(classname, method_name, arguments);
+						}
+					} catch (ClassNotFoundException ex) {
+						LOG.CONFIG(new ObjectException(e, String.format(
+								"Classloader \"%1$s\" and \"%1$s.%2$s\" not found", classname, method_name)));
+						continue;
+					}
+				}
+				if (object != null) {
+					object.initOscillator();
+					LOG.INFO("\"%s\" loaded.", line.replaceAll("\\s", ""));
+				} else 
+					LOG.INFO("\"%s\" not load.", line.replaceAll("\\s", ""));
+				/**
 				try {
 					Class<?> clazz = Class.forName(classname);
 					if (OscillatorLoader.class.isAssignableFrom(clazz)) {
@@ -106,6 +142,7 @@ public class Oscillator extends TimerTask implements Runnable {
 				} catch (ClassNotFoundException e) {
 					LOG.CONFIG(e);
 				} 
+				/**/
 			}
 			reader.close();
 		} catch (FileNotFoundException e) {
