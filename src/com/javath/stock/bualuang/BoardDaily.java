@@ -4,6 +4,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
@@ -15,6 +16,8 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.hibernate.Query;
+import org.hibernate.Session;
 
 import com.javath.http.Browser;
 import com.javath.http.Response;
@@ -75,14 +78,36 @@ public class BoardDaily extends Instance implements OscillatorLoader {
 	public static BoardDaily getInstance() {
 		return instance;
 	}
+	public static Date getLastUpdate() {
+		Session session = Assign.getSessionFactory().getCurrentSession();
+		session.beginTransaction();
+		Query query = session.createQuery("select max(board.id.date) from BualuangBoardDaily as board");
+		Date date = (Date) query.uniqueResult();
+		session.getTransaction().commit();
+		return date;
+	}
 	
 	private final State state;
 	private OscillatorDivideFilter oscillator;
+	private Date wait_update;
 	
 	private BoardDaily() {
 		state = State.borrowObject();
+		setUpdate(BoardDaily.getLastUpdate());
 	}
 	
+	private void setUpdate(Date date) {
+		Calendar calendar = DateTime.borrowCalendar();
+		try {
+			calendar.setTime(date);
+			calendar.add(Calendar.DATE, 1);
+			wait_update = calendar.getTime();
+		} catch (NullPointerException e) {
+			wait_update = DateTime.date("2002-07-02");	
+		} finally {
+			DateTime.returnCalendar(calendar);
+		}
+	}
 	private Response getWebPage(Date date) {
 		Browser browser = Browser.borrowObject(state.getCookieStore());
 		try {
@@ -98,13 +123,7 @@ public class BoardDaily extends Instance implements OscillatorLoader {
 	
 	@Override
 	public void action(OscillatorEvent event) {
-		System.out.printf("Begin: %s%n", DateTime.string(event.getTimestamp()));
-		try {
-			Thread.sleep(120000);
-		} catch (InterruptedException e) {
-			SEVERE(e);
-		}
-		System.out.printf("End: %s%n", DateTime.string(event.getTimestamp()));
+	
 	}
 	/**
 	 * Default 
@@ -119,7 +138,7 @@ public class BoardDaily extends Instance implements OscillatorLoader {
 	public void initOscillator() {
 		if (oscillator != null)
 			return;
-		long clock = assign.getLongProperty("clock", 900000);
+		long clock = assign.getLongProperty("clock", 900000); // 15m
 		Oscillator source = Oscillator.getInstance(clock);
 		long date = DateTime.date().getTime();
 		long time = DateTime.time(

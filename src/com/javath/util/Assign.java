@@ -18,6 +18,8 @@ import java.util.Random;
 import java.util.Set;
 import java.util.prefs.Preferences;
 
+import javax.naming.InitialContext;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -29,6 +31,7 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
+import org.hibernate.SessionFactory;
 
 import com.javath.logger.LOG;
 
@@ -138,7 +141,7 @@ public class Assign extends Instance {
 		vm_argument = getProperty(properties, "java.naming.factory.initial");
 		if (vm_argument == null)
 			system.setProperty("java.naming.factory.initial", 
-					"com.javath.ContextFactory");
+					"com.javath.util.ContextFactory");
 		vm_argument = getProperty(properties, "java.util.logging.config.file");
 		if (vm_argument == null)
 			system.setProperty("java.util.logging.config.file", 
@@ -301,6 +304,17 @@ public class Assign extends Instance {
 			LOG.SEVERE(e);
 		}
 		return null;
+	}
+	
+	public static SessionFactory getSessionFactory() {
+		try {
+			return (SessionFactory) new InitialContext()
+					.lookup("SessionFactory");
+		} catch (Exception e) {
+			LOG.SEVERE(e);
+			throw new IllegalStateException(
+					"Could not locate SessionFactory in JNDI");
+		}
 	}
 	
 	public static String md5(String message) {
