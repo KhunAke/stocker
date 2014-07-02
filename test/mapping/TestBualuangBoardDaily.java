@@ -12,10 +12,12 @@ import org.hibernate.SessionFactory;
 import com.javath.mapping.BualuangBoardDaily;
 import com.javath.mapping.BualuangBoardDailyHome;
 import com.javath.mapping.BualuangBoardDailyId;
+import com.javath.stock.bualuang.BoardDaily;
 
 public class TestBualuangBoardDaily {
 
 	public static void main(String[] args) {
+		/**
 		Properties system = System.getProperties();
 		system.setProperty("java.naming.factory.initial", 
 				"com.javath.util.ContextFactory");
@@ -38,8 +40,9 @@ public class TestBualuangBoardDaily {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-
+		/**/
+		BoardDaily board = BoardDaily.getInstance();
+		board.run();
 	}
 
 }

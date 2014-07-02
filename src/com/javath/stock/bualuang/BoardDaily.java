@@ -4,9 +4,12 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.CharBuffer;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.GnuParser;
@@ -18,11 +21,15 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.hibernate.Query;
 import org.hibernate.Session;
+import org.hibernate.Transaction;
 
 import com.javath.http.Browser;
 import com.javath.http.Response;
 import com.javath.http.State;
 import com.javath.logger.LOG;
+import com.javath.mapping.BualuangBoardDaily;
+import com.javath.mapping.BualuangBoardDailyHome;
+import com.javath.mapping.BualuangBoardDailyId;
 import com.javath.trigger.Oscillator;
 import com.javath.trigger.OscillatorDivideFilter;
 import com.javath.trigger.OscillatorEvent;
@@ -32,16 +39,19 @@ import com.javath.util.DateTime;
 import com.javath.util.Instance;
 import com.javath.util.ObjectException;
 import com.javath.util.Service;
+import com.javath.util.TaskManager;
 import com.javath.util.TextSpliter;
 
-public class BoardDaily extends Instance implements OscillatorLoader {
+public class BoardDaily extends Instance implements OscillatorLoader, Runnable {
 	
 	private final static Assign assign;
 	private final static String date_board;
 	private final static Locale date_locale;
 	private final static boolean fixed;
 	private final static String[] spliter_headers;
+	private final static Map<String,Integer> map_headers;
 	private final static int[] spliter_positions;
+	private final static String spliter_date_parse;
 	private final static String spliter_delimiter;
 	private final static BoardDaily instance;
 	//
@@ -64,12 +74,22 @@ public class BoardDaily extends Instance implements OscillatorLoader {
 			assign.warning(new ObjectException("For input string: \"%s\"", spliter_mode), "spliter");
 			fixed = true;
 		}
+		map_headers = new HashMap<String,Integer>();
 		spliter_headers = assign.getProperty("spliter_headers","").split(",");
+		for (int index = 0; index < spliter_headers.length; index++)
+			try {
+				map_headers.put(spliter_headers[index].trim(), index);
+			} catch (Exception e) {
+				LOG.CONFIG(new ObjectException(e,
+						"\"spliter_headers\" at order %d", index));
+			}
+		
 		String[] positions = assign.getProperty("spliter_positions","").split(",");
 		spliter_positions = new int[positions.length];
 		for (int index = 0; index < positions.length; index++) {
 			spliter_positions[index] = Integer.valueOf(positions[index]);
 		}
+		spliter_date_parse = assign.getProperty("spliter_date_parse","yyMMdd");
 		spliter_delimiter = assign.getProperty("spliter_delimiter","\\s");
 		instance = new BoardDaily();
 		options = buildOptions();
@@ -90,10 +110,12 @@ public class BoardDaily extends Instance implements OscillatorLoader {
 	private final State state;
 	private OscillatorDivideFilter oscillator;
 	private Date wait_update;
+	private BualuangBoardDailyHome home;
 	
 	private BoardDaily() {
 		state = State.borrowObject();
 		setUpdate(BoardDaily.getLastUpdate());
+		home = new BualuangBoardDailyHome();
 	}
 	
 	private void setUpdate(Date date) {
@@ -123,7 +145,54 @@ public class BoardDaily extends Instance implements OscillatorLoader {
 	
 	@Override
 	public void action(OscillatorEvent event) {
-	
+		TaskManager.create(
+				String.format("%s[timestamp=%d]", 
+						this.getClassName(), event.getTimestamp()), 
+				this);
+	}
+	@Override
+	public void run() {
+		Response response = getWebPage(wait_update);
+		if (response.getStatusCode() == 200) {
+			TextSpliter spliter;
+			InputStream input_stream = response.getContent();
+			if (fixed) {
+				spliter = new TextSpliter(input_stream, true);
+				spliter.setPositions(spliter_positions);
+			} else {
+				spliter = new TextSpliter(input_stream, false);
+				spliter.setDelimiter(spliter_delimiter);
+			}
+			try {
+				//Session session = Assign.getSessionFactory().getCurrentSession();
+				BualuangBoardDailyHome home = new BualuangBoardDailyHome();
+				while (spliter.ready()) {
+					Session session = Assign.getSessionFactory().getCurrentSession();
+					Transaction transaction = session.beginTransaction();
+					try {
+						String[] fields = spliter.readLine();
+						BualuangBoardDailyId id = new BualuangBoardDailyId(
+								fields[map_headers.get("symbol")],
+								DateTime.format(spliter_date_parse, fields[map_headers.get("date")]));
+						BualuangBoardDaily board = new BualuangBoardDaily(id,
+								Double.valueOf(fields[map_headers.get("open")]),
+								Double.valueOf(fields[map_headers.get("high")]),
+								Double.valueOf(fields[map_headers.get("low")]),
+								Double.valueOf(fields[map_headers.get("close")]),
+								Long.valueOf(fields[map_headers.get("volume")]),
+								Double.valueOf(fields[map_headers.get("value")]));
+						home.persist(board);
+						transaction.commit();
+					} catch (IOException e) {
+						LOG.WARNING(e);
+						transaction.rollback();
+					}
+				}
+			} catch (IOException e) {
+				LOG.WARNING(e);
+			}
+			System.out.println("commit");
+		}
 	}
 	/**
 	 * Default 
@@ -200,6 +269,7 @@ public class BoardDaily extends Instance implements OscillatorLoader {
 				buffer.delete(0, buffer.length());
 				try {
 					String[] fields = spliter.readLine();
+					
 					for (int index = 0; index < fields.length; index++) {
 						if (show_name) {
 							buffer.append(spliter_headers[index]);
