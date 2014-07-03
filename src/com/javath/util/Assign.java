@@ -13,6 +13,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
@@ -31,8 +32,13 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.pool.ObjectPool;
+import org.apache.commons.pool.PoolableObjectFactory;
+import org.apache.commons.pool.impl.GenericObjectPool;
+import org.apache.commons.pool.impl.GenericObjectPool.Config;
 import org.hibernate.SessionFactory;
 
+import com.javath.http.Browser;
 import com.javath.logger.LOG;
 
 public class Assign extends Instance {
@@ -60,6 +66,8 @@ public class Assign extends Instance {
 	//
 	private static final Preferences preferences;
 	private static final AES aes;
+	// key is classname
+	private static final Map<String, ObjectPool<Object>> map_pool;
 	//
 	private static final Options options;
 	
@@ -132,7 +140,9 @@ public class Assign extends Instance {
 	        }
 	        //
 	        aes = new AES(md5(shared_key));
+	        map_pool = new HashMap<String, ObjectPool<Object>>();
 	        instances.put(assign_file, new Assign(assign_file, properties));
+	        
 	        options = buildOptions();
 		}
 	}
@@ -306,7 +316,82 @@ public class Assign extends Instance {
 		return null;
 	}
 	
-	public static SessionFactory getSessionFactory() {
+	public static Object borrowObject(String classname) {
+		ObjectPool<Object> pool = map_pool.get(classname);
+		try {
+			if (pool == null) {
+				pool = initialObjectPool(classname);
+				map_pool.put(classname, pool);
+			}
+			return pool.borrowObject();
+		} catch (NoSuchElementException e) {
+			LOG.SEVERE(e);
+		} catch (IllegalStateException e) {
+			LOG.SEVERE(e);
+		} catch (Exception e) {
+			LOG.SEVERE(e);
+		}
+		return null;
+	}
+	public static void returnObject(Object object) {
+		String classname = object.getClass().getCanonicalName();
+		ObjectPool<Object> pool = map_pool.get(classname);
+		try {
+			if (pool == null) {
+				pool = initialObjectPool(classname);
+				map_pool.put(classname, pool);
+			}
+			pool.returnObject(object);
+		} catch (Exception e) {
+			LOG.SEVERE(e);
+		}
+		
+	}
+	private final static ObjectPool<Object> initialObjectPool(String classname) {
+		/**
+		Config config = new GenericObjectPool.Config();
+		config.maxActive = 10;
+	    config.testOnBorrow = true;
+	    config.testWhileIdle = true;
+		config.maxIdle = 5;
+	    config.minIdle = 1;
+	    config.maxWait = 10000;
+	    config.timeBetweenEvictionRunsMillis = 10000;
+	    config.timeBetweenEvictionRunsMillis = 60000; // 1m
+	    config.minEvictableIdleTimeMillis = 300000; // 5m
+	    /**/
+		return new GenericObjectPool<Object>(
+				new PoolableObjectFactory<Object>() {
+					private String classname;
+					@Override
+					public Object makeObject() 
+							throws Exception {
+						return getInstance();
+					}
+					@Override
+					public void activateObject(Object object) 
+							throws Exception {}
+					@Override
+					public void passivateObject(Object object) 
+							throws Exception {}
+					@Override
+					public boolean validateObject(Object object) {
+						return true;
+					}
+					@Override
+					public void destroyObject(Object object) 
+							throws Exception {}
+					public PoolableObjectFactory<Object> setClassname(String classname) {
+						this.classname = classname;
+						return this;
+					}
+					private Object getInstance() {
+						return Assign.forConstructor(classname);
+					}
+				}.setClassname(classname));
+	}
+	
+ 	public static SessionFactory getSessionFactory() {
 		try {
 			return (SessionFactory) new InitialContext()
 					.lookup("SessionFactory");

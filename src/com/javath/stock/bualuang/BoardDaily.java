@@ -4,7 +4,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.CharBuffer;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -22,6 +21,7 @@ import org.apache.commons.cli.ParseException;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.hibernate.exception.ConstraintViolationException;
 
 import com.javath.http.Browser;
 import com.javath.http.Response;
@@ -110,12 +110,10 @@ public class BoardDaily extends Instance implements OscillatorLoader, Runnable {
 	private final State state;
 	private OscillatorDivideFilter oscillator;
 	private Date wait_update;
-	private BualuangBoardDailyHome home;
 	
 	private BoardDaily() {
 		state = State.borrowObject();
 		setUpdate(BoardDaily.getLastUpdate());
-		home = new BualuangBoardDailyHome();
 	}
 	
 	private void setUpdate(Date date) {
@@ -146,8 +144,8 @@ public class BoardDaily extends Instance implements OscillatorLoader, Runnable {
 	@Override
 	public void action(OscillatorEvent event) {
 		TaskManager.create(
-				String.format("%s[timestamp=%d]", 
-						this.getClassName(), event.getTimestamp()), 
+				String.format("%s[timestamp=%d,update=%s]", 
+						this.getClassName(), event.getTimestamp(), DateTime.date(wait_update)), 
 				this);
 	}
 	@Override
@@ -163,18 +161,21 @@ public class BoardDaily extends Instance implements OscillatorLoader, Runnable {
 				spliter = new TextSpliter(input_stream, false);
 				spliter.setDelimiter(spliter_delimiter);
 			}
+			BualuangBoardDailyHome home = (BualuangBoardDailyHome)
+						Assign.borrowObject(BualuangBoardDailyHome.class.getCanonicalName());
 			try {
 				//Session session = Assign.getSessionFactory().getCurrentSession();
-				BualuangBoardDailyHome home = new BualuangBoardDailyHome();
 				while (spliter.ready()) {
 					Session session = Assign.getSessionFactory().getCurrentSession();
 					Transaction transaction = session.beginTransaction();
+					BualuangBoardDailyId id = null;
+					BualuangBoardDaily board = null;;
 					try {
 						String[] fields = spliter.readLine();
-						BualuangBoardDailyId id = new BualuangBoardDailyId(
+						id = new BualuangBoardDailyId(
 								fields[map_headers.get("symbol")],
 								DateTime.format(spliter_date_parse, fields[map_headers.get("date")]));
-						BualuangBoardDaily board = new BualuangBoardDaily(id,
+						board = new BualuangBoardDaily(id,
 								Double.valueOf(fields[map_headers.get("open")]),
 								Double.valueOf(fields[map_headers.get("high")]),
 								Double.valueOf(fields[map_headers.get("low")]),
@@ -184,15 +185,39 @@ public class BoardDaily extends Instance implements OscillatorLoader, Runnable {
 						home.persist(board);
 						transaction.commit();
 					} catch (IOException e) {
-						LOG.WARNING(e);
+						WARNING(e);
 						transaction.rollback();
+					} catch (ConstraintViolationException e) {
+						SEVERE(new ObjectException(e.getCause(), "%s because \"%s\"", 
+								e.getMessage(), e.getCause().getMessage()));
+						transaction.rollback();
+					} catch (StringIndexOutOfBoundsException e) {
+						SEVERE(new ObjectException(e, "%s.txt because %s", 
+								DateTime.format("%1$td%1$tm%1$tY", wait_update), e.getMessage()));
+						Oscillator source = oscillator.getSource();
+						source.removeListener(oscillator);
+						e.printStackTrace(System.out);
+						throw e;
+					} catch (Exception e) {
+						SEVERE(new ObjectException(e, "%s.txt", DateTime.format("%1$td%1$tm%1$tY", wait_update)));
+						e.printStackTrace(System.out);
+						System.exit(Integer.MAX_VALUE);
 					}
 				}
 			} catch (IOException e) {
-				LOG.WARNING(e);
+				WARNING(e);
+			} finally {
+				Assign.returnObject(home);
 			}
-			System.out.println("commit");
-		}
+			setUpdate(getLastUpdate());
+		} else if (response.getStatusCode() == 404) {
+			WARNING("%s.txt: %d %s", DateTime.format("%1$td%1$tm%1$tY", wait_update), 
+					response.getStatusCode(), response.getReasonPhrase());
+			if (wait_update.compareTo(DateTime.date()) < 0)
+				setUpdate(wait_update);
+		} else 
+			WARNING("%s.txt: %d %s", DateTime.format("%1$td%1$tm%1$tY", wait_update), 
+					response.getStatusCode(), response.getReasonPhrase());
 	}
 	/**
 	 * Default 
@@ -215,7 +240,7 @@ public class BoardDaily extends Instance implements OscillatorLoader, Runnable {
 		System.out.printf("Schedule: \"%s\"%n", DateTime.timestamp(time));
 		long datetime = DateTime.merge(date, time).getTime();
 		System.out.printf("Schedule: \"%s\"%n", DateTime.timestamp(datetime));
-		oscillator = new OscillatorDivideFilter(source, this, 2, datetime);
+		oscillator = new OscillatorDivideFilter(source, this, 10, datetime);
 	}
 	
 	public static void main(String[] args) {
