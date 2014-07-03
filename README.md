@@ -12,8 +12,7 @@ Library requirements:
    requirements:  
      + c3p0 (0.9.2.1)  
    option:  
-     - MySQL (5.1.31)  
-     - PostgreSQL (9.3-1101)  
+     + MySQL (5.1.31)    
 8. HttpClient (4.2.6)  
    requirements:  
      + Apache Commons Codec  
