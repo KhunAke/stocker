@@ -1,14 +1,19 @@
 package com.javath.stock.bualuang;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.EventListener;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.GnuParser;
@@ -30,6 +35,7 @@ import com.javath.logger.LOG;
 import com.javath.mapping.BualuangBoardDaily;
 import com.javath.mapping.BualuangBoardDailyHome;
 import com.javath.mapping.BualuangBoardDailyId;
+import com.javath.trigger.MulticastEvent;
 import com.javath.trigger.Oscillator;
 import com.javath.trigger.OscillatorDivideFilter;
 import com.javath.trigger.OscillatorEvent;
@@ -37,12 +43,16 @@ import com.javath.trigger.OscillatorLoader;
 import com.javath.util.Assign;
 import com.javath.util.DateTime;
 import com.javath.util.Instance;
+import com.javath.util.NotificationEvent;
+import com.javath.util.NotificationListener;
+import com.javath.util.NotificationSource;
 import com.javath.util.ObjectException;
 import com.javath.util.Service;
 import com.javath.util.TaskManager;
 import com.javath.util.TextSpliter;
 
-public class BoardDaily extends Instance implements OscillatorLoader, Runnable {
+public class BoardDaily extends Instance 
+		implements NotificationSource, OscillatorLoader, Runnable {
 	
 	private final static Assign assign;
 	private final static String date_board;
@@ -53,6 +63,7 @@ public class BoardDaily extends Instance implements OscillatorLoader, Runnable {
 	private final static int[] spliter_positions;
 	private final static String spliter_date_parse;
 	private final static String spliter_delimiter;
+	private final static String storage_path;
 	private final static BoardDaily instance;
 	//
 	private static final Options options;
@@ -62,6 +73,9 @@ public class BoardDaily extends Instance implements OscillatorLoader, Runnable {
 				"stock" + Assign.File_Separator +
 				"bualuang.properties";
 		assign = Assign.getInstance(Service.class.getCanonicalName(), default_Properties);
+		String default_path = Assign.var + Assign.File_Separator + "bualuang"
+				+ Assign.File_Separator + "quotation";
+		storage_path = assign.getProperty("storage_path", default_path);
 		date_board = assign.getProperty("date_board",
 				"http://realtime.bualuang.co.th/myeasy/realtime/quotation/txt/%1$td%1$tm%1$tY.txt");
 		date_locale = Locale.forLanguageTag(assign.getProperty("date_locale","en-US"));
@@ -111,9 +125,11 @@ public class BoardDaily extends Instance implements OscillatorLoader, Runnable {
 	private OscillatorDivideFilter oscillator;
 	private Date wait_update;
 	
+	private final Set<NotificationListener> listeners;
+	
 	private BoardDaily() {
 		state = State.borrowObject();
-		setUpdate(BoardDaily.getLastUpdate());
+		listeners = new HashSet<NotificationListener>();
 	}
 	
 	private void setUpdate(Date date) {
@@ -142,6 +158,34 @@ public class BoardDaily extends Instance implements OscillatorLoader, Runnable {
 	}
 	
 	@Override
+	public boolean addListener(NotificationListener listener) {
+		return listeners.add(listener);
+	}
+	@Override
+	public boolean removeListener(NotificationListener listener) {
+		return listeners.remove(listener);
+	}
+	public void notify(NotificationEvent.State state, String message, Object... objects) {
+		notify(state, String.format(message, objects));
+	}
+	public void notify(NotificationEvent.State state, String message) {
+		try {
+			EventListener[] listeners = this.listeners.toArray(new EventListener[] {});
+			NotificationEvent event = new NotificationEvent(this, state, message);
+			System.out.printf("%s: %s%n", DateTime.timestamp(new Date()), event);
+			if (listeners.length > 0 ) {
+				MulticastEvent.send("notify", listeners, event);
+			} 
+		} catch (NoSuchElementException e) {
+			SEVERE(e);
+		} catch (IllegalStateException e) {
+			SEVERE(e);
+		} catch (Exception e) {
+			SEVERE(e);
+		}
+	}
+	
+	@Override
 	public void action(OscillatorEvent event) {
 		TaskManager.create(
 				String.format("%s[timestamp=%d,update=%s]", 
@@ -152,6 +196,29 @@ public class BoardDaily extends Instance implements OscillatorLoader, Runnable {
 	public void run() {
 		Response response = getWebPage(wait_update);
 		if (response.getStatusCode() == 200) {
+			try {
+			response.save(storage_path + Assign.File_Separator + 
+					String.format("%1$td%1$tm%1$tY.txt", wait_update));
+			} catch (ObjectException e) {
+				if (e.getCause().getClass().getCanonicalName()
+						.equals("java.io.FileNotFoundException")) {
+					new File(storage_path).mkdirs();
+					response.save(storage_path + Assign.File_Separator + 
+							String.format("%1$td%1$tm%1$tY.txt", wait_update));
+				}
+			}
+			notify(NotificationEvent.State.DONE, getURI(wait_update));
+			try {
+				reload(response.getContent());
+			} catch (Exception e) {
+				SEVERE(new ObjectException(e, "%s; %s",
+						DateTime.format("%1$td%1$tm%1$tY.txt", wait_update), e.getMessage()));
+				Oscillator source = oscillator.getSource();
+				source.removeListener(oscillator);
+				e.printStackTrace(System.out);
+				return;
+			}
+			/**
 			TextSpliter spliter;
 			InputStream input_stream = response.getContent();
 			if (fixed) {
@@ -188,20 +255,17 @@ public class BoardDaily extends Instance implements OscillatorLoader, Runnable {
 						WARNING(e);
 						transaction.rollback();
 					} catch (ConstraintViolationException e) {
-						SEVERE(new ObjectException(e.getCause(), "%s because \"%s\"", 
+						SEVERE(new ObjectException(e.getCause(), "%s; %s", 
 								e.getMessage(), e.getCause().getMessage()));
 						transaction.rollback();
-					} catch (StringIndexOutOfBoundsException e) {
-						SEVERE(new ObjectException(e, "%s.txt because %s", 
-								DateTime.format("%1$td%1$tm%1$tY", wait_update), e.getMessage()));
+					} catch (Exception e) {
+						SEVERE(new ObjectException(e, "%s; %s",
+								DateTime.format("%1$td%1$tm%1$tY.txt", wait_update), e.getMessage()));
 						Oscillator source = oscillator.getSource();
 						source.removeListener(oscillator);
 						e.printStackTrace(System.out);
-						throw e;
-					} catch (Exception e) {
-						SEVERE(new ObjectException(e, "%s.txt", DateTime.format("%1$td%1$tm%1$tY", wait_update)));
-						e.printStackTrace(System.out);
-						System.exit(Integer.MAX_VALUE);
+						transaction.rollback();
+						return;
 					}
 				}
 			} catch (IOException e) {
@@ -209,16 +273,72 @@ public class BoardDaily extends Instance implements OscillatorLoader, Runnable {
 			} finally {
 				Assign.returnObject(home);
 			}
+			/**/
+			notify(NotificationEvent.State.SUCCESS, getURI(wait_update));
 			setUpdate(getLastUpdate());
 		} else if (response.getStatusCode() == 404) {
+			notify(NotificationEvent.State.FAIL, getURI(wait_update));
 			WARNING("%s.txt: %d %s", DateTime.format("%1$td%1$tm%1$tY", wait_update), 
 					response.getStatusCode(), response.getReasonPhrase());
 			if (wait_update.compareTo(DateTime.date()) < 0)
 				setUpdate(wait_update);
-		} else 
+		} else {
+			notify(NotificationEvent.State.UNKNOW, getURI(wait_update));
 			WARNING("%s.txt: %d %s", DateTime.format("%1$td%1$tm%1$tY", wait_update), 
 					response.getStatusCode(), response.getReasonPhrase());
+		}
 	}
+	private void reload(InputStream input_stream) {
+		TextSpliter spliter;
+		if (fixed) {
+			spliter = new TextSpliter(input_stream, true);
+			spliter.setPositions(spliter_positions);
+		} else {
+			spliter = new TextSpliter(input_stream, false);
+			spliter.setDelimiter(spliter_delimiter);
+		}
+		BualuangBoardDailyHome home = (BualuangBoardDailyHome)
+					Assign.borrowObject(BualuangBoardDailyHome.class.getCanonicalName());
+		try {
+			//Session session = Assign.getSessionFactory().getCurrentSession();
+			while (spliter.ready()) {
+				Session session = Assign.getSessionFactory().getCurrentSession();
+				Transaction transaction = session.beginTransaction();
+				BualuangBoardDailyId id = null;
+				BualuangBoardDaily board = null;;
+				try {
+					String[] fields = spliter.readLine();
+					id = new BualuangBoardDailyId(
+							fields[map_headers.get("symbol")],
+							DateTime.format(spliter_date_parse, fields[map_headers.get("date")]));
+					board = new BualuangBoardDaily(id,
+							Double.valueOf(fields[map_headers.get("open")]),
+							Double.valueOf(fields[map_headers.get("high")]),
+							Double.valueOf(fields[map_headers.get("low")]),
+							Double.valueOf(fields[map_headers.get("close")]),
+							Long.valueOf(fields[map_headers.get("volume")]),
+							Double.valueOf(fields[map_headers.get("value")]));
+					home.persist(board);
+					transaction.commit();
+				} catch (IOException e) {
+					WARNING(e);
+					transaction.rollback();
+				} catch (ConstraintViolationException e) {
+					SEVERE(new ObjectException(e.getCause(), "%s; %s", 
+							e.getMessage(), e.getCause().getMessage()));
+					transaction.rollback();
+				} catch (Exception e) {
+					transaction.rollback();
+					throw e;
+				}
+			}
+		} catch (IOException e) {
+			WARNING(e);
+		} finally {
+			Assign.returnObject(home);
+		}
+	}
+	
 	/**
 	 * Default 
 	 * stock.settrade.Market.assign=
@@ -232,15 +352,19 @@ public class BoardDaily extends Instance implements OscillatorLoader, Runnable {
 	public void initOscillator() {
 		if (oscillator != null)
 			return;
+		setUpdate(BoardDaily.getLastUpdate());
 		long clock = assign.getLongProperty("clock", 900000); // 15m
 		Oscillator source = Oscillator.getInstance(clock);
 		long date = DateTime.date().getTime();
 		long time = DateTime.time(
 				assign.getProperty("schedule", "18:30:00")).getTime();
-		System.out.printf("Schedule: \"%s\"%n", DateTime.timestamp(time));
+		//System.out.printf("Schedule: \"%s\"%n", DateTime.timestamp(time));
 		long datetime = DateTime.merge(date, time).getTime();
-		System.out.printf("Schedule: \"%s\"%n", DateTime.timestamp(datetime));
-		oscillator = new OscillatorDivideFilter(source, this, 10, datetime);
+		//System.out.printf("Schedule: \"%s\"%n", DateTime.timestamp(datetime));
+		long try_again = (long) Math.ceil(assign.getLongProperty("try_again", clock * 2) / (double) clock);
+		if (try_again == 0)
+			try_again = 1;
+		oscillator = new OscillatorDivideFilter(source, this, try_again, datetime);
 	}
 	
 	public static void main(String[] args) {
@@ -255,6 +379,8 @@ public class BoardDaily extends Instance implements OscillatorLoader, Runnable {
 			main_option += 1;
 		if (line.hasOption("schedule"))
 			main_option += 1;
+		if (line.hasOption("reload"))
+			main_option += 1;
 		if (line.hasOption("help") || (main_option > 1)) {
 			usage();
 			return;
@@ -263,6 +389,8 @@ public class BoardDaily extends Instance implements OscillatorLoader, Runnable {
 		if (line.hasOption("schedule")) {
 			BoardDaily.getInstance().initOscillator();
 			Oscillator.startAll();
+		} else if (line.hasOption("reload")) {
+			
 		} else if (line.hasOption("date")) {
 			Response response = BoardDaily.getInstance()
 					.getWebPage(DateTime.date(line.getOptionValue("date")));
@@ -338,7 +466,7 @@ public class BoardDaily extends Instance implements OscillatorLoader, Runnable {
                 .withDescription("extract data from the BLS website on \"date\"")
                 .withLongOpt("date")
                 .create();
-		//options.addOption(file);
+		//options.addOption(date);
 		// Option "--file"
 		Option file = OptionBuilder
 				.hasArg()
@@ -347,22 +475,31 @@ public class BoardDaily extends Instance implements OscillatorLoader, Runnable {
                 .withLongOpt("file")
                 .create();
 		//options.addOption(file);
-		// Option "--file"
+		// Option "--help"
 		Option help = OptionBuilder
                 .withDescription("print this message")
                 .withLongOpt("help")
                 .create();
-		//options.addOption(file);
-		// Option "--help"
+		//options.addOption(help);
+		// Option "--schedule"
 		Option schedule = OptionBuilder
                 .withDescription("schedule")
                 .withLongOpt("schedule")
+                .create();
+		//options.addOption(schedule);
+		// Option "--file"
+		Option reload = OptionBuilder
+				.hasArg()
+				.withArgName("path")
+                .withDescription("reload data file to Database")
+                .withLongOpt("reload")
                 .create();
 		//options.addOption(file);
 		group.addOption(date);
 		group.addOption(file);
 		group.addOption(help);
 		group.addOption(schedule);
+		group.addOption(reload);
 		group.setRequired(true);
 		options.addOptionGroup(group);
 		Option show = OptionBuilder
@@ -382,5 +519,5 @@ public class BoardDaily extends Instance implements OscillatorLoader, Runnable {
 		State.returnObject(state);
 		super.finalize();
 	}
-
+	
 }

@@ -232,11 +232,11 @@ public class Oscillator extends TimerTask implements Runnable {
 					}
 				}
 			} catch (NoSuchElementException e) {
-				throw new ObjectException(e);
+				LOG.SEVERE(e);
 			} catch (IllegalStateException e) {
-				throw new ObjectException(e);
+				LOG.SEVERE(e);
 			} catch (Exception e) {
-				throw new ObjectException(e);
+				LOG.SEVERE(e);
 			}
 		}
 	}
