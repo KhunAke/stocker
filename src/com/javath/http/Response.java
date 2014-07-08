@@ -32,6 +32,8 @@ public class Response extends Instance {
 	private String mime;
 	private String charset;
 	
+	private String filename;
+	
 	public Response(HttpResponse http_response) {
 		try {
 			headers = http_response.getAllHeaders();
@@ -50,6 +52,15 @@ public class Response extends Instance {
 		}
 	}
 	
+	public String getFilename() {
+		return filename;
+	}
+
+	protected Response setFilename(String filename) {
+		this.filename = filename;
+		return this;
+	}
+
 	// Information from ByteArrayEntity
 	private void parseContentType(Header header) {
 		if (header.getName() == "Content-Type") {

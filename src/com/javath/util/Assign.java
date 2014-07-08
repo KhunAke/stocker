@@ -38,7 +38,6 @@ import org.apache.commons.pool.impl.GenericObjectPool;
 import org.apache.commons.pool.impl.GenericObjectPool.Config;
 import org.hibernate.SessionFactory;
 
-import com.javath.http.Browser;
 import com.javath.logger.LOG;
 
 public class Assign extends Instance {
@@ -348,17 +347,19 @@ public class Assign extends Instance {
 		
 	}
 	private final static ObjectPool<Object> initialObjectPool(String classname) {
-		/**
+		Assign assign = Assign.getInstance();
+		/**/
 		Config config = new GenericObjectPool.Config();
-		config.maxActive = 10;
-	    config.testOnBorrow = true;
-	    config.testWhileIdle = true;
-		config.maxIdle = 5;
-	    config.minIdle = 1;
-	    config.maxWait = 10000;
-	    config.timeBetweenEvictionRunsMillis = 10000;
-	    config.timeBetweenEvictionRunsMillis = 60000; // 1m
-	    config.minEvictableIdleTimeMillis = 300000; // 5m
+		config.maxActive = (int) assign.getLongProperty("config_maxActive", -1);
+	    config.testOnBorrow = assign.getBooleanProperty("config_testOnBorrow", true);
+	    config.testWhileIdle = assign.getBooleanProperty("config_testWhileIdle", true);
+		config.maxIdle = (int) assign.getLongProperty("config_maxIdle", 5);
+	    config.minIdle = (int) assign.getLongProperty("config_minIdle", 1);
+	    config.maxWait = assign.getLongProperty("config_maxWait", 10000);
+	    config.timeBetweenEvictionRunsMillis = 
+	    		assign.getLongProperty("config_timeBetweenEvictionRunsMillis", 10000);
+	    config.minEvictableIdleTimeMillis = 
+	    		assign.getLongProperty("config_minEvictableIdleTimeMillis", 60000);
 	    /**/
 		return new GenericObjectPool<Object>(
 				new PoolableObjectFactory<Object>() {
@@ -388,7 +389,7 @@ public class Assign extends Instance {
 					private Object getInstance() {
 						return Assign.forConstructor(classname);
 					}
-				}.setClassname(classname));
+				}.setClassname(classname), config);
 	}
 	
  	public static SessionFactory getSessionFactory() {

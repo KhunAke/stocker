@@ -19,5 +19,9 @@ public class ObjectException extends RuntimeException {
 	public ObjectException(Throwable cause, String format, java.lang.Object... value) {
 		this(cause, String.format(format, value));
 	}
-
+	
+	public boolean equalsCause(Class<?> classname) {
+		return this.getCause().getClass().getCanonicalName()
+				.equals(classname.getCanonicalName());
+	}
 }

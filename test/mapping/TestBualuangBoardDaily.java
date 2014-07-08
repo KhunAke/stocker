@@ -13,8 +13,11 @@ import com.javath.mapping.BualuangBoardDaily;
 import com.javath.mapping.BualuangBoardDailyHome;
 import com.javath.mapping.BualuangBoardDailyId;
 import com.javath.stock.bualuang.BoardDaily;
+import com.javath.trigger.Oscillator;
+import com.javath.util.NotificationEvent;
+import com.javath.util.NotificationListener;
 
-public class TestBualuangBoardDaily {
+public class TestBualuangBoardDaily implements NotificationListener {
 
 	public static void main(String[] args) {
 		/**
@@ -42,7 +45,15 @@ public class TestBualuangBoardDaily {
 		}
 		/**/
 		BoardDaily board = BoardDaily.getInstance();
-		board.run();
+		board.initOscillator();
+		TestBualuangBoardDaily test = new TestBualuangBoardDaily();
+		board.addListener(test);
+		Oscillator.startAll();
+	}
+
+	@Override
+	public void notify(NotificationEvent event) {
+		System.out.println(event);
 	}
 
 }

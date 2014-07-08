@@ -284,7 +284,7 @@ public class Browser extends Instance {
     }	
 	private synchronized Response execute(HttpRequestBase request) {
 		try {
-			return new Response(client.execute(request, context));
+			return new Response(client.execute(request, context)).setFilename(generateFilename());
 		} catch (IllegalStateException e) {
 			if (e.getMessage().equals("Target host must not be null, or set in parameters."))
 				request.setURI(redirect(address));	

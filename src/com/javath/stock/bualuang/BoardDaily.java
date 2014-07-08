@@ -5,7 +5,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.EventListener;
 import java.util.HashMap;
@@ -44,6 +46,7 @@ import com.javath.util.Assign;
 import com.javath.util.DateTime;
 import com.javath.util.Instance;
 import com.javath.util.NotificationEvent;
+import com.javath.util.NotificationEvent.Status;
 import com.javath.util.NotificationListener;
 import com.javath.util.NotificationSource;
 import com.javath.util.ObjectException;
@@ -165,13 +168,13 @@ public class BoardDaily extends Instance
 	public boolean removeListener(NotificationListener listener) {
 		return listeners.remove(listener);
 	}
-	public void notify(NotificationEvent.State state, String message, Object... objects) {
-		notify(state, String.format(message, objects));
+	public void notify(Status status, String message, Object... objects) {
+		notify(status, String.format(message, objects));
 	}
-	public void notify(NotificationEvent.State state, String message) {
+	public void notify(Status status, String message) {
 		try {
 			EventListener[] listeners = this.listeners.toArray(new EventListener[] {});
-			NotificationEvent event = new NotificationEvent(this, state, message);
+			NotificationEvent event = new NotificationEvent(this, status, message);
 			System.out.printf("%s: %s%n", DateTime.timestamp(new Date()), event);
 			if (listeners.length > 0 ) {
 				MulticastEvent.send("notify", listeners, event);
@@ -198,97 +201,64 @@ public class BoardDaily extends Instance
 		if (response.getStatusCode() == 200) {
 			try {
 			response.save(storage_path + Assign.File_Separator + 
-					String.format("%1$td%1$tm%1$tY.txt", wait_update));
+					response.getFilename());
+					//String.format("%1$td%1$tm%1$tY.txt", wait_update));
 			} catch (ObjectException e) {
-				if (e.getCause().getClass().getCanonicalName()
-						.equals("java.io.FileNotFoundException")) {
+				//if (e.getCause().getClass().getCanonicalName()
+				//		.equals("java.io.FileNotFoundException")) {
+				if (e.equalsCause(FileNotFoundException.class)) {
 					new File(storage_path).mkdirs();
 					response.save(storage_path + Assign.File_Separator + 
-							String.format("%1$td%1$tm%1$tY.txt", wait_update));
+							response.getFilename());
+							//String.format("%1$td%1$tm%1$tY.txt", wait_update));
 				}
 			}
-			notify(NotificationEvent.State.DONE, getURI(wait_update));
+			notify(NotificationEvent.Status.DONE, getURI(wait_update));
 			try {
-				reload(response.getContent());
+				upload(response.getContent());
 			} catch (Exception e) {
 				SEVERE(new ObjectException(e, "%s; %s",
-						DateTime.format("%1$td%1$tm%1$tY.txt", wait_update), e.getMessage()));
+						response.getFilename(), e.getMessage()));
 				Oscillator source = oscillator.getSource();
 				source.removeListener(oscillator);
 				e.printStackTrace(System.out);
 				return;
 			}
-			/**
-			TextSpliter spliter;
-			InputStream input_stream = response.getContent();
-			if (fixed) {
-				spliter = new TextSpliter(input_stream, true);
-				spliter.setPositions(spliter_positions);
-			} else {
-				spliter = new TextSpliter(input_stream, false);
-				spliter.setDelimiter(spliter_delimiter);
-			}
-			BualuangBoardDailyHome home = (BualuangBoardDailyHome)
-						Assign.borrowObject(BualuangBoardDailyHome.class.getCanonicalName());
-			try {
-				//Session session = Assign.getSessionFactory().getCurrentSession();
-				while (spliter.ready()) {
-					Session session = Assign.getSessionFactory().getCurrentSession();
-					Transaction transaction = session.beginTransaction();
-					BualuangBoardDailyId id = null;
-					BualuangBoardDaily board = null;;
-					try {
-						String[] fields = spliter.readLine();
-						id = new BualuangBoardDailyId(
-								fields[map_headers.get("symbol")],
-								DateTime.format(spliter_date_parse, fields[map_headers.get("date")]));
-						board = new BualuangBoardDaily(id,
-								Double.valueOf(fields[map_headers.get("open")]),
-								Double.valueOf(fields[map_headers.get("high")]),
-								Double.valueOf(fields[map_headers.get("low")]),
-								Double.valueOf(fields[map_headers.get("close")]),
-								Long.valueOf(fields[map_headers.get("volume")]),
-								Double.valueOf(fields[map_headers.get("value")]));
-						home.persist(board);
-						transaction.commit();
-					} catch (IOException e) {
-						WARNING(e);
-						transaction.rollback();
-					} catch (ConstraintViolationException e) {
-						SEVERE(new ObjectException(e.getCause(), "%s; %s", 
-								e.getMessage(), e.getCause().getMessage()));
-						transaction.rollback();
-					} catch (Exception e) {
-						SEVERE(new ObjectException(e, "%s; %s",
-								DateTime.format("%1$td%1$tm%1$tY.txt", wait_update), e.getMessage()));
-						Oscillator source = oscillator.getSource();
-						source.removeListener(oscillator);
-						e.printStackTrace(System.out);
-						transaction.rollback();
-						return;
-					}
-				}
-			} catch (IOException e) {
-				WARNING(e);
-			} finally {
-				Assign.returnObject(home);
-			}
-			/**/
-			notify(NotificationEvent.State.SUCCESS, getURI(wait_update));
+			notify(NotificationEvent.Status.SUCCESS, getURI(wait_update));
 			setUpdate(getLastUpdate());
 		} else if (response.getStatusCode() == 404) {
-			notify(NotificationEvent.State.FAIL, getURI(wait_update));
-			WARNING("%s.txt: %d %s", DateTime.format("%1$td%1$tm%1$tY", wait_update), 
+			notify(NotificationEvent.Status.FAIL, getURI(wait_update));
+			WARNING("%s: %d %s", response.getFilename(), 
 					response.getStatusCode(), response.getReasonPhrase());
 			if (wait_update.compareTo(DateTime.date()) < 0)
 				setUpdate(wait_update);
+			else {
+				long date = DateTime.date().getTime();
+				long time = DateTime.time(
+						assign.getProperty("schedule", "18:30:00")).getTime();
+				long datetime = DateTime.merge(date, time).getTime();
+				Calendar calendar = DateTime.borrowCalendar();
+				try {
+					calendar.setTimeInMillis(datetime);
+					int day_of_week = calendar.get(Calendar.DAY_OF_WEEK);
+					if (day_of_week == Calendar.SUNDAY)
+						calendar.add(Calendar.DATE, 1);
+					else if (day_of_week == Calendar.SATURDAY)
+						calendar.add(Calendar.DATE, 2);
+					oscillator.setSchedule(datetime);
+				} finally {
+					DateTime.returnCalendar(calendar);
+				}
+			}
 		} else {
-			notify(NotificationEvent.State.UNKNOW, getURI(wait_update));
-			WARNING("%s.txt: %d %s", DateTime.format("%1$td%1$tm%1$tY", wait_update), 
+			notify(NotificationEvent.Status.UNKNOW, getURI(wait_update));
+			WARNING("%s: %d %s", response.getFilename(), 
 					response.getStatusCode(), response.getReasonPhrase());
+			Oscillator source = oscillator.getSource();
+			source.removeListener(oscillator);
 		}
 	}
-	private void reload(InputStream input_stream) {
+	private static void upload(InputStream input_stream) {
 		TextSpliter spliter;
 		if (fixed) {
 			spliter = new TextSpliter(input_stream, true);
@@ -308,23 +278,37 @@ public class BoardDaily extends Instance
 				BualuangBoardDaily board = null;;
 				try {
 					String[] fields = spliter.readLine();
-					id = new BualuangBoardDailyId(
-							fields[map_headers.get("symbol")],
-							DateTime.format(spliter_date_parse, fields[map_headers.get("date")]));
-					board = new BualuangBoardDaily(id,
-							Double.valueOf(fields[map_headers.get("open")]),
-							Double.valueOf(fields[map_headers.get("high")]),
-							Double.valueOf(fields[map_headers.get("low")]),
-							Double.valueOf(fields[map_headers.get("close")]),
-							Long.valueOf(fields[map_headers.get("volume")]),
-							Double.valueOf(fields[map_headers.get("value")]));
+					try {
+						id = new BualuangBoardDailyId(
+								fields[map_headers.get("symbol")],
+								DateTime.format(spliter_date_parse, fields[map_headers.get("date")]));
+						board = new BualuangBoardDaily(id,
+								Double.valueOf(fields[map_headers.get("open")]),
+								Double.valueOf(fields[map_headers.get("high")]),
+								Double.valueOf(fields[map_headers.get("low")]),
+								Double.valueOf(fields[map_headers.get("close")]),
+								Long.valueOf(fields[map_headers.get("volume")]),
+								Double.valueOf(fields[map_headers.get("value")]));
+					} catch (NumberFormatException e) {
+						String symbol = fields[map_headers.get("symbol")];
+						if (symbol.equals("BGH-F")) {
+							String date =fields[map_headers.get("date")];
+							LOG.WARNING(
+									new ObjectException(e,"\"%s\",\"$s\"; %s", symbol, date, e.getMessage()));
+							transaction.rollback();
+							continue;
+						} else {
+							transaction.rollback();
+							throw e;
+						}
+					}
 					home.persist(board);
 					transaction.commit();
 				} catch (IOException e) {
-					WARNING(e);
+					LOG.WARNING(e);
 					transaction.rollback();
 				} catch (ConstraintViolationException e) {
-					SEVERE(new ObjectException(e.getCause(), "%s; %s", 
+					LOG.FINE(new ObjectException(e.getCause(), "%s; %s", 
 							e.getMessage(), e.getCause().getMessage()));
 					transaction.rollback();
 				} catch (Exception e) {
@@ -333,7 +317,7 @@ public class BoardDaily extends Instance
 				}
 			}
 		} catch (IOException e) {
-			WARNING(e);
+			LOG.WARNING(e);
 		} finally {
 			Assign.returnObject(home);
 		}
@@ -379,7 +363,7 @@ public class BoardDaily extends Instance
 			main_option += 1;
 		if (line.hasOption("schedule"))
 			main_option += 1;
-		if (line.hasOption("reload"))
+		if (line.hasOption("restore"))
 			main_option += 1;
 		if (line.hasOption("help") || (main_option > 1)) {
 			usage();
@@ -389,8 +373,21 @@ public class BoardDaily extends Instance
 		if (line.hasOption("schedule")) {
 			BoardDaily.getInstance().initOscillator();
 			Oscillator.startAll();
-		} else if (line.hasOption("reload")) {
-			
+		} else if (line.hasOption("restore")) {
+			File filepath = new File(line.getOptionValue("restore"));
+			if (filepath.isFile()) {
+				load(filepath);
+			} else {
+				File[] files = filepath.listFiles();
+				Arrays.sort(files, new Comparator<File>() {
+				    public int compare(File file_1, File file_2)
+				    {
+				        return Long.valueOf(file_1.lastModified()).compareTo(file_2.lastModified());
+				    } });
+				for (int index = 0; index < files.length; index++) {
+					load(files[index]);
+				}
+			}
 		} else if (line.hasOption("date")) {
 			Response response = BoardDaily.getInstance()
 					.getWebPage(DateTime.date(line.getOptionValue("date")));
@@ -406,6 +403,18 @@ public class BoardDaily extends Instance
 				LOG.SEVERE(e);
 			}
 		} 
+	}
+	private static void load(File file) {
+		StringBuffer buffer = new StringBuffer();
+		buffer.append(file.getName());
+		try {
+			upload(new FileInputStream(file));
+			buffer.append("; SUCCESS");
+		} catch (FileNotFoundException e) {
+			buffer.append("; FAIL");
+			LOG.SEVERE(e);
+		}
+		System.out.println(buffer.toString());
 	}
 	private static void print(InputStream input_stream, boolean show_name) {
 		TextSpliter spliter;
@@ -488,18 +497,18 @@ public class BoardDaily extends Instance
                 .create();
 		//options.addOption(schedule);
 		// Option "--file"
-		Option reload = OptionBuilder
+		Option restore = OptionBuilder
 				.hasArg()
 				.withArgName("path")
-                .withDescription("reload data file to Database")
-                .withLongOpt("reload")
+                .withDescription("restore to Database")
+                .withLongOpt("restore")
                 .create();
 		//options.addOption(file);
 		group.addOption(date);
 		group.addOption(file);
 		group.addOption(help);
 		group.addOption(schedule);
-		group.addOption(reload);
+		group.addOption(restore);
 		group.setRequired(true);
 		options.addOptionGroup(group);
 		Option show = OptionBuilder
