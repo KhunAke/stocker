@@ -139,7 +139,10 @@ public class BoardDaily extends Instance
 		Calendar calendar = DateTime.borrowCalendar();
 		try {
 			calendar.setTime(date);
-			calendar.add(Calendar.DATE, 1);
+			if (calendar.get(Calendar.DAY_OF_WEEK) == Calendar.FRIDAY)
+				calendar.add(Calendar.DATE, 3);
+			else
+				calendar.add(Calendar.DATE, 1);
 			wait_update = calendar.getTime();
 		} catch (NullPointerException e) {
 			wait_update = DateTime.date("2002-07-02");	
@@ -232,24 +235,6 @@ public class BoardDaily extends Instance
 					response.getStatusCode(), response.getReasonPhrase());
 			if (wait_update.compareTo(DateTime.date()) < 0)
 				setUpdate(wait_update);
-			else {
-				long date = DateTime.date().getTime();
-				long time = DateTime.time(
-						assign.getProperty("schedule", "18:30:00")).getTime();
-				long datetime = DateTime.merge(date, time).getTime();
-				Calendar calendar = DateTime.borrowCalendar();
-				try {
-					calendar.setTimeInMillis(datetime);
-					int day_of_week = calendar.get(Calendar.DAY_OF_WEEK);
-					if (day_of_week == Calendar.SUNDAY)
-						calendar.add(Calendar.DATE, 1);
-					else if (day_of_week == Calendar.SATURDAY)
-						calendar.add(Calendar.DATE, 2);
-					oscillator.setSchedule(datetime);
-				} finally {
-					DateTime.returnCalendar(calendar);
-				}
-			}
 		} else {
 			notify(NotificationEvent.Status.UNKNOW, getURI(wait_update));
 			WARNING("%s: %d %s", response.getFilename(), 
@@ -339,7 +324,7 @@ public class BoardDaily extends Instance
 		setUpdate(BoardDaily.getLastUpdate());
 		long clock = assign.getLongProperty("clock", 900000); // 15m
 		Oscillator source = Oscillator.getInstance(clock);
-		long date = DateTime.date().getTime();
+		long date = wait_update.getTime();
 		long time = DateTime.time(
 				assign.getProperty("schedule", "18:30:00")).getTime();
 		//System.out.printf("Schedule: \"%s\"%n", DateTime.timestamp(time));
@@ -426,24 +411,27 @@ public class BoardDaily extends Instance
 			spliter.setDelimiter(spliter_delimiter);
 		}
 		try {
+			String delimiter = " ";
+			if (!spliter_delimiter.equals("\\s"))
+				delimiter = spliter_delimiter.substring(0, 1);
 			StringBuffer buffer = new StringBuffer();
 			while (spliter.ready()) {
 				buffer.delete(0, buffer.length());
 				try {
 					String[] fields = spliter.readLine();
-					
 					for (int index = 0; index < fields.length; index++) {
 						if (show_name) {
 							buffer.append(spliter_headers[index]);
 							buffer.append("=\"");
 							buffer.append(fields[index]);
-							buffer.append("\",");
+							buffer.append("\"");
+							buffer.append(delimiter);
 						} else {
 							buffer.append(fields[index]);
-							buffer.append(",");
+							buffer.append(delimiter);
 						}				
 					}
-				System.out.println(buffer.substring(0, buffer.length() - 1));
+					System.out.println(buffer.substring(0, buffer.length() - 1));
 				} catch (IOException e) {
 					LOG.WARNING(e);
 				}

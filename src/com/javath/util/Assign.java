@@ -315,6 +315,9 @@ public class Assign extends Instance {
 		return null;
 	}
 	
+	public static Object borrowObject(Class<?> classname) {
+		return borrowObject(classname.getCanonicalName());
+	}
 	public static Object borrowObject(String classname) {
 		ObjectPool<Object> pool = map_pool.get(classname);
 		try {
@@ -333,7 +336,12 @@ public class Assign extends Instance {
 		return null;
 	}
 	public static void returnObject(Object object) {
-		String classname = object.getClass().getCanonicalName();
+		String classname = null;
+		try {
+			classname = object.getClass().getCanonicalName();
+		} catch (NullPointerException e) {
+			return;
+		}
 		ObjectPool<Object> pool = map_pool.get(classname);
 		try {
 			if (pool == null) {
@@ -357,7 +365,7 @@ public class Assign extends Instance {
 	    config.minIdle = (int) assign.getLongProperty("config_minIdle", 1);
 	    config.maxWait = assign.getLongProperty("config_maxWait", 10000);
 	    config.timeBetweenEvictionRunsMillis = 
-	    		assign.getLongProperty("config_timeBetweenEvictionRunsMillis", 10000);
+	    		assign.getLongProperty("config_timeBetweenEvictionRunsMillis", 30000);
 	    config.minEvictableIdleTimeMillis = 
 	    		assign.getLongProperty("config_minEvictableIdleTimeMillis", 60000);
 	    /**/
@@ -389,7 +397,15 @@ public class Assign extends Instance {
 					private Object getInstance() {
 						return Assign.forConstructor(classname);
 					}
-				}.setClassname(classname), config);
+				}.setClassname(classname), config) {
+					@Override
+					public Object borrowObject() throws Exception {
+						Object result = super.borrowObject();
+						if (ObjectPoolable.class.isAssignableFrom(result.getClass()))
+							((ObjectPoolable) result).initialObject();
+						return result;
+					}
+		};
 	}
 	
  	public static SessionFactory getSessionFactory() {
