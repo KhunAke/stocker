@@ -358,16 +358,20 @@ public class Assign extends Instance {
 		Assign assign = Assign.getInstance();
 		/**/
 		Config config = new GenericObjectPool.Config();
-		config.maxActive = (int) assign.getLongProperty("config_maxActive", -1);
-	    config.testOnBorrow = assign.getBooleanProperty("config_testOnBorrow", true);
-	    config.testWhileIdle = assign.getBooleanProperty("config_testWhileIdle", true);
-		config.maxIdle = (int) assign.getLongProperty("config_maxIdle", 5);
-	    config.minIdle = (int) assign.getLongProperty("config_minIdle", 1);
-	    config.maxWait = assign.getLongProperty("config_maxWait", 10000);
+		config.lifo = assign.getBooleanProperty("config_lifo", true);
+		config.maxActive = (int) assign.getLongProperty("config_maxActive", 8);
+	    config.testOnBorrow = assign.getBooleanProperty("config_testOnBorrow", false);
+	    config.testOnReturn = assign.getBooleanProperty("config_testOnReturn", false);
+	    config.testWhileIdle = assign.getBooleanProperty("config_testWhileIdle", false);
+		config.maxIdle = (int) assign.getLongProperty("config_maxIdle", 8);
+	    config.minIdle = (int) assign.getLongProperty("config_minIdle", 0);
+	    config.maxWait = assign.getLongProperty("config_maxWait", -1);
+	    config.numTestsPerEvictionRun =
+	    		(int) assign.getLongProperty("config_numTestsPerEvictionRun", 3);
 	    config.timeBetweenEvictionRunsMillis = 
-	    		assign.getLongProperty("config_timeBetweenEvictionRunsMillis", 30000);
+	    		assign.getLongProperty("config_timeBetweenEvictionRunsMillis", -1);
 	    config.minEvictableIdleTimeMillis = 
-	    		assign.getLongProperty("config_minEvictableIdleTimeMillis", 60000);
+	    		assign.getLongProperty("config_minEvictableIdleTimeMillis", 1800000);
 	    /**/
 		return new GenericObjectPool<Object>(
 				new PoolableObjectFactory<Object>() {
