@@ -1,28 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE hibernate-configuration PUBLIC
 "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
-"http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd">
+"http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
 <hibernate-configuration>
     <session-factory>
         <property name="hibernate.bytecode.use_reflection_optimizer">false</property>
-        <property name="hibernate.connection.driver_class">org.gjt.mm.mysql.Driver</property>
-        <property name="hibernate.connection.password">stocker</property>
-        <property name="hibernate.connection.url">jdbc:mysql://172.30.194.9/stock</property>
-        <property name="hibernate.connection.username">stocker</property>
-        <property name="hibernate.dialect">org.hibernate.dialect.MySQL5Dialect</property>
+        <property name="hibernate.connection.driver_class">com.mysql.jdbc.Driver</property>
+        <property name="hibernate.connection.password">kill4ake</property>
+        <property name="hibernate.connection.url">jdbc:mysql://172.30.194.9:3306/stock</property>
+        <property name="hibernate.connection.username">khunake</property>
+        <property name="hibernate.dialect">org.hibernate.dialect.MySQLDialect</property>
         <property name="hibernate.search.autoregister_listeners">false</property>
-        
-        <property name="hibernate.connection.provider_class">org.hibernate.connection.C3P0ConnectionProvider</property>
-	    <property name="hibernate.c3p0.acquire_increment">2</property>
-	    <property name="hibernate.c3p0.idle_test_period">300</property>
-	    <property name="hibernate.c3p0.timeout">1800</property>
-	    <property name="hibernate.c3p0.max_size">25</property>
-	    <property name="hibernate.c3p0.min_size" >3</property>
-	    <property name="hibernate.c3p0.max_statement">0</property>
-	    <property name="hibernate.c3p0.preferredTestQuery">select 1;</property>
-	    <property name="hibernate.c3p0.testConnectionOnCheckout">true</property>
-	    <property name="hibernate.c3p0.validate">true</property>
-        
+        <mapping resource="com/javath/mapping/SetSector.hbm.xml" />
+        <mapping resource="com/javath/mapping/SetMarket.hbm.xml" />
         <mapping resource="com/javath/mapping/BualuangBoardDaily.hbm.xml" />
+        <mapping resource="com/javath/mapping/SetCompany.hbm.xml" />
+        <mapping resource="com/javath/mapping/SetIndustry.hbm.xml" />
     </session-factory>
 </hibernate-configuration>

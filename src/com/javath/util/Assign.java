@@ -507,8 +507,8 @@ public class Assign extends Instance {
 		}
 		return result;
 	}
-	public static Assign getInstance(String classname, String default_Properties) {
-		return getInstance(new File(system.getProperty(classname, default_Properties)));
+	public static Assign getInstance(Class<?> classname, String default_Properties) {
+		return getInstance(new File(system.getProperty(classname.getCanonicalName(), default_Properties)));
 	}
 	public static Assign getInstance(String file_Properties) {
 		return getInstance(new File(file_Properties));

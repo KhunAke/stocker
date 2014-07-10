@@ -17,7 +17,7 @@ public class Hibernate {
 		String default_Properties = Assign.etc + Assign.File_Separator +
 				"util" + Assign.File_Separator +
 				"Hibernate.properties";
-		assign = Assign.getInstance(Hibernate.class.getCanonicalName(), default_Properties);
+		assign = Assign.getInstance(Hibernate.class, default_Properties);
 		String default_configuration = Assign.etc + Assign.File_Separator + 
 				"hibernate.cfg.xml";
 		String hibernate_cfg = assign.getProperty("configuration", default_configuration);

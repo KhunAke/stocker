@@ -3,11 +3,7 @@ package com.javath.html;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
-import java.util.NoSuchElementException;
 
-import org.apache.commons.pool.ObjectPool;
-import org.apache.commons.pool.PoolableObjectFactory;
-import org.apache.commons.pool.impl.GenericObjectPool;
 import org.apache.html.dom.HTMLDocumentImpl;
 import org.cyberneko.html.parsers.DOMFragmentParser;
 import org.w3c.dom.DocumentFragment;
@@ -17,103 +13,12 @@ import org.w3c.dom.html.HTMLDocument;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import com.javath.util.Assign;
 import com.javath.util.Instance;
 import com.javath.util.ObjectException;
 
 public class HtmlParser extends Instance {
-	
-	private final static ObjectPool<DOMFragmentParser> pool_parser;
-	private final static ObjectPool<HTMLDocument> pool_document;
-	
-	static {
-		pool_parser = initialPoolParser();
-		pool_document = initialPoolDocument();
-	}
-	
-	private final static ObjectPool<DOMFragmentParser> initialPoolParser() {
-		return new GenericObjectPool<DOMFragmentParser>(
-				new PoolableObjectFactory<DOMFragmentParser>() {
-					@Override
-					public DOMFragmentParser makeObject() 
-							throws Exception {
-						return new DOMFragmentParser();
-					}
-					@Override
-					public void activateObject(DOMFragmentParser parser) 
-							throws Exception {}
-					@Override
-					public void passivateObject(DOMFragmentParser parser) 
-							throws Exception {}
-					@Override
-					public boolean validateObject(DOMFragmentParser parser) {
-						return true;
-					}
-					@Override
-					public void destroyObject(DOMFragmentParser parser) 
-							throws Exception {}
-				});
-	}
-	private final static ObjectPool<HTMLDocument> initialPoolDocument() {
-		return new GenericObjectPool<HTMLDocument>(
-				new PoolableObjectFactory<HTMLDocument>() {
-					@Override
-					public HTMLDocument makeObject() 
-							throws Exception {
-						return new HTMLDocumentImpl();
-					}
-					@Override
-					public void activateObject(HTMLDocument document) 
-							throws Exception {}
-					@Override
-					public void passivateObject(HTMLDocument document) 
-							throws Exception {}
-					@Override
-					public boolean validateObject(HTMLDocument document) {
-						return true;
-					}
-					@Override
-					public void destroyObject(HTMLDocument document) 
-							throws Exception {}
-				});
-	}
 
-	private static DOMFragmentParser borrowParser() {
-		try {
-			return pool_parser.borrowObject();
-		} catch (NoSuchElementException e) {
-			throw new ObjectException(e);
-		} catch (IllegalStateException e) {
-			throw new ObjectException(e);
-		} catch (Exception e) {
-			throw new ObjectException(e);
-		}
-	}	
-	private static void returnParser(DOMFragmentParser parser) {
-		try {
-			pool_parser.returnObject(parser);
-		} catch (Exception e) {
-			throw new ObjectException(e);
-		}
-	}
-	private static HTMLDocument borrowDocument() {
-		try {
-			return pool_document.borrowObject();
-		} catch (NoSuchElementException e) {
-			throw new ObjectException(e);
-		} catch (IllegalStateException e) {
-			throw new ObjectException(e);
-		} catch (Exception e) {
-			throw new ObjectException(e);
-		}
-	}	
-	private static void returnDocument(HTMLDocument document) {
-		try {
-			pool_document.returnObject(document);
-		} catch (Exception e) {
-			throw new ObjectException(e);
-		}
-	}
-	
 	private InputSource source;
 	private DocumentFragment fragment;
 	
@@ -137,19 +42,21 @@ public class HtmlParser extends Instance {
 	
 	public DocumentFragment parse() {
 		if (fragment == null) {
-			DOMFragmentParser parser = borrowParser();
-			HTMLDocument document = borrowDocument();
+			DOMFragmentParser parser = (DOMFragmentParser)
+					Assign.borrowObject(DOMFragmentParser.class);
+			HTMLDocument document = (HTMLDocument)
+					Assign.borrowObject(HTMLDocumentImpl.class);
 			try {
-			fragment = document.createDocumentFragment();
-			parser.parse(source, fragment);
-			source = null;
+				fragment = document.createDocumentFragment();
+				parser.parse(source, fragment);
+				source = null;
 			} catch (SAXException e) {
 				throw new ObjectException(e);
 			} catch (IOException e) {
 				throw new ObjectException(e);
 			} finally {
-				returnDocument(document);
-				returnParser(parser);
+				Assign.returnObject(document);
+				Assign.returnObject(parser);
 			}
 		}
 		//travel(null,fragment);
@@ -165,7 +72,6 @@ public class HtmlParser extends Instance {
 		}
 		return null;
 	}
-	
 	public static String text(Node node) {
 		StringBuffer string = new StringBuffer();
 		if (node.getNodeName().equals("#text"))
@@ -181,7 +87,6 @@ public class HtmlParser extends Instance {
 	public static void print(Node node) {
 		print("", node);
 	}
-	
 	private static void print(String space, Node node) {
 		printNode(space, node);
 		Node child = node.getFirstChild();
@@ -190,7 +95,6 @@ public class HtmlParser extends Instance {
             child = child.getNextSibling();
         }
 	}
-	
 	public static void printNode(String space, Node node) {
 		StringBuffer string = new StringBuffer();
 		NamedNodeMap attributes = node.getAttributes();

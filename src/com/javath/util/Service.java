@@ -22,7 +22,7 @@ public class Service extends Instance implements Daemon, OscillatorListener {
 		String default_Properties = Assign.etc + Assign.File_Separator +
 				"util" + Assign.File_Separator +
 				"Service.properties";
-		assign = Assign.getInstance(Service.class.getCanonicalName(), default_Properties);
+		assign = Assign.getInstance(Service.class, default_Properties);
 		int ignore_length = (int) assign.getLongProperty("ignore_length", 0);
 		ignore_monitor = new String[ignore_length];
 		for (int index = 0; index < ignore_monitor.length; index++) {

@@ -31,8 +31,8 @@ import org.hibernate.Transaction;
 import org.hibernate.exception.ConstraintViolationException;
 
 import com.javath.http.Browser;
+import com.javath.http.Cookie;
 import com.javath.http.Response;
-import com.javath.http.State;
 import com.javath.logger.LOG;
 import com.javath.mapping.BualuangBoardDaily;
 import com.javath.mapping.BualuangBoardDailyHome;
@@ -75,7 +75,7 @@ public class BoardDaily extends Instance
 		String default_Properties = Assign.etc + Assign.File_Separator +
 				"stock" + Assign.File_Separator +
 				"bualuang.properties";
-		assign = Assign.getInstance(Service.class.getCanonicalName(), default_Properties);
+		assign = Assign.getInstance(BoardDaily.class, default_Properties);
 		String default_path = Assign.var + Assign.File_Separator + "bualuang"
 				+ Assign.File_Separator + "quotation";
 		storage_path = assign.getProperty("storage_path", default_path);
@@ -124,18 +124,18 @@ public class BoardDaily extends Instance
 		return date;
 	}
 	
-	private final State state;
+	private final Cookie cookie;
 	private OscillatorDivideFilter oscillator;
 	private Date wait_update;
 	
 	private final Set<NotificationListener> listeners;
 	
 	private BoardDaily() {
-		state = State.borrowObject();
+		cookie = new Cookie();
 		listeners = new HashSet<NotificationListener>();
 	}
 	
-	private void setUpdate(Date date) {
+	private long setUpdate(Date date) {
 		Calendar calendar = DateTime.borrowCalendar();
 		try {
 			calendar.setTime(date);
@@ -149,14 +149,16 @@ public class BoardDaily extends Instance
 		} finally {
 			DateTime.returnCalendar(calendar);
 		}
+		return wait_update.getTime();
 	}
 	private Response getWebPage(Date date) {
-		Browser browser = Browser.borrowObject(state.getCookieStore());
+		Browser browser = (Browser) Assign.borrowObject(Browser.class);
+		browser.setCookie(cookie.getCookieStore());
 		try {
 			browser.address(getURI(date));
 			return browser.get();
 		} finally {
-			Browser.returnObject(browser);
+			Assign.returnObject(browser);
 		}
 	}
 	private String getURI(Date date) {
@@ -228,7 +230,12 @@ public class BoardDaily extends Instance
 				return;
 			}
 			notify(NotificationEvent.Status.SUCCESS, getURI(wait_update));
-			setUpdate(getLastUpdate());
+			long date = setUpdate(BoardDaily.getLastUpdate());
+			long time = DateTime.time(
+					assign.getProperty("schedule", "18:30:00")).getTime();
+			//System.out.printf("Schedule: \"%s\"%n", DateTime.timestamp(time));
+			long datetime = DateTime.merge(date, time).getTime();
+			oscillator.setSchedule(datetime);
 		} else if (response.getStatusCode() == 404) {
 			notify(NotificationEvent.Status.FAIL, getURI(wait_update));
 			WARNING("%s: %d %s", response.getFilename(), 
@@ -321,10 +328,9 @@ public class BoardDaily extends Instance
 	public void initOscillator() {
 		if (oscillator != null)
 			return;
-		setUpdate(BoardDaily.getLastUpdate());
 		long clock = assign.getLongProperty("clock", 900000); // 15m
 		Oscillator source = Oscillator.getInstance(clock);
-		long date = wait_update.getTime();
+		long date = setUpdate(BoardDaily.getLastUpdate());
 		long time = DateTime.time(
 				assign.getProperty("schedule", "18:30:00")).getTime();
 		//System.out.printf("Schedule: \"%s\"%n", DateTime.timestamp(time));
@@ -509,12 +515,6 @@ public class BoardDaily extends Instance
 	private static void usage() {
 		HelpFormatter formatter = new HelpFormatter();
 		formatter.printHelp("BoardDaily", options);
-	}
-	
-	@Override
-	protected void finalize() throws Throwable {
-		State.returnObject(state);
-		super.finalize();
 	}
 	
 }

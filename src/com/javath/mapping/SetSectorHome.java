@@ -11,14 +11,13 @@ import org.hibernate.SessionFactory;
 import static org.hibernate.criterion.Example.create;
 
 /**
- * Home object for domain model class BualuangBoardDaily.
- * @see com.javath.mapping.BualuangBoardDaily
+ * Home object for domain model class SetSector.
+ * @see com.javath.mapping.SetSector
  * @author Hibernate Tools
  */
-public class BualuangBoardDailyHome {
+public class SetSectorHome {
 
-	private static final Log log = LogFactory
-			.getLog(BualuangBoardDailyHome.class);
+	private static final Log log = LogFactory.getLog(SetSectorHome.class);
 
 	private final SessionFactory sessionFactory = getSessionFactory();
 
@@ -33,8 +32,8 @@ public class BualuangBoardDailyHome {
 		}
 	}
 
-	public void persist(BualuangBoardDaily transientInstance) {
-		log.debug("persisting BualuangBoardDaily instance");
+	public void persist(SetSector transientInstance) {
+		log.debug("persisting SetSector instance");
 		try {
 			sessionFactory.getCurrentSession().persist(transientInstance);
 			log.debug("persist successful");
@@ -44,8 +43,8 @@ public class BualuangBoardDailyHome {
 		}
 	}
 
-	public void attachDirty(BualuangBoardDaily instance) {
-		log.debug("attaching dirty BualuangBoardDaily instance");
+	public void attachDirty(SetSector instance) {
+		log.debug("attaching dirty SetSector instance");
 		try {
 			sessionFactory.getCurrentSession().saveOrUpdate(instance);
 			log.debug("attach successful");
@@ -55,8 +54,8 @@ public class BualuangBoardDailyHome {
 		}
 	}
 
-	public void attachClean(BualuangBoardDaily instance) {
-		log.debug("attaching clean BualuangBoardDaily instance");
+	public void attachClean(SetSector instance) {
+		log.debug("attaching clean SetSector instance");
 		try {
 			sessionFactory.getCurrentSession().lock(instance, LockMode.NONE);
 			log.debug("attach successful");
@@ -66,8 +65,8 @@ public class BualuangBoardDailyHome {
 		}
 	}
 
-	public void delete(BualuangBoardDaily persistentInstance) {
-		log.debug("deleting BualuangBoardDaily instance");
+	public void delete(SetSector persistentInstance) {
+		log.debug("deleting SetSector instance");
 		try {
 			sessionFactory.getCurrentSession().delete(persistentInstance);
 			log.debug("delete successful");
@@ -77,11 +76,11 @@ public class BualuangBoardDailyHome {
 		}
 	}
 
-	public BualuangBoardDaily merge(BualuangBoardDaily detachedInstance) {
-		log.debug("merging BualuangBoardDaily instance");
+	public SetSector merge(SetSector detachedInstance) {
+		log.debug("merging SetSector instance");
 		try {
-			BualuangBoardDaily result = (BualuangBoardDaily) sessionFactory
-					.getCurrentSession().merge(detachedInstance);
+			SetSector result = (SetSector) sessionFactory.getCurrentSession()
+					.merge(detachedInstance);
 			log.debug("merge successful");
 			return result;
 		} catch (RuntimeException re) {
@@ -90,13 +89,11 @@ public class BualuangBoardDailyHome {
 		}
 	}
 
-	public BualuangBoardDaily findById(
-			com.javath.mapping.BualuangBoardDailyId id) {
-		log.debug("getting BualuangBoardDaily instance with id: " + id);
+	public SetSector findById(java.lang.Short id) {
+		log.debug("getting SetSector instance with id: " + id);
 		try {
-			BualuangBoardDaily instance = (BualuangBoardDaily) sessionFactory
-					.getCurrentSession().get(
-							"com.javath.mapping.BualuangBoardDaily", id);
+			SetSector instance = (SetSector) sessionFactory.getCurrentSession()
+					.get("com.javath.mapping.SetSector", id);
 			if (instance == null) {
 				log.debug("get successful, no instance found");
 			} else {
@@ -109,12 +106,12 @@ public class BualuangBoardDailyHome {
 		}
 	}
 
-	public List<BualuangBoardDaily> findByExample(BualuangBoardDaily instance) {
-		log.debug("finding BualuangBoardDaily instance by example");
+	public List<SetSector> findByExample(SetSector instance) {
+		log.debug("finding SetSector instance by example");
 		try {
-			List<BualuangBoardDaily> results = (List<BualuangBoardDaily>) sessionFactory
+			List<SetSector> results = (List<SetSector>) sessionFactory
 					.getCurrentSession()
-					.createCriteria("com.javath.mapping.BualuangBoardDaily")
+					.createCriteria("com.javath.mapping.SetSector")
 					.add(create(instance)).list();
 			log.debug("find by example successful, result size: "
 					+ results.size());

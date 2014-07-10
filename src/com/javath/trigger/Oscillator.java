@@ -30,7 +30,7 @@ public class Oscillator extends TimerTask implements Runnable {
 		String default_Properties = Assign.etc + Assign.File_Separator +
 				"trigger" + Assign.File_Separator +
 				"Oscillator.properties";
-		assign = Assign.getInstance(Service.class.getCanonicalName(), default_Properties);
+		assign = Assign.getInstance(Oscillator.class, default_Properties);
 		instances = new HashMap<Long,Oscillator>();
 	}
 	

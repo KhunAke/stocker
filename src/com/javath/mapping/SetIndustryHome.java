@@ -11,14 +11,13 @@ import org.hibernate.SessionFactory;
 import static org.hibernate.criterion.Example.create;
 
 /**
- * Home object for domain model class BualuangBoardDaily.
- * @see com.javath.mapping.BualuangBoardDaily
+ * Home object for domain model class SetIndustry.
+ * @see com.javath.mapping.SetIndustry
  * @author Hibernate Tools
  */
-public class BualuangBoardDailyHome {
+public class SetIndustryHome {
 
-	private static final Log log = LogFactory
-			.getLog(BualuangBoardDailyHome.class);
+	private static final Log log = LogFactory.getLog(SetIndustryHome.class);
 
 	private final SessionFactory sessionFactory = getSessionFactory();
 
@@ -33,8 +32,8 @@ public class BualuangBoardDailyHome {
 		}
 	}
 
-	public void persist(BualuangBoardDaily transientInstance) {
-		log.debug("persisting BualuangBoardDaily instance");
+	public void persist(SetIndustry transientInstance) {
+		log.debug("persisting SetIndustry instance");
 		try {
 			sessionFactory.getCurrentSession().persist(transientInstance);
 			log.debug("persist successful");
@@ -44,8 +43,8 @@ public class BualuangBoardDailyHome {
 		}
 	}
 
-	public void attachDirty(BualuangBoardDaily instance) {
-		log.debug("attaching dirty BualuangBoardDaily instance");
+	public void attachDirty(SetIndustry instance) {
+		log.debug("attaching dirty SetIndustry instance");
 		try {
 			sessionFactory.getCurrentSession().saveOrUpdate(instance);
 			log.debug("attach successful");
@@ -55,8 +54,8 @@ public class BualuangBoardDailyHome {
 		}
 	}
 
-	public void attachClean(BualuangBoardDaily instance) {
-		log.debug("attaching clean BualuangBoardDaily instance");
+	public void attachClean(SetIndustry instance) {
+		log.debug("attaching clean SetIndustry instance");
 		try {
 			sessionFactory.getCurrentSession().lock(instance, LockMode.NONE);
 			log.debug("attach successful");
@@ -66,8 +65,8 @@ public class BualuangBoardDailyHome {
 		}
 	}
 
-	public void delete(BualuangBoardDaily persistentInstance) {
-		log.debug("deleting BualuangBoardDaily instance");
+	public void delete(SetIndustry persistentInstance) {
+		log.debug("deleting SetIndustry instance");
 		try {
 			sessionFactory.getCurrentSession().delete(persistentInstance);
 			log.debug("delete successful");
@@ -77,10 +76,10 @@ public class BualuangBoardDailyHome {
 		}
 	}
 
-	public BualuangBoardDaily merge(BualuangBoardDaily detachedInstance) {
-		log.debug("merging BualuangBoardDaily instance");
+	public SetIndustry merge(SetIndustry detachedInstance) {
+		log.debug("merging SetIndustry instance");
 		try {
-			BualuangBoardDaily result = (BualuangBoardDaily) sessionFactory
+			SetIndustry result = (SetIndustry) sessionFactory
 					.getCurrentSession().merge(detachedInstance);
 			log.debug("merge successful");
 			return result;
@@ -90,13 +89,12 @@ public class BualuangBoardDailyHome {
 		}
 	}
 
-	public BualuangBoardDaily findById(
-			com.javath.mapping.BualuangBoardDailyId id) {
-		log.debug("getting BualuangBoardDaily instance with id: " + id);
+	public SetIndustry findById(java.lang.Short id) {
+		log.debug("getting SetIndustry instance with id: " + id);
 		try {
-			BualuangBoardDaily instance = (BualuangBoardDaily) sessionFactory
-					.getCurrentSession().get(
-							"com.javath.mapping.BualuangBoardDaily", id);
+			SetIndustry instance = (SetIndustry) sessionFactory
+					.getCurrentSession().get("com.javath.mapping.SetIndustry",
+							id);
 			if (instance == null) {
 				log.debug("get successful, no instance found");
 			} else {
@@ -109,12 +107,12 @@ public class BualuangBoardDailyHome {
 		}
 	}
 
-	public List<BualuangBoardDaily> findByExample(BualuangBoardDaily instance) {
-		log.debug("finding BualuangBoardDaily instance by example");
+	public List<SetIndustry> findByExample(SetIndustry instance) {
+		log.debug("finding SetIndustry instance by example");
 		try {
-			List<BualuangBoardDaily> results = (List<BualuangBoardDaily>) sessionFactory
+			List<SetIndustry> results = (List<SetIndustry>) sessionFactory
 					.getCurrentSession()
-					.createCriteria("com.javath.mapping.BualuangBoardDaily")
+					.createCriteria("com.javath.mapping.SetIndustry")
 					.add(create(instance)).list();
 			log.debug("find by example successful, result size: "
 					+ results.size());

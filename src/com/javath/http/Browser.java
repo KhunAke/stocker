@@ -10,11 +10,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 
-import org.apache.commons.pool.ObjectPool;
-import org.apache.commons.pool.PoolableObjectFactory;
-import org.apache.commons.pool.impl.GenericObjectPool;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHost;
@@ -56,15 +52,15 @@ import org.apache.http.protocol.HttpContext;
 import com.javath.util.Assign;
 import com.javath.util.Instance;
 import com.javath.util.ObjectException;
+import com.javath.util.ObjectPoolable;
 import com.javath.util.Service;
 
-public class Browser extends Instance {
+public class Browser extends Instance implements ObjectPoolable {
 	
 	private final static Assign assign;
 	private final static String USER_AGENT;
 	private final static int CONNECTION_TIMEOUT;
 	
-	private final static ObjectPool<Browser> pool_browser;
 	private final static HttpClient default_client;
 	public final static HttpHost LOCALHOST;
 	private final static HttpRequest default_request;
@@ -76,13 +72,12 @@ public class Browser extends Instance {
 		String default_Properties = Assign.etc + Assign.File_Separator +
 				"http" + Assign.File_Separator +
 				"Browser.properties";
-		assign = Assign.getInstance(Service.class.getCanonicalName(), default_Properties);
+		assign = Assign.getInstance(Browser.class, default_Properties);
 		USER_AGENT = assign.getProperty("USER_AGENT", "Mozilla/5.0 (Compatible)");
 		CONNECTION_TIMEOUT = (int) assign.getLongProperty("CONNECTION_TIMEOUT", 20000);
 		int max_total = (int) assign.getLongProperty("max_total", 200);
 		int max_per_route = (int) assign.getLongProperty("max_per_route", 20);
 		
-		pool_browser = initialPoolBrowser();
 		SchemeRegistry scheme_registry = new SchemeRegistry();
 		scheme_registry.register(
 				new Scheme("http", 80, PlainSocketFactory.getSocketFactory()));
@@ -119,54 +114,7 @@ public class Browser extends Instance {
 				HttpVersion.HTTP_1_1, HttpStatus.SC_NO_CONTENT, "No Content");
 		no_context_response.setEntity(new ByteArrayEntity(new byte[] {}));
 	}
-	
-	private final static ObjectPool<Browser> initialPoolBrowser() {
-		return new GenericObjectPool<Browser>(
-				new PoolableObjectFactory<Browser>() {
-					@Override
-					public Browser makeObject() 
-							throws Exception {
-						return new Browser();
-					}
-					@Override
-					public void activateObject(Browser browser) 
-							throws Exception {}
-					@Override
-					public void passivateObject(Browser browser) 
-							throws Exception {
-						browser.initial();
-					}
-					@Override
-					public boolean validateObject(Browser browser) {
-						return true;
-					}
-					@Override
-					public void destroyObject(Browser browser) 
-							throws Exception {}
-				});
-	}
 		
-	public static Browser borrowObject(CookieStore cookie) {
-		try {
-			Browser result = pool_browser.borrowObject();
-			result.setCookie(cookie);
-			return result;
-		} catch (NoSuchElementException e) {
-			throw new ObjectException(e);
-		} catch (IllegalStateException e) {
-			throw new ObjectException(e);
-		} catch (Exception e) {
-			throw new ObjectException(e);
-		}
-	}	
-	public static void returnObject(Browser browser) {
-		try {
-			pool_browser.returnObject(browser);
-		} catch (Exception e) {
-			throw new ObjectException(e);
-		}
-	}
-	
 	// Variable for Browser
 	private HttpClient client;
 	private final HttpContext context;
@@ -174,12 +122,12 @@ public class Browser extends Instance {
 	private URI address;
 	private HttpEntity entity;
 	
-	private Browser() {
+	public Browser() {
 		context = new BasicHttpContext();
-		initial();
 	}
 	
-	public void initial() {
+	@Override
+	public void initialObject() {
 		if (client != default_client)
 			client = default_client;
 		// Reset socket timeout
