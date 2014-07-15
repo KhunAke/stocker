@@ -1,6 +1,6 @@
 package com.javath.mapping;
 
-// Generated Jul 10, 2014 2:01:01 PM by Hibernate Tools 4.0.0
+// Generated Jul 15, 2014 1:21:50 PM by Hibernate Tools 4.0.0
 
 import java.util.Date;
 
@@ -10,6 +10,9 @@ import java.util.Date;
 public class SetCompany implements java.io.Serializable {
 
 	private String symbol;
+	private Short marketId;
+	private Short industryId;
+	private Short sectorId;
 	private String nameTh;
 	private String nameEn;
 	private String website;
@@ -22,9 +25,13 @@ public class SetCompany implements java.io.Serializable {
 		this.symbol = symbol;
 	}
 
-	public SetCompany(String symbol, String nameTh, String nameEn,
-			String website, Date update) {
+	public SetCompany(String symbol, Short marketId, Short industryId,
+			Short sectorId, String nameTh, String nameEn, String website,
+			Date update) {
 		this.symbol = symbol;
+		this.marketId = marketId;
+		this.industryId = industryId;
+		this.sectorId = sectorId;
 		this.nameTh = nameTh;
 		this.nameEn = nameEn;
 		this.website = website;
@@ -37,6 +44,30 @@ public class SetCompany implements java.io.Serializable {
 
 	public void setSymbol(String symbol) {
 		this.symbol = symbol;
+	}
+
+	public Short getMarketId() {
+		return this.marketId;
+	}
+
+	public void setMarketId(Short marketId) {
+		this.marketId = marketId;
+	}
+
+	public Short getIndustryId() {
+		return this.industryId;
+	}
+
+	public void setIndustryId(Short industryId) {
+		this.industryId = industryId;
+	}
+
+	public Short getSectorId() {
+		return this.sectorId;
+	}
+
+	public void setSectorId(Short sectorId) {
+		this.sectorId = sectorId;
 	}
 
 	public String getNameTh() {

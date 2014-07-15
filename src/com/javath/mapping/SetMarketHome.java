@@ -1,6 +1,6 @@
 package com.javath.mapping;
 
-// Generated Jul 10, 2014 2:01:02 PM by Hibernate Tools 4.0.0
+// Generated Jul 15, 2014 1:21:50 PM by Hibernate Tools 4.0.0
 
 import java.util.List;
 import javax.naming.InitialContext;
@@ -89,7 +89,7 @@ public class SetMarketHome {
 		}
 	}
 
-	public SetMarket findById(java.lang.Short id) {
+	public SetMarket findById(short id) {
 		log.debug("getting SetMarket instance with id: " + id);
 		try {
 			SetMarket instance = (SetMarket) sessionFactory.getCurrentSession()

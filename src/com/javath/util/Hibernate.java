@@ -42,4 +42,6 @@ public class Hibernate {
 		return sessionFactory;
 	}
 	
+	
+
 }
