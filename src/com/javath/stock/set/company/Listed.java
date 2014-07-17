@@ -1,14 +1,10 @@
 package com.javath.stock.set.company;
 
 import java.util.Date;
-import java.util.EventListener;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
 
 import org.hibernate.Query;
 import org.hibernate.Session;
@@ -28,7 +24,6 @@ import com.javath.mapping.SetMarketHome;
 import com.javath.mapping.SetSector;
 import com.javath.mapping.SetSectorHome;
 import com.javath.mapping.SetSectorId;
-import com.javath.trigger.MulticastEvent;
 import com.javath.trigger.Oscillator;
 import com.javath.trigger.OscillatorEvent;
 import com.javath.trigger.OscillatorListener;
@@ -36,7 +31,6 @@ import com.javath.util.Assign;
 import com.javath.util.DateTime;
 import com.javath.util.Instance;
 import com.javath.util.NotificationAdaptor;
-import com.javath.util.NotificationEvent;
 import com.javath.util.NotificationListener;
 import com.javath.util.NotificationSource;
 import com.javath.util.NotificationEvent.Status;
@@ -97,22 +91,7 @@ public class Listed extends Instance implements NotificationSource, OscillatorLi
 	@Override
 	public void run() {
 		Response response = null;
-		String locale = "en-US";
-		try {
-			response = getWebPage(locale);
-			if (response.getStatusCode() == 200)
-				note.notify(Status.DONE, getURI(locale));
-			else {
-				initTryAgain(locale);
-				return;
-			}
-			parser(response, false);
-		} catch (Exception e) {
-			initTryAgain(locale);
-			SEVERE(e);
-			return;
-		}
-		locale = "th-TH";
+		String locale = "th-TH";
 		try {
 			response = getWebPage(locale);
 			if (response.getStatusCode() == 200)
@@ -122,6 +101,21 @@ public class Listed extends Instance implements NotificationSource, OscillatorLi
 				return;
 			}
 			parser(response, true);
+		} catch (Exception e) {
+			initTryAgain(locale);
+			SEVERE(e);
+			return;
+		}
+		locale = "en-US";
+		try {
+			response = getWebPage(locale);
+			if (response.getStatusCode() == 200)
+				note.notify(Status.DONE, getURI(locale));
+			else {
+				initTryAgain(locale);
+				return;
+			}
+			parser(response, false);
 		} catch (Exception e) {
 			initTryAgain(locale);
 			SEVERE(e);
@@ -177,6 +171,8 @@ public class Listed extends Instance implements NotificationSource, OscillatorLi
 						data[COMPANY] = raw[header.get("Company")];
 						data[WEBSITE] = raw[header.get("Website")];
 					}
+					//System.out.printf("%s, %s, %s, %s, %s, %s%n",
+					//		data[SYMBOL], data[MARKET], data[INDUSTRY], data[SECTOR], data[COMPANY], data[WEBSITE]);
 					saveOrUpdate(data, update, thai);
 				} catch (NullPointerException e) {
 					header = new HashMap<String, Integer>();
@@ -194,21 +190,25 @@ public class Listed extends Instance implements NotificationSource, OscillatorLi
 		SetCompany company = null;
 		Session session = Assign.getSessionFactory().getCurrentSession();
 		session.beginTransaction();
-		try {
+		try { 
 			SetCompanyHome home = (SetCompanyHome) 
 					Assign.borrowObject(SetCompanyHome.class);
 			try {
 				company = home.findById(data[SYMBOL]);
 				SetSectorId id = id(company, data[MARKET], data[INDUSTRY], data[SECTOR] ,thai);
 				company.setMarketId(id.getMarketId());
-				company.setIndustryId(id.getMarketId());
-				company.setSectorId(id.getMarketId());
+				company.setIndustryId(id.getIndustryId());
+				company.setSectorId(id.getSectorId());
 				if (thai)
 					company.setNameTh(data[COMPANY]);
 				else
 					company.setNameEn(data[COMPANY]);
 				company.setWebsite(data[WEBSITE]);
 				company.setLastUpdate(update);
+				home.attachDirty(company);
+				System.out.printf("%s, %s, %s, %s%n",
+						company.getSymbol(), company.getMarketId(), company.getIndustryId(), company.getSectorId());
+				session.getTransaction().commit();
 			} catch (NullPointerException e) {
 				SetSectorId id = id(null, data[MARKET], data[INDUSTRY], data[SECTOR] ,thai);
 				if (thai) {
@@ -233,10 +233,12 @@ public class Listed extends Instance implements NotificationSource, OscillatorLi
 							update);
 				}
 				home.attachDirty(company);
+				System.out.printf("%s, %s, %s, %s%n",
+						company.getSymbol(), company.getMarketId(), company.getIndustryId(), company.getSectorId());
+				session.getTransaction().commit();
 			} finally {
 				Assign.returnObject(home);
 			}
-			session.getTransaction().commit();
 		} catch (Exception e) {
 			session.getTransaction().rollback();
 			throw e;
@@ -272,7 +274,7 @@ public class Listed extends Instance implements NotificationSource, OscillatorLi
 				} 
 				SetSector set_sector = findById(market_id, industry_id, sector_id);
 				if (set_sector.getNameTh() == null) {
-					set_sector.setNameTh(industry);
+					set_sector.setNameTh(sector);
 					update(set_sector);
 				} else if (!set_sector.getNameTh().equals(sector)) {
 					SetSector example_sector = new SetSector();
@@ -298,7 +300,7 @@ public class Listed extends Instance implements NotificationSource, OscillatorLi
 				} 
 				SetSector set_sector = findById(market_id, industry_id, sector_id);
 				if (set_sector.getNameEn() == null) {
-					set_sector.setNameEn(industry);
+					set_sector.setNameEn(sector);
 					update(set_sector);
 				} else if (!set_sector.getNameEn().equals(sector)) {
 					SetSector example_sector = new SetSector();
