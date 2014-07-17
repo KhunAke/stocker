@@ -332,7 +332,7 @@ public class BoardDaily extends Instance
 		Oscillator source = Oscillator.getInstance(clock);
 		long date = setUpdate(BoardDaily.getLastUpdate());
 		long time = DateTime.time(
-				assign.getProperty("schedule", "18:30:00")).getTime();
+				assign.getProperty("schedule", "19:30:00")).getTime();
 		//System.out.printf("Schedule: \"%s\"%n", DateTime.timestamp(time));
 		long datetime = DateTime.merge(date, time).getTime();
 		//System.out.printf("Schedule: \"%s\"%n", DateTime.timestamp(datetime));

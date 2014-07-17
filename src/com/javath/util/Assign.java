@@ -12,6 +12,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Properties;
@@ -45,6 +46,9 @@ public class Assign extends Instance {
 	private static final Properties system;
 	private static final Map<File,Assign> instances;
 	//
+	public static final Locale th_TH;
+	public static final Locale en_US;
+	//
 	public static final String File_Separator;
 	public static final String Line_Separator;
 	public static final String Path_Separator;
@@ -73,6 +77,9 @@ public class Assign extends Instance {
 	static {
 		system = System.getProperties();
 		instances = new HashMap<File, Assign>();
+		//
+		th_TH = Locale.forLanguageTag("th-TH");
+		en_US = Locale.US;
 		//
 		File_Separator = system.getProperty("file.separator");
 		Line_Separator = system.getProperty("line.separator");

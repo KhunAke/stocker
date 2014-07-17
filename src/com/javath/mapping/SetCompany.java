@@ -1,6 +1,6 @@
 package com.javath.mapping;
 
-// Generated Jul 15, 2014 1:21:50 PM by Hibernate Tools 4.0.0
+// Generated Jul 16, 2014 8:37:43 AM by Hibernate Tools 4.0.0
 
 import java.util.Date;
 
@@ -16,7 +16,7 @@ public class SetCompany implements java.io.Serializable {
 	private String nameTh;
 	private String nameEn;
 	private String website;
-	private Date update;
+	private Date lastUpdate;
 
 	public SetCompany() {
 	}
@@ -27,7 +27,7 @@ public class SetCompany implements java.io.Serializable {
 
 	public SetCompany(String symbol, Short marketId, Short industryId,
 			Short sectorId, String nameTh, String nameEn, String website,
-			Date update) {
+			Date lastUpdate) {
 		this.symbol = symbol;
 		this.marketId = marketId;
 		this.industryId = industryId;
@@ -35,7 +35,7 @@ public class SetCompany implements java.io.Serializable {
 		this.nameTh = nameTh;
 		this.nameEn = nameEn;
 		this.website = website;
-		this.update = update;
+		this.lastUpdate = lastUpdate;
 	}
 
 	public String getSymbol() {
@@ -94,12 +94,12 @@ public class SetCompany implements java.io.Serializable {
 		this.website = website;
 	}
 
-	public Date getUpdate() {
-		return this.update;
+	public Date getLastUpdate() {
+		return this.lastUpdate;
 	}
 
-	public void setUpdate(Date update) {
-		this.update = update;
+	public void setLastUpdate(Date lastUpdate) {
+		this.lastUpdate = lastUpdate;
 	}
 
 }

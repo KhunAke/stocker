@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
 "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
-<!-- Generated Jul 15, 2014 1:21:50 PM by Hibernate Tools 4.0.0 -->
+<!-- Generated Jul 16, 2014 8:37:43 AM by Hibernate Tools 4.0.0 -->
 <hibernate-mapping>
     <class name="com.javath.mapping.SetIndustry" table="set_industry" catalog="stock">
         <composite-id name="id" class="com.javath.mapping.SetIndustryId">

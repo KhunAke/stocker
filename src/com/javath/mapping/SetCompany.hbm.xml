@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
 "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
-<!-- Generated Jul 15, 2014 1:21:50 PM by Hibernate Tools 4.0.0 -->
+<!-- Generated Jul 16, 2014 8:37:43 AM by Hibernate Tools 4.0.0 -->
 <hibernate-mapping>
     <class name="com.javath.mapping.SetCompany" table="set_company" catalog="stock">
         <id name="symbol" type="string">
@@ -26,8 +26,8 @@
         <property name="website" type="string">
             <column name="website" />
         </property>
-        <property name="update" type="date">
-            <column name="update" length="10" />
+        <property name="lastUpdate" type="date">
+            <column name="last_update" length="10" />
         </property>
     </class>
 </hibernate-mapping>

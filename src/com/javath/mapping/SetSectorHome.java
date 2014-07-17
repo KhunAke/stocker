@@ -1,6 +1,6 @@
 package com.javath.mapping;
 
-// Generated Jul 15, 2014 1:21:50 PM by Hibernate Tools 4.0.0
+// Generated Jul 16, 2014 8:37:43 AM by Hibernate Tools 4.0.0
 
 import java.util.List;
 import javax.naming.InitialContext;
