@@ -1,0 +1,1 @@
+Method "notify" in class "com.javath.stock.set.company.Listed"

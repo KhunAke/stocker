@@ -12,9 +12,11 @@ import com.javath.util.NotificationEvent.Status;
 
 public class NotificationAdaptor implements NotificationSource {
 	
+	private final Object source;
 	private final Set<NotificationListener> listeners;
 	
-	public NotificationAdaptor() {
+	public NotificationAdaptor(Object source) {
+		this.source = source;
 		listeners = new HashSet<NotificationListener>();
 	}
 	
@@ -32,8 +34,8 @@ public class NotificationAdaptor implements NotificationSource {
 	public void notify(Status status, String message) {
 		try {
 			EventListener[] listeners = this.listeners.toArray(new EventListener[] {});
-			NotificationEvent event = new NotificationEvent(this, status, message);
-			System.out.printf("%s: %s%n", DateTime.timestamp(new Date()), event);
+			NotificationEvent event = new NotificationEvent(source, status, message);
+			output("%s: %s%n", DateTime.timestamp(new Date()), event);
 			if (listeners.length > 0 ) {
 				MulticastEvent.send("notify", listeners, event);
 			} 
@@ -45,5 +47,11 @@ public class NotificationAdaptor implements NotificationSource {
 			LOG.SEVERE(e);
 		}
 	}
-
+	
+	public void output(String message, Object... objects) {
+		System.out.printf("%s: %s%n", DateTime.timestamp(new Date()), message);
+	}
+	public void alarm(String message, Object... objects) {
+		System.err.printf("%s: %s%n", DateTime.timestamp(new Date()), message);
+	}
 }

@@ -1,11 +1,20 @@
 package com.javath.stock.set.company;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.OptionGroup;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.hibernate.Query;
 import org.hibernate.Session;
 
@@ -24,6 +33,7 @@ import com.javath.mapping.SetMarketHome;
 import com.javath.mapping.SetSector;
 import com.javath.mapping.SetSectorHome;
 import com.javath.mapping.SetSectorId;
+import com.javath.stock.bualuang.BoardDaily;
 import com.javath.trigger.Oscillator;
 import com.javath.trigger.OscillatorEvent;
 import com.javath.trigger.OscillatorListener;
@@ -31,11 +41,14 @@ import com.javath.util.Assign;
 import com.javath.util.DateTime;
 import com.javath.util.Instance;
 import com.javath.util.NotificationAdaptor;
+import com.javath.util.NotificationEvent;
 import com.javath.util.NotificationListener;
 import com.javath.util.NotificationSource;
+import com.javath.util.TaskManager;
 import com.javath.util.NotificationEvent.Status;
 
-public class Listed extends Instance implements NotificationSource, OscillatorListener, Runnable {
+public class Listed extends Instance 
+		implements NotificationSource, NotificationListener, OscillatorListener, Runnable {
 	
 	private final static int SYMBOL = 0;
 	private final static int MARKET = 1;
@@ -47,6 +60,9 @@ public class Listed extends Instance implements NotificationSource, OscillatorLi
 	private final static Assign assign;
 	private final static String page_listed;
 	private final static long try_again;
+	private final static Listed instance;
+	//
+	private static final Options options;
 	
 	static {
 		String default_Properties = Assign.etc + Assign.File_Separator +
@@ -55,16 +71,23 @@ public class Listed extends Instance implements NotificationSource, OscillatorLi
 		assign = Assign.getInstance(Listed.class, default_Properties);
 		page_listed = assign.getProperty("page_listed",
 				"http://www.set.or.th/listedcompany/static/listedCompanies_%1$s.xls");
-		try_again = assign.getLongProperty("try_again", 5000);
-		//try_again = assign.getLongProperty("try_again", 900000); // 15 minute
+		//try_again = assign.getLongProperty("try_again", 5000);
+		try_again = assign.getLongProperty("try_again", 900000); // 15 minute
+		instance = new Listed();
+		options = buildOptions();
+	}
+	
+	public static Listed getInstance() {
+		return instance;
 	}
 	
 	private Cookie cookie;
+	
 	private final NotificationAdaptor note;
 	
 	private Listed() {
 		cookie = new Cookie();
-		note = new NotificationAdaptor();
+		note = new NotificationAdaptor(this);
 	}
 	
 	@Override
@@ -86,7 +109,48 @@ public class Listed extends Instance implements NotificationSource, OscillatorLi
 	public void action(OscillatorEvent event) {
 		Oscillator oscillator = Oscillator.getInstance(try_again);
 		oscillator.removeListener(this);
-		this.run();
+		TaskManager.create(
+				String.format("%s[re-try=\"%s\"]", 
+						this.getClassName(), DateTime.timestamp(event.getTimestamp())), 
+				this);
+	}
+	@Override
+	public void notify(NotificationEvent event) {
+		if (event.isObject(BoardDaily.class) 
+			&& (event.getStatus() == Status.SUCCESS)) {
+			if (getCurrentWeek() != getUpdateWeek())
+				TaskManager.create(
+						String.format("%s[update]", 
+								this.getClassName()), 
+						this);
+			else
+				note.output("\"Company listed\" The infomation available is current.");
+		}
+	}
+	private int getCurrentWeek() {
+		int result = 0;
+		Calendar calendar = DateTime.borrowCalendar();
+		try {
+			result = calendar.get(Calendar.WEEK_OF_YEAR);
+		} finally {
+			DateTime.returnCalendar(calendar);
+		}
+		return result;
+	}
+	private int getUpdateWeek() {
+		int result = 0;
+		Session session = Assign.getSessionFactory().getCurrentSession();
+		session.beginTransaction();
+		try {
+			Query query = session.createQuery(
+					"select max(weekofyear(company.lastUpdate)) " +
+					"from SetCompany as company");
+			result = (int) query.uniqueResult();
+			session.getTransaction().commit();
+		} catch (Exception e) {
+			session.getTransaction().rollback();
+		}
+		return result;
 	}
 	@Override
 	public void run() {
@@ -94,13 +158,13 @@ public class Listed extends Instance implements NotificationSource, OscillatorLi
 		String locale = "th-TH";
 		try {
 			response = getWebPage(locale);
-			if (response.getStatusCode() == 200)
+			if (response.getStatusCode() == 200) {
 				note.notify(Status.DONE, getURI(locale));
-			else {
+				parser(response, true);
+			} else {
 				initTryAgain(locale);
 				return;
 			}
-			parser(response, true);
 		} catch (Exception e) {
 			initTryAgain(locale);
 			SEVERE(e);
@@ -109,13 +173,13 @@ public class Listed extends Instance implements NotificationSource, OscillatorLi
 		locale = "en-US";
 		try {
 			response = getWebPage(locale);
-			if (response.getStatusCode() == 200)
+			if (response.getStatusCode() == 200) {
 				note.notify(Status.DONE, getURI(locale));
-			else {
+				parser(response, false);
+			} else {
 				initTryAgain(locale);
 				return;
 			}
-			parser(response, false);
 		} catch (Exception e) {
 			initTryAgain(locale);
 			SEVERE(e);
@@ -206,8 +270,8 @@ public class Listed extends Instance implements NotificationSource, OscillatorLi
 				company.setWebsite(data[WEBSITE]);
 				company.setLastUpdate(update);
 				home.attachDirty(company);
-				System.out.printf("%s, %s, %s, %s%n",
-						company.getSymbol(), company.getMarketId(), company.getIndustryId(), company.getSectorId());
+				//System.out.printf("%s, %s, %s, %s%n",
+				//		company.getSymbol(), company.getMarketId(), company.getIndustryId(), company.getSectorId());
 				session.getTransaction().commit();
 			} catch (NullPointerException e) {
 				SetSectorId id = id(null, data[MARKET], data[INDUSTRY], data[SECTOR] ,thai);
@@ -233,8 +297,8 @@ public class Listed extends Instance implements NotificationSource, OscillatorLi
 							update);
 				}
 				home.attachDirty(company);
-				System.out.printf("%s, %s, %s, %s%n",
-						company.getSymbol(), company.getMarketId(), company.getIndustryId(), company.getSectorId());
+				//System.out.printf("%s, %s, %s, %s%n",
+				//		company.getSymbol(), company.getMarketId(), company.getIndustryId(), company.getSectorId());
 				session.getTransaction().commit();
 			} finally {
 				Assign.returnObject(home);
@@ -253,63 +317,74 @@ public class Listed extends Instance implements NotificationSource, OscillatorLi
 			market_id = company.getMarketId();
 			industry_id = company.getIndustryId();
 			sector_id = company.getSectorId();
-			if (!findById(market_id).getName()
+			SetMarket current_market = findById(market_id);
+			if (!current_market.getName()
 					.equals(market)) {
-				SetMarket example_market = new SetMarket();
-				example_market.setName(market);
-				market_id = id(example_market);
+				SetMarket update_market = new SetMarket();
+				update_market.setName(market);
+				market_id = id(update_market);
+				WARNING("Symbol=\"%s\" Market change \"%s\" to \"%s\"",
+						company.getSymbol(), current_market.getName(), update_market.getName());
 			}
 			if (thai) {
-				SetIndustry set_industry = findById(market_id, industry_id);
-				if (set_industry.getNameTh() == null) {
-					set_industry.setNameTh(industry);
-					update(set_industry);
-				} else if (!set_industry.getNameTh().equals(industry)) {
-					SetIndustry example_industry = new SetIndustry();
-					SetIndustryId example_industry_id = new SetIndustryId();
-					example_industry_id.setMarketId(market_id);
-					example_industry.setId(example_industry_id);
-					example_industry.setNameTh(industry);
-					industry_id = id(example_industry);
+				SetIndustry current_industry = findById(market_id, industry_id);
+				if (current_industry.getNameTh() == null) {
+					current_industry.setNameTh(industry);
+					update(current_industry);
+				} else if (!current_industry.getNameTh().equals(industry)) {
+					SetIndustry update_industry = new SetIndustry();
+					SetIndustryId update_industry_id = new SetIndustryId();
+					update_industry_id.setMarketId(market_id);
+					update_industry.setId(update_industry_id);
+					update_industry.setNameTh(industry);
+					industry_id = id(update_industry);
+					WARNING("Symbol=\"%s\" Industry change \"%s\" to \"%s\"",
+							company.getSymbol(), current_industry.getNameTh(), update_industry.getNameTh());
 				} 
-				SetSector set_sector = findById(market_id, industry_id, sector_id);
-				if (set_sector.getNameTh() == null) {
-					set_sector.setNameTh(sector);
-					update(set_sector);
-				} else if (!set_sector.getNameTh().equals(sector)) {
-					SetSector example_sector = new SetSector();
-					SetSectorId example_sector_id = new SetSectorId();
-					example_sector_id.setMarketId(market_id);
-					example_sector_id.setIndustryId(industry_id);
-					example_sector.setId(example_sector_id);
-					example_sector.setNameTh(sector);
-					sector_id = id(example_sector);
+				SetSector current_sector = findById(market_id, industry_id, sector_id);
+				if (current_sector.getNameTh() == null) {
+					current_sector.setNameTh(sector);
+					update(current_sector);
+				} else if (!current_sector.getNameTh().equals(sector)) {
+					SetSector update_sector = new SetSector();
+					SetSectorId update_sector_id = new SetSectorId();
+					update_sector_id.setMarketId(market_id);
+					update_sector_id.setIndustryId(industry_id);
+					update_sector.setId(update_sector_id);
+					update_sector.setNameTh(sector);
+					sector_id = id(update_sector);
+					WARNING("Symbol=\"%s\" Sector change \"%s\" to \"%s\"",
+							company.getSymbol(), current_sector.getNameTh(), update_sector.getNameTh());
 				}
 			} else {
-				SetIndustry set_industry = findById(market_id, industry_id);
-				if (set_industry.getNameEn() == null) {
-					set_industry.setNameEn(industry);
-					update(set_industry);
-				} else if (!set_industry.getNameEn().equals(industry)) {
-					SetIndustry example_industry = new SetIndustry();
-					SetIndustryId example_industry_id = new SetIndustryId();
-					example_industry_id.setMarketId(market_id);
-					example_industry.setId(example_industry_id);
-					example_industry.setNameEn(industry);
-					industry_id = id(example_industry);
+				SetIndustry current_industry = findById(market_id, industry_id);
+				if (current_industry.getNameEn() == null) {
+					current_industry.setNameEn(industry);
+					update(current_industry);
+				} else if (!current_industry.getNameEn().equals(industry)) {
+					SetIndustry update_industry = new SetIndustry();
+					SetIndustryId update_industry_id = new SetIndustryId();
+					update_industry_id.setMarketId(market_id);
+					update_industry.setId(update_industry_id);
+					update_industry.setNameEn(industry);
+					industry_id = id(update_industry);
+					WARNING("Symbol=\"%s\" Industry change \"%s\" to \"%s\"",
+							company.getSymbol(), current_industry.getNameEn(), update_industry.getNameEn());
 				} 
-				SetSector set_sector = findById(market_id, industry_id, sector_id);
-				if (set_sector.getNameEn() == null) {
-					set_sector.setNameEn(sector);
-					update(set_sector);
-				} else if (!set_sector.getNameEn().equals(sector)) {
-					SetSector example_sector = new SetSector();
-					SetSectorId example_sector_id = new SetSectorId();
-					example_sector_id.setMarketId(market_id);
-					example_sector_id.setIndustryId(industry_id);
-					example_sector.setId(example_sector_id);
-					example_sector.setNameEn(sector);
-					sector_id = id(example_sector);
+				SetSector current_sector = findById(market_id, industry_id, sector_id);
+				if (current_sector.getNameEn() == null) {
+					current_sector.setNameEn(sector);
+					update(current_sector);
+				} else if (!current_sector.getNameEn().equals(sector)) {
+					SetSector update_sector = new SetSector();
+					SetSectorId update_sector_id = new SetSectorId();
+					update_sector_id.setMarketId(market_id);
+					update_sector_id.setIndustryId(industry_id);
+					update_sector.setId(update_sector_id);
+					update_sector.setNameEn(sector);
+					sector_id = id(update_sector);
+					WARNING("Symbol=\"%s\" Sector change \"%s\" to \"%s\"",
+							company.getSymbol(), current_sector.getNameEn(), update_sector.getNameEn());
 				}
 			}
 		} catch (NullPointerException e) {
@@ -484,9 +559,73 @@ public class Listed extends Instance implements NotificationSource, OscillatorLi
 	}
 	
 	public static void main(String[] args) {
-		Listed listed = new Listed();
-		listed.run();
+		CommandLine line = commandline(args);
+		int main_option = 0;
+		if (line.hasOption("update"))
+			main_option += 1;
+		if (line.hasOption("help") || (main_option > 1)) {
+			usage();
+			return;
+		}
+		Listed listed = Listed.getInstance();
+		if (line.hasOption("update")) {
+			if (listed.getCurrentWeek() != listed.getUpdateWeek())
+				TaskManager.create(
+						String.format("%s[update]", 
+								listed.getClassName()), 
+								listed);
+			else {
+				listed.output("\"Company listed\" The infomation available is current.");
+			}
+		}
 	}
-
+	
+	private static CommandLine commandline(String[] args) {
+		// CommandLineParser parser = new BasicParser();
+		// CommandLineParser parser = new PosixParser();
+		try {
+			//return new BasicParser().parse(options, args );
+			//return new PosixParser().parse(options, args );
+			return new GnuParser().parse(options, args );
+		} catch (ParseException e) {
+			return commandline(new String[] {"--help"});
+		}
+	}
+	@SuppressWarnings("static-access")
+	private static Options buildOptions() {
+		Options options = new Options();
+		OptionGroup group = new OptionGroup();
+		/**
+		// Option "--date"
+		Option date = OptionBuilder
+				.withArgName("yyyy-mm-dd")
+				.hasArg()
+                .withDescription("extract data from the BLS website on \"date\"")
+                .withLongOpt("date")
+                .create();
+		//options.addOption(date);
+		/**/
+		// Option "--help"
+		Option help = OptionBuilder
+                .withDescription("print this message")
+                .withLongOpt("help")
+                .create();
+		//options.addOption(help);
+		// Option "--update"
+		Option update = OptionBuilder
+                .withDescription("check week update")
+                .withLongOpt("update")
+                .create();
+		//options.addOption(update);
+		group.addOption(help);
+		group.addOption(update);
+		group.setRequired(true);
+		options.addOptionGroup(group);
+		return options;
+	}
+	private static void usage() {
+		HelpFormatter formatter = new HelpFormatter();
+		formatter.printHelp("Listed", options);
+	}
 
 }

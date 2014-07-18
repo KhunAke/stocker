@@ -9,13 +9,9 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.EventListener;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.GnuParser;
@@ -37,7 +33,7 @@ import com.javath.logger.LOG;
 import com.javath.mapping.BualuangBoardDaily;
 import com.javath.mapping.BualuangBoardDailyHome;
 import com.javath.mapping.BualuangBoardDailyId;
-import com.javath.trigger.MulticastEvent;
+import com.javath.stock.set.company.Listed;
 import com.javath.trigger.Oscillator;
 import com.javath.trigger.OscillatorDivideFilter;
 import com.javath.trigger.OscillatorEvent;
@@ -45,12 +41,11 @@ import com.javath.trigger.OscillatorLoader;
 import com.javath.util.Assign;
 import com.javath.util.DateTime;
 import com.javath.util.Instance;
-import com.javath.util.NotificationEvent;
 import com.javath.util.NotificationEvent.Status;
+import com.javath.util.NotificationAdaptor;
 import com.javath.util.NotificationListener;
 import com.javath.util.NotificationSource;
 import com.javath.util.ObjectException;
-import com.javath.util.Service;
 import com.javath.util.TaskManager;
 import com.javath.util.TextSpliter;
 
@@ -128,11 +123,13 @@ public class BoardDaily extends Instance
 	private OscillatorDivideFilter oscillator;
 	private Date wait_update;
 	
-	private final Set<NotificationListener> listeners;
+	private final NotificationAdaptor note;
 	
 	private BoardDaily() {
 		cookie = new Cookie();
-		listeners = new HashSet<NotificationListener>();
+		note = new NotificationAdaptor(this);
+		if (assign.getBooleanProperty("company_listed", false)) 
+			addListener(Listed.getInstance());
 	}
 	
 	private long setUpdate(Date date) {
@@ -167,30 +164,11 @@ public class BoardDaily extends Instance
 	
 	@Override
 	public boolean addListener(NotificationListener listener) {
-		return listeners.add(listener);
+		return note.addListener(listener);
 	}
 	@Override
 	public boolean removeListener(NotificationListener listener) {
-		return listeners.remove(listener);
-	}
-	public void notify(Status status, String message, Object... objects) {
-		notify(status, String.format(message, objects));
-	}
-	public void notify(Status status, String message) {
-		try {
-			EventListener[] listeners = this.listeners.toArray(new EventListener[] {});
-			NotificationEvent event = new NotificationEvent(this, status, message);
-			System.out.printf("%s: %s%n", DateTime.timestamp(new Date()), event);
-			if (listeners.length > 0 ) {
-				MulticastEvent.send("notify", listeners, event);
-			} 
-		} catch (NoSuchElementException e) {
-			SEVERE(e);
-		} catch (IllegalStateException e) {
-			SEVERE(e);
-		} catch (Exception e) {
-			SEVERE(e);
-		}
+		return note.removeListener(listener);
 	}
 	
 	@Override
@@ -218,7 +196,7 @@ public class BoardDaily extends Instance
 							//String.format("%1$td%1$tm%1$tY.txt", wait_update));
 				}
 			}
-			notify(NotificationEvent.Status.DONE, getURI(wait_update));
+			note.notify(Status.DONE, getURI(wait_update));
 			try {
 				upload(response.getContent());
 			} catch (Exception e) {
@@ -229,7 +207,7 @@ public class BoardDaily extends Instance
 				e.printStackTrace(System.out);
 				return;
 			}
-			notify(NotificationEvent.Status.SUCCESS, getURI(wait_update));
+			note.notify(Status.SUCCESS, getURI(wait_update));
 			long date = setUpdate(BoardDaily.getLastUpdate());
 			long time = DateTime.time(
 					assign.getProperty("schedule", "18:30:00")).getTime();
@@ -237,13 +215,13 @@ public class BoardDaily extends Instance
 			long datetime = DateTime.merge(date, time).getTime();
 			oscillator.setSchedule(datetime);
 		} else if (response.getStatusCode() == 404) {
-			notify(NotificationEvent.Status.FAIL, getURI(wait_update));
+			note.notify(Status.FAIL, getURI(wait_update));
 			WARNING("%s: %d %s", response.getFilename(), 
 					response.getStatusCode(), response.getReasonPhrase());
 			if (wait_update.compareTo(DateTime.date()) < 0)
 				setUpdate(wait_update);
 		} else {
-			notify(NotificationEvent.Status.UNKNOW, getURI(wait_update));
+			note.notify(Status.UNKNOW, getURI(wait_update));
 			WARNING("%s: %d %s", response.getFilename(), 
 					response.getStatusCode(), response.getReasonPhrase());
 			Oscillator source = oscillator.getSource();

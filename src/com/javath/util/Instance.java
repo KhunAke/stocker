@@ -220,6 +220,13 @@ public class Instance {
 			}
 	}
 
+	protected void output(String message, Object... objects) {
+		System.out.printf("%s: %s%n", DateTime.timestamp(new Date()), message);
+	}
+	protected void alarm(String message, Object... objects) {
+		System.err.printf("%s: %s%n", DateTime.timestamp(new Date()), message);
+	}
+	
 	@Override
 	public String toString() {
 		return String.format("%s[InstanceId=%d]",

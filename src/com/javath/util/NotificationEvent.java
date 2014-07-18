@@ -26,14 +26,24 @@ public class NotificationEvent extends EventObject {
 		this.status = status;
 		this.message = message;
 	}
-
-	public String getMessage() {
+	
+	public boolean isClass(Class<?> classname) {
+		Object source = getSource();
+		return source.getClass().getCanonicalName()
+				.equals(classname.getCanonicalName());
+	}
+	public boolean isObject(Object object) {
+		Object source = getSource();
+		return source.equals(object);
+	}
+	
+ 	public String getMessage() {
 		return message;
 	}
-
 	public Status getStatus() {
 		return status;
 	}
+	
 	public String toString() {
 		return String.format("%2$s; %1$s", status, message);
 	}
