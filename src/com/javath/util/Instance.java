@@ -221,10 +221,12 @@ public class Instance {
 	}
 
 	protected void output(String message, Object... objects) {
-		System.out.printf("%s: %s%n", DateTime.timestamp(new Date()), message);
+		System.out.printf("%s: %s", DateTime.timestamp(new Date()), 
+				String.format(message, objects));
 	}
 	protected void alarm(String message, Object... objects) {
-		System.err.printf("%s: %s%n", DateTime.timestamp(new Date()), message);
+		System.err.printf("%s: %s", DateTime.timestamp(new Date()), 
+				String.format(message, objects));
 	}
 	
 	@Override

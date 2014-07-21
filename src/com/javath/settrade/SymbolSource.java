@@ -1,4 +1,4 @@
-package com.javath.stock;
+package com.javath.settrade;
 
 public interface SymbolSource {
 	public boolean addListener(String symbol, SymbolListener listener);

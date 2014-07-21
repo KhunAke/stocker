@@ -3,8 +3,8 @@
 "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 <!-- Generated Jul 21, 2014 12:58:19 PM by Hibernate Tools 4.0.0 -->
 <hibernate-mapping>
-    <class name="com.javath.mapping.BualuangBoardDaily" table="bualuang_board_daily" catalog="stock">
-        <composite-id name="id" class="com.javath.mapping.BualuangBoardDailyId">
+    <class name="com.javath.mapping.SettradeBoard" table="settrade_board" catalog="stock">
+        <composite-id name="id" class="com.javath.mapping.SettradeBoardId">
             <key-property name="symbol" type="string">
                 <column name="symbol" length="24" />
             </key-property>
@@ -21,8 +21,20 @@
         <property name="low" type="java.lang.Double">
             <column name="low" precision="22" scale="0" />
         </property>
-        <property name="close" type="java.lang.Double">
-            <column name="close" precision="22" scale="0" />
+        <property name="last" type="java.lang.Double">
+            <column name="last" precision="22" scale="0" />
+        </property>
+        <property name="bid" type="java.lang.Double">
+            <column name="bid" precision="22" scale="0" />
+        </property>
+        <property name="bidVolume" type="java.lang.Long">
+            <column name="bid_volume" />
+        </property>
+        <property name="offer" type="java.lang.Double">
+            <column name="offer" precision="22" scale="0" />
+        </property>
+        <property name="offerVolume" type="java.lang.Long">
+            <column name="offer_volume" />
         </property>
         <property name="volume" type="java.lang.Long">
             <column name="volume" />

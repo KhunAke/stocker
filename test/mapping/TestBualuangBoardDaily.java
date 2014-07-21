@@ -9,10 +9,10 @@ import javax.naming.NamingException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 
+import com.javath.bualuang.BoardDaily;
 import com.javath.mapping.BualuangBoardDaily;
 import com.javath.mapping.BualuangBoardDailyHome;
 import com.javath.mapping.BualuangBoardDailyId;
-import com.javath.stock.bualuang.BoardDaily;
 import com.javath.trigger.Oscillator;
 import com.javath.util.NotificationEvent;
 import com.javath.util.NotificationListener;

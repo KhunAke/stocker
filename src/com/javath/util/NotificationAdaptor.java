@@ -35,7 +35,7 @@ public class NotificationAdaptor implements NotificationSource {
 		try {
 			EventListener[] listeners = this.listeners.toArray(new EventListener[] {});
 			NotificationEvent event = new NotificationEvent(source, status, message);
-			output("%s: %s%n", DateTime.timestamp(new Date()), event);
+			output("%s%n", event);
 			if (listeners.length > 0 ) {
 				MulticastEvent.send("notify", listeners, event);
 			} 
@@ -49,9 +49,11 @@ public class NotificationAdaptor implements NotificationSource {
 	}
 	
 	public void output(String message, Object... objects) {
-		System.out.printf("%s: %s%n", DateTime.timestamp(new Date()), message);
+		System.out.printf("%s: %s", DateTime.timestamp(new Date()), 
+				String.format(message, objects));
 	}
 	public void alarm(String message, Object... objects) {
-		System.err.printf("%s: %s%n", DateTime.timestamp(new Date()), message);
+		System.err.printf("%s: %s", DateTime.timestamp(new Date()), 
+				String.format(message, objects));
 	}
 }

@@ -1,4 +1,4 @@
-package com.javath.stock.set.company;
+package com.javath.set.company;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -18,6 +18,7 @@ import org.apache.commons.cli.ParseException;
 import org.hibernate.Query;
 import org.hibernate.Session;
 
+import com.javath.bualuang.BoardDaily;
 import com.javath.html.HtmlParser;
 import com.javath.html.TextNode;
 import com.javath.http.Browser;
@@ -33,7 +34,6 @@ import com.javath.mapping.SetMarketHome;
 import com.javath.mapping.SetSector;
 import com.javath.mapping.SetSectorHome;
 import com.javath.mapping.SetSectorId;
-import com.javath.stock.bualuang.BoardDaily;
 import com.javath.trigger.Oscillator;
 import com.javath.trigger.OscillatorEvent;
 import com.javath.trigger.OscillatorListener;
@@ -66,7 +66,6 @@ public class Listed extends Instance
 	
 	static {
 		String default_Properties = Assign.etc + Assign.File_Separator +
-				"stock" + Assign.File_Separator +
 				"set.properties";
 		assign = Assign.getInstance(Listed.class, default_Properties);
 		page_listed = assign.getProperty("page_listed",
@@ -116,7 +115,7 @@ public class Listed extends Instance
 	}
 	@Override
 	public void notify(NotificationEvent event) {
-		if (event.isObject(BoardDaily.class) 
+		if (event.isClass(BoardDaily.class) 
 			&& (event.getStatus() == Status.SUCCESS)) {
 			if (getCurrentWeek() != getUpdateWeek())
 				TaskManager.create(
@@ -124,7 +123,8 @@ public class Listed extends Instance
 								this.getClassName()), 
 						this);
 			else
-				note.output("\"Company listed\" The infomation available is current.");
+				//note.output("\"Company listed\" The infomation available is current.");
+				note.output("\"Company listed\" skip.");
 		}
 	}
 	private int getCurrentWeek() {
@@ -281,6 +281,9 @@ public class Listed extends Instance
 							id.getMarketId(),
 							id.getIndustryId(),
 							id.getSectorId(),
+							false,
+							false,
+							false,
 							data[COMPANY],
 							null,
 							data[WEBSITE],
@@ -291,6 +294,9 @@ public class Listed extends Instance
 							id.getMarketId(),
 							id.getIndustryId(),
 							id.getSectorId(),
+							false,
+							false,
+							false,
 							null,
 							data[COMPANY],
 							data[WEBSITE],
@@ -575,7 +581,8 @@ public class Listed extends Instance
 								listed.getClassName()), 
 								listed);
 			else {
-				listed.output("\"Company listed\" The infomation available is current.");
+				//listed.output("\"Company listed\" The infomation available is current.");
+				listed.output("\"Company listed\" skip.");
 			}
 		}
 	}

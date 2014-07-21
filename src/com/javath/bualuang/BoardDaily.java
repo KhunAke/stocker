@@ -1,4 +1,4 @@
-package com.javath.stock.bualuang;
+package com.javath.bualuang;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -33,7 +33,7 @@ import com.javath.logger.LOG;
 import com.javath.mapping.BualuangBoardDaily;
 import com.javath.mapping.BualuangBoardDailyHome;
 import com.javath.mapping.BualuangBoardDailyId;
-import com.javath.stock.set.company.Listed;
+import com.javath.set.company.Listed;
 import com.javath.trigger.Oscillator;
 import com.javath.trigger.OscillatorDivideFilter;
 import com.javath.trigger.OscillatorEvent;
@@ -68,7 +68,6 @@ public class BoardDaily extends Instance
 
 	static {
 		String default_Properties = Assign.etc + Assign.File_Separator +
-				"stock" + Assign.File_Separator +
 				"bualuang.properties";
 		assign = Assign.getInstance(BoardDaily.class, default_Properties);
 		String default_path = Assign.var + Assign.File_Separator + "bualuang"

@@ -13,8 +13,10 @@
         <property name="hibernate.search.autoregister_listeners">false</property>
         <mapping resource="com/javath/mapping/SetSector.hbm.xml" />
         <mapping resource="com/javath/mapping/SetMarket.hbm.xml" />
+        <mapping resource="com/javath/mapping/SettradeBoard.hbm.xml" />
         <mapping resource="com/javath/mapping/BualuangBoardDaily.hbm.xml" />
         <mapping resource="com/javath/mapping/SetCompany.hbm.xml" />
         <mapping resource="com/javath/mapping/SetIndustry.hbm.xml" />
+        <mapping resource="com/javath/mapping/SettradeMarket.hbm.xml" />
     </session-factory>
 </hibernate-configuration>

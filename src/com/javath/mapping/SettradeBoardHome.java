@@ -11,13 +11,13 @@ import org.hibernate.SessionFactory;
 import static org.hibernate.criterion.Example.create;
 
 /**
- * Home object for domain model class BualuangBoardDaily.
- * @see com.javath.mapping.BualuangBoardDaily
+ * Home object for domain model class SettradeBoard.
+ * @see com.javath.mapping.SettradeBoard
  * @author Hibernate Tools
  */
-public class BualuangBoardDailyHome {
+public class SettradeBoardHome {
 
-    private static final Log log = LogFactory.getLog(BualuangBoardDailyHome.class);
+    private static final Log log = LogFactory.getLog(SettradeBoardHome.class);
 
     private final SessionFactory sessionFactory = getSessionFactory();
     
@@ -31,8 +31,8 @@ public class BualuangBoardDailyHome {
         }
     }
     
-    public void persist(BualuangBoardDaily transientInstance) {
-        log.debug("persisting BualuangBoardDaily instance");
+    public void persist(SettradeBoard transientInstance) {
+        log.debug("persisting SettradeBoard instance");
         try {
             sessionFactory.getCurrentSession().persist(transientInstance);
             log.debug("persist successful");
@@ -43,8 +43,8 @@ public class BualuangBoardDailyHome {
         }
     }
     
-    public void attachDirty(BualuangBoardDaily instance) {
-        log.debug("attaching dirty BualuangBoardDaily instance");
+    public void attachDirty(SettradeBoard instance) {
+        log.debug("attaching dirty SettradeBoard instance");
         try {
             sessionFactory.getCurrentSession().saveOrUpdate(instance);
             log.debug("attach successful");
@@ -55,8 +55,8 @@ public class BualuangBoardDailyHome {
         }
     }
     
-    public void attachClean(BualuangBoardDaily instance) {
-        log.debug("attaching clean BualuangBoardDaily instance");
+    public void attachClean(SettradeBoard instance) {
+        log.debug("attaching clean SettradeBoard instance");
         try {
             sessionFactory.getCurrentSession().lock(instance, LockMode.NONE);
             log.debug("attach successful");
@@ -67,8 +67,8 @@ public class BualuangBoardDailyHome {
         }
     }
     
-    public void delete(BualuangBoardDaily persistentInstance) {
-        log.debug("deleting BualuangBoardDaily instance");
+    public void delete(SettradeBoard persistentInstance) {
+        log.debug("deleting SettradeBoard instance");
         try {
             sessionFactory.getCurrentSession().delete(persistentInstance);
             log.debug("delete successful");
@@ -79,10 +79,10 @@ public class BualuangBoardDailyHome {
         }
     }
     
-    public BualuangBoardDaily merge(BualuangBoardDaily detachedInstance) {
-        log.debug("merging BualuangBoardDaily instance");
+    public SettradeBoard merge(SettradeBoard detachedInstance) {
+        log.debug("merging SettradeBoard instance");
         try {
-            BualuangBoardDaily result = (BualuangBoardDaily) sessionFactory.getCurrentSession()
+            SettradeBoard result = (SettradeBoard) sessionFactory.getCurrentSession()
                     .merge(detachedInstance);
             log.debug("merge successful");
             return result;
@@ -93,11 +93,11 @@ public class BualuangBoardDailyHome {
         }
     }
     
-    public BualuangBoardDaily findById( com.javath.mapping.BualuangBoardDailyId id) {
-        log.debug("getting BualuangBoardDaily instance with id: " + id);
+    public SettradeBoard findById( com.javath.mapping.SettradeBoardId id) {
+        log.debug("getting SettradeBoard instance with id: " + id);
         try {
-            BualuangBoardDaily instance = (BualuangBoardDaily) sessionFactory.getCurrentSession()
-                    .get("com.javath.mapping.BualuangBoardDaily", id);
+            SettradeBoard instance = (SettradeBoard) sessionFactory.getCurrentSession()
+                    .get("com.javath.mapping.SettradeBoard", id);
             if (instance==null) {
                 log.debug("get successful, no instance found");
             }
@@ -112,11 +112,11 @@ public class BualuangBoardDailyHome {
         }
     }
     
-    public List<BualuangBoardDaily> findByExample(BualuangBoardDaily instance) {
-        log.debug("finding BualuangBoardDaily instance by example");
+    public List<SettradeBoard> findByExample(SettradeBoard instance) {
+        log.debug("finding SettradeBoard instance by example");
         try {
-            List<BualuangBoardDaily> results = (List<BualuangBoardDaily>) sessionFactory.getCurrentSession()
-                    .createCriteria("com.javath.mapping.BualuangBoardDaily")
+            List<SettradeBoard> results = (List<SettradeBoard>) sessionFactory.getCurrentSession()
+                    .createCriteria("com.javath.mapping.SettradeBoard")
                     .add( create(instance) )
             .list();
             log.debug("find by example successful, result size: " + results.size());
