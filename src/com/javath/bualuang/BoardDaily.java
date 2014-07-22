@@ -33,7 +33,6 @@ import com.javath.logger.LOG;
 import com.javath.mapping.BualuangBoardDaily;
 import com.javath.mapping.BualuangBoardDailyHome;
 import com.javath.mapping.BualuangBoardDailyId;
-import com.javath.set.company.Listed;
 import com.javath.trigger.Oscillator;
 import com.javath.trigger.OscillatorDivideFilter;
 import com.javath.trigger.OscillatorEvent;
@@ -41,8 +40,8 @@ import com.javath.trigger.OscillatorLoader;
 import com.javath.util.Assign;
 import com.javath.util.DateTime;
 import com.javath.util.Instance;
-import com.javath.util.NotificationEvent.Status;
 import com.javath.util.NotificationAdaptor;
+import com.javath.util.NotificationEvent.NoteStatus;
 import com.javath.util.NotificationListener;
 import com.javath.util.NotificationSource;
 import com.javath.util.ObjectException;
@@ -95,7 +94,7 @@ public class BoardDaily extends Instance
 						"\"spliter_headers\" at order %d", index));
 			}
 		
-		String[] positions = assign.getProperty("spliter_positions","").split(",");
+		String[] positions = assign.getProperty("spliter_positions","0").split(",");
 		spliter_positions = new int[positions.length];
 		for (int index = 0; index < positions.length; index++) {
 			spliter_positions[index] = Integer.valueOf(positions[index]);
@@ -127,8 +126,6 @@ public class BoardDaily extends Instance
 	private BoardDaily() {
 		cookie = new Cookie();
 		note = new NotificationAdaptor(this);
-		if (assign.getBooleanProperty("company_listed", false)) 
-			addListener(Listed.getInstance());
 	}
 	
 	private long setUpdate(Date date) {
@@ -195,7 +192,7 @@ public class BoardDaily extends Instance
 							//String.format("%1$td%1$tm%1$tY.txt", wait_update));
 				}
 			}
-			note.notify(Status.DONE, getURI(wait_update));
+			note.notify(NoteStatus.DONE, getURI(wait_update));
 			try {
 				upload(response.getContent());
 			} catch (Exception e) {
@@ -206,7 +203,7 @@ public class BoardDaily extends Instance
 				e.printStackTrace(System.out);
 				return;
 			}
-			note.notify(Status.SUCCESS, getURI(wait_update));
+			note.notify(NoteStatus.SUCCESS, getURI(wait_update));
 			long date = setUpdate(BoardDaily.getLastUpdate());
 			long time = DateTime.time(
 					assign.getProperty("schedule", "18:30:00")).getTime();
@@ -214,13 +211,13 @@ public class BoardDaily extends Instance
 			long datetime = DateTime.merge(date, time).getTime();
 			oscillator.setSchedule(datetime);
 		} else if (response.getStatusCode() == 404) {
-			note.notify(Status.FAIL, getURI(wait_update));
+			note.notify(NoteStatus.FAIL, getURI(wait_update));
 			WARNING("%s: %d %s", response.getFilename(), 
 					response.getStatusCode(), response.getReasonPhrase());
 			if (wait_update.compareTo(DateTime.date()) < 0)
 				setUpdate(wait_update);
 		} else {
-			note.notify(Status.UNKNOW, getURI(wait_update));
+			note.notify(NoteStatus.UNKNOW, getURI(wait_update));
 			WARNING("%s: %d %s", response.getFilename(), 
 					response.getStatusCode(), response.getReasonPhrase());
 			Oscillator source = oscillator.getSource();

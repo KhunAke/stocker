@@ -6,7 +6,7 @@ public class NotificationEvent extends EventObject {
 
 	private static final long serialVersionUID = 1L;
 	
-	public enum Status {
+	public enum NoteStatus {
 		UNKNOW,
 		PROCESS,
 		PENDING,
@@ -15,13 +15,13 @@ public class NotificationEvent extends EventObject {
 		SUCCESS
 	}
 	
-	private Status status;
+	private NoteStatus status;
 	private String message;
 
-	public NotificationEvent(Object source, Status status, String message, Object... objects) {
+	public NotificationEvent(Object source, NoteStatus status, String message, Object... objects) {
 		this(source, status, String.format(message, objects));
 	}
-	public NotificationEvent(Object source, Status status, String message) {
+	public NotificationEvent(Object source, NoteStatus status, String message) {
 		super(source);
 		this.status = status;
 		this.message = message;
@@ -40,7 +40,7 @@ public class NotificationEvent extends EventObject {
  	public String getMessage() {
 		return message;
 	}
-	public Status getStatus() {
+	public NoteStatus getStatus() {
 		return status;
 	}
 	

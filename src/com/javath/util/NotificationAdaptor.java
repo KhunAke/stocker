@@ -8,7 +8,7 @@ import java.util.Set;
 
 import com.javath.logger.LOG;
 import com.javath.trigger.MulticastEvent;
-import com.javath.util.NotificationEvent.Status;
+import com.javath.util.NotificationEvent.NoteStatus;
 
 public class NotificationAdaptor implements NotificationSource {
 	
@@ -28,10 +28,10 @@ public class NotificationAdaptor implements NotificationSource {
 	public boolean removeListener(NotificationListener listener) {
 		return listeners.remove(listener);
 	}
-	public void notify(Status status, String message, Object... objects) {
+	public void notify(NoteStatus status, String message, Object... objects) {
 		notify(status, String.format(message, objects));
 	}
-	public void notify(Status status, String message) {
+	public void notify(NoteStatus status, String message) {
 		try {
 			EventListener[] listeners = this.listeners.toArray(new EventListener[] {});
 			NotificationEvent event = new NotificationEvent(source, status, message);

@@ -42,10 +42,10 @@ import com.javath.util.DateTime;
 import com.javath.util.Instance;
 import com.javath.util.NotificationAdaptor;
 import com.javath.util.NotificationEvent;
+import com.javath.util.NotificationEvent.NoteStatus;
 import com.javath.util.NotificationListener;
 import com.javath.util.NotificationSource;
 import com.javath.util.TaskManager;
-import com.javath.util.NotificationEvent.Status;
 
 public class Listed extends Instance 
 		implements NotificationSource, NotificationListener, OscillatorListener, Runnable {
@@ -87,6 +87,8 @@ public class Listed extends Instance
 	private Listed() {
 		cookie = new Cookie();
 		note = new NotificationAdaptor(this);
+		NotificationSource source = BoardDaily.getInstance();
+		source.addListener(this);
 	}
 	
 	@Override
@@ -99,7 +101,7 @@ public class Listed extends Instance
 	}
 	
 	private void initTryAgain(String locale) {
-		note.notify(Status.FAIL, getURI(locale));
+		note.notify(NoteStatus.FAIL, getURI(locale));
 		Oscillator oscillator = Oscillator.getInstance(try_again);
 		oscillator.addListener(this);
 		oscillator.start();
@@ -116,7 +118,7 @@ public class Listed extends Instance
 	@Override
 	public void notify(NotificationEvent event) {
 		if (event.isClass(BoardDaily.class) 
-			&& (event.getStatus() == Status.SUCCESS)) {
+			&& (event.getStatus() == NoteStatus.SUCCESS)) {
 			if (getCurrentWeek() != getUpdateWeek())
 				TaskManager.create(
 						String.format("%s[update]", 
@@ -159,7 +161,7 @@ public class Listed extends Instance
 		try {
 			response = getWebPage(locale);
 			if (response.getStatusCode() == 200) {
-				note.notify(Status.DONE, getURI(locale));
+				note.notify(NoteStatus.DONE, getURI(locale));
 				parser(response, true);
 			} else {
 				initTryAgain(locale);
@@ -174,7 +176,7 @@ public class Listed extends Instance
 		try {
 			response = getWebPage(locale);
 			if (response.getStatusCode() == 200) {
-				note.notify(Status.DONE, getURI(locale));
+				note.notify(NoteStatus.DONE, getURI(locale));
 				parser(response, false);
 			} else {
 				initTryAgain(locale);
@@ -185,7 +187,7 @@ public class Listed extends Instance
 			SEVERE(e);
 			return;
 		}
-		note.notify(Status.SUCCESS, getURI(null));
+		note.notify(NoteStatus.SUCCESS, getURI(null));
 	}
 	
 	public String getURI(String locale) {

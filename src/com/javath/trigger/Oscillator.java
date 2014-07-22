@@ -19,7 +19,6 @@ import java.util.regex.Pattern;
 import com.javath.logger.LOG;
 import com.javath.util.Assign;
 import com.javath.util.ObjectException;
-import com.javath.util.Service;
 
 public class Oscillator extends TimerTask implements Runnable {
 	
@@ -100,49 +99,6 @@ public class Oscillator extends TimerTask implements Runnable {
 					LOG.INFO("\"%s\" loaded.", line.replaceAll("\\s", ""));
 				} else 
 					LOG.INFO("\"%s\" not load.", line.replaceAll("\\s", ""));
-				/**
-				try {
-					Class<?> clazz = Class.forName(classname);
-					if (OscillatorLoader.class.isAssignableFrom(clazz)) {
-						LOG.INFO("\"%s\" loaded.", classname);
-						try {
-							//Object object;
-							try {
-								if (argument) {
-									Object[] arguments = 
-											line.substring(line.indexOf('(') + 1, line.indexOf(')'))
-											.split(",\\s");
-									Class<?>[] types = new Class<?>[arguments.length];
-									Method method = clazz.getMethod("getInstance", types);
-									object = method.invoke(null, arguments);
-								} else
-									object = clazz.newInstance();
-							} catch (IllegalAccessException e) {
-								Method method = clazz.getMethod("getInstance");
-								object = method.invoke(null);
-							} catch (InstantiationException e) {
-								Method method = clazz.getMethod("getInstance");
-								object = method.invoke(null);
-							}
-							Method method = clazz.getMethod("initOscillator");
-							method.invoke(object);
-						} catch (NoSuchMethodException e) {
-							LOG.CONFIG(e);
-						} catch (SecurityException e) {
-							LOG.CONFIG(e);
-						} catch (IllegalAccessException e) {
-							LOG.CONFIG(e);
-						} catch (IllegalArgumentException e) {
-							LOG.CONFIG(e);
-						} catch (InvocationTargetException e) {
-							LOG.CONFIG(e);
-						}
-					} else
-						LOG.INFO("\"%s\" not load.", classname);
-				} catch (ClassNotFoundException e) {
-					LOG.CONFIG(e);
-				} 
-				/**/
 			}
 			reader.close();
 		} catch (FileNotFoundException e) {

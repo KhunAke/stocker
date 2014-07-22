@@ -1,5 +1,9 @@
 package com.javath.util;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -12,6 +16,7 @@ import com.javath.logger.LOG;
 import com.javath.trigger.Oscillator;
 import com.javath.trigger.OscillatorEvent;
 import com.javath.trigger.OscillatorListener;
+import com.javath.trigger.OscillatorLoader;
 
 public class Service extends Instance implements Daemon, OscillatorListener {
 	
@@ -46,7 +51,62 @@ public class Service extends Instance implements Daemon, OscillatorListener {
 			throws DaemonInitException, Exception {
 		INFO("Daemon initializing.");
 		monitor(false);
-		Oscillator.loader();
+		//Oscillator.loader();
+		loader();
+	}
+	private void loader() {
+		String loader_path = Assign.etc + Assign.File_Separator + "ClassLoader";
+		BufferedReader reader = null;
+		try {
+			reader = new BufferedReader(
+					new FileReader(assign.getProperty("ClassLoader", loader_path)));
+			while (reader.ready()) {
+				String line = reader.readLine();
+				String classname = null;
+				String method_name = null;
+				String[] arguments = null;
+				String pattern_not_arguments = "^\\w+(.\\w+)*\\(\\s*\\)$";
+				String pattern_arguments = "^\\w+(.\\w+)*\\(\\s*\\w+\\s*(\\s*,\\s*\\w+)*\\)$";
+				if (Pattern.matches(pattern_not_arguments, line)) {
+					classname = line.substring(0,line.indexOf('('));
+					method_name = "getInstance";
+				} else if (Pattern.matches(pattern_arguments, line)) {
+					classname = line.substring(0,line.indexOf('('));
+					method_name = "getInstance";
+					arguments = line.substring(line.indexOf('(') + 1, line.indexOf(')'))
+							.split(",\\s");
+				}
+				Object object = null;
+				// Instance for Constructor
+				if (arguments == null)
+					object = Assign.forConstructor(classname);
+				else
+					object = Assign.forConstructor(classname, arguments);
+				if (object != null) {
+					LOG.INFO("\"%s\" loaded.", line.replaceAll("\\s", ""));
+					if (OscillatorLoader.class.isAssignableFrom(object.getClass()))
+						((OscillatorLoader) object).initOscillator();
+				} else { // Instance for Method
+					method_name = classname.substring(classname.lastIndexOf('.'));
+					classname = classname.substring(0, classname.lastIndexOf('.'));
+					if (arguments == null)
+						object = Assign.forMethod(classname, method_name);
+					else
+						object = Assign.forMethod(classname, method_name, arguments);
+					if (object != null) {
+						LOG.INFO("\"%s\" loaded.", line.replaceAll("\\s", ""));
+						if (OscillatorLoader.class.isAssignableFrom(object.getClass()))
+							((OscillatorLoader) object).initOscillator();
+					} else
+						LOG.INFO("\"%s\" not load.", line.replaceAll("\\s", ""));
+				}
+			}
+			reader.close();
+		} catch (FileNotFoundException e) {
+			LOG.CONFIG(e);
+		} catch (IOException e) {
+			LOG.CONFIG(e);
+		} 
 	}
 	@Override
 	public void start() 
