@@ -8,9 +8,8 @@ public class TaskManager {
 	
 	// Method name : create
 	public final static Thread create(Runnable runnable) {
-		long timestamp = new Date().getTime(); 
-		String name = String.format("%s[timestamp=%d]", 
-				runnable.getClass().getCanonicalName(), timestamp);
+		String name = String.format("%s[timestamp=%s]", 
+				runnable.getClass().getCanonicalName(), DateTime.timestamp(new Date()));
 		return create(name, runnable);
 	}
 	public final static Thread create(String name, Runnable runnable) {
@@ -19,9 +18,8 @@ public class TaskManager {
 		return thread;
 	}
 	public final static Thread create(java.lang.Object object, String methodName, java.lang.Object... arguments) {
-		long timestamp = new Date().getTime(); 
-		String name = String.format("%s.%s(timestamp=%d)"
-				, object.getClass().getCanonicalName(), methodName, timestamp);
+		String name = String.format("%s.%s(timestamp=%s)"
+				, object.getClass().getCanonicalName(), methodName, DateTime.timestamp(new Date()));
 		return create(name, object, methodName, arguments);
 	}
 	public final static Thread create(String name, java.lang.Object object, String methodName, java.lang.Object... arguments) {

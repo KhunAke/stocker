@@ -34,9 +34,8 @@ public class NotificationAdaptor implements NotificationSource {
 	public void notify(NoteStatus status, String message) {
 		try {
 			EventListener[] listeners = this.listeners.toArray(new EventListener[] {});
-			NotificationEvent event = new NotificationEvent(source, status, message);
-			output("%s%n", event);
 			if (listeners.length > 0 ) {
+				NotificationEvent event = new NotificationEvent(source, status, message);
 				MulticastEvent.send("notify", listeners, event);
 			} 
 		} catch (NoSuchElementException e) {
@@ -47,13 +46,5 @@ public class NotificationAdaptor implements NotificationSource {
 			LOG.SEVERE(e);
 		}
 	}
-	
-	public void output(String message, Object... objects) {
-		System.out.printf("%s: %s", DateTime.timestamp(new Date()), 
-				String.format(message, objects));
-	}
-	public void alarm(String message, Object... objects) {
-		System.err.printf("%s: %s", DateTime.timestamp(new Date()), 
-				String.format(message, objects));
-	}
+
 }

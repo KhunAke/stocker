@@ -170,8 +170,8 @@ public class BoardDaily extends Instance
 	@Override
 	public void action(OscillatorEvent event) {
 		TaskManager.create(
-				String.format("%s[timestamp=%d,update=%s]", 
-						this.getClassName(), event.getTimestamp(), DateTime.date(wait_update)), 
+				String.format("%s[timestamp=%s,update=%s]", 
+						this.getClassName(), DateTime.timestamp(event.getTimestamp()), DateTime.date(wait_update)), 
 				this);
 	}
 	@Override

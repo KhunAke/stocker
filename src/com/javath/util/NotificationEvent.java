@@ -8,6 +8,7 @@ public class NotificationEvent extends EventObject {
 	
 	public enum NoteStatus {
 		UNKNOW,
+		NOTICE,
 		PROCESS,
 		PENDING,
 		DONE,

@@ -1,6 +1,8 @@
 package com.javath.settrade;
 
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.EventListener;
 import java.util.HashSet;
@@ -10,7 +12,6 @@ import java.util.Set;
 
 import org.w3c.dom.Node;
 
-import com.javath.bualuang.BoardDaily;
 import com.javath.html.CustomFilter;
 import com.javath.html.CustomHandler;
 import com.javath.html.HtmlParser;
@@ -26,7 +27,6 @@ import com.javath.trigger.OscillatorLoader;
 import com.javath.util.Assign;
 import com.javath.util.DateTime;
 import com.javath.util.Instance;
-import com.javath.util.NotificationAdaptor;
 import com.javath.util.ObjectException;
 import com.javath.util.TaskManager;
 
@@ -35,6 +35,7 @@ public class Market extends Instance implements OscillatorLoader, CustomHandler,
 	private final static Assign assign;
 	private final static String storage_path;
 	private final static String market_page;
+	private static Market instance;
 	
 	static {
 		String default_Properties = Assign.etc + Assign.File_Separator +
@@ -44,22 +45,30 @@ public class Market extends Instance implements OscillatorLoader, CustomHandler,
 		storage_path = assign.getProperty("storage_path", default_path);
 		market_page = assign.getProperty("market_page",
 				"http://www.settrade.com/C13_MarketSummary.jsp?detail=SET");
+		instance = new Market();
 	}
 
-	private final Cookie cookie;
-	private OscillatorDivideFilter oscillator;
+	public static Market getInstance() {
+		return instance;
+	}
 	
+	private final Cookie cookie;
 	private final Set<MarketListener> market_listeners;
 	private final Set<MarketStatusListener> status_listeners;
+	private final long interval_update;
 	
+	private OscillatorDivideFilter oscillator;
 	private Date last_update;
 	private MarketStatus status;
+	private String[][] rows ;
 	
 	private Market() {
-		cookie = new Cookie();
-		// 
+		cookie = new Cookie(); 
 		market_listeners = new HashSet<MarketListener>();
 		status_listeners = new HashSet<MarketStatusListener>();
+		//
+		last_update = new Date(0);
+		interval_update = assign.getLongProperty("interval_update", 16000);
 	}
 	
 	public boolean addMarketListener(MarketListener listener) {
@@ -79,33 +88,26 @@ public class Market extends Instance implements OscillatorLoader, CustomHandler,
 	public void initOscillator() {
 		if (oscillator != null)
 			return;
-		long clock = assign.getLongProperty("clock", 1000); // 1s
+		long clock = assign.getLongProperty("clock", 1000); // 1 seconds
 		Oscillator source = Oscillator.getInstance(clock);
-		long date = new Date().getTime();
-		long time = DateTime.time(
-				assign.getProperty("schedule", "19:30:00")).getTime();
-		//System.out.printf("Schedule: \"%s\"%n", DateTime.timestamp(time));
-		long datetime = DateTime.merge(date, time).getTime();
-		//System.out.printf("Schedule: \"%s\"%n", DateTime.timestamp(datetime));
-		long try_again = (long) Math.ceil(assign.getLongProperty("try_again", clock * 5) / (double) clock);
-		if (try_again == 0)
-			try_again = 1;
+		long try_again = (long) Math.ceil( // 5 seconds
+				assign.getLongProperty("try_again", clock * 5) / (double) clock);
+		try_again = (try_again == 0) ? 1 : try_again;
+		long datetime = DateTime.date().getTime();
 		oscillator = new OscillatorDivideFilter(source, this, try_again, datetime);
 	}
 	@Override
 	public void action(OscillatorEvent event) {
 		TaskManager.create(
-				String.format("%s[timestamp=%d]", 
-						this.getClassName(), event.getTimestamp()), 
+				String.format("%s[timestamp=%s]", 
+						this.getClassName(), DateTime.timestamp(event.getTimestamp())), 
 				this);
 	}
 	
 	@Override
 	public void run() {
 		Response response = getWebPage();
-		response.printHeaders();
 		parser(response);
-		
 	}
 	private Response getWebPage() {
 		Browser browser = (Browser) Assign.borrowObject(Browser.class);
@@ -118,11 +120,9 @@ public class Market extends Instance implements OscillatorLoader, CustomHandler,
 		}
 	}
 	private String getURI() {
-		return "http://www.settrade.com/C13_MarketSummary.jsp?detail=SET";
+		return market_page;
 	}
 
-	
-	
 	private void parser(Response response) {
 		HtmlParser parser = new HtmlParser(response.getContent(), response.getCharset());
 		CustomFilter filter = new CustomFilter(parser.parse());
@@ -153,13 +153,13 @@ public class Market extends Instance implements OscillatorLoader, CustomHandler,
 				last_update = date;
 				MarketStatus status = MarketStatus.getStatus(text.getString(8, 4));
 				if (!status.equals(this.status)) {
-					INFO("Status at %s is \"%s\"", DateTime.timestamp(date), status);
+					INFO("Status at \"%s\" is \"%s\"", DateTime.string(date), status);
 					this.status = status;
-					//sendStatusEvent();
+					sendStatusEvent();
 				}
-				//assignNextSchedule();
-				//updateRows(text);
-				//sendMarketEvent();
+				assignNextSchedule();
+				updateRows(text);
+				sendMarketEvent();
 				//printRows();
 			} else if (date.before(last_update)) { //before(when)
 				WARNING("Server delayed because request of \"%s\" but received after \"%s\"", 
@@ -248,6 +248,27 @@ public class Market extends Instance implements OscillatorLoader, CustomHandler,
 			throw new ObjectException(e);
 		}
 	}
+	public void updateRows(TextNode node) {
+		ArrayList<String[]> rows = new ArrayList<String[]>();
+		for (int index = 1; index < node.length(); index++) {
+			String[] data = node.getStringArray(index);
+			if (data[0].equals("2") && (data[2].length() > 0)) {
+				String symbol =data[2].substring(0, data[2].indexOf(" Index"));
+				String last = replace(data[4]);
+				String high = replace(data[10]);
+				String low = replace(data[12]);
+				String volume = replace(data[14]);
+				String value = replace(data[16]);
+				rows.add(new String[]
+						{symbol, last, high, low, volume, value});
+			}
+		}
+		this.rows = rows.toArray(new String[][] {});
+	}
+	public static String replace(String data) {
+		String result = data.replace("-", "");
+		return result.replace(",", "");
+	}
 	private void sendStatusEvent() {
 		try {
 			EventListener[] listeners = new EventListener[] {};
@@ -263,9 +284,13 @@ public class Market extends Instance implements OscillatorLoader, CustomHandler,
 		}
 	}
 	
-	
 	public static void main(String[] args) {
-		Market stock = new Market();
+		Market stock = Market.getInstance();
+		MarketScreen.getInstance();
+		MarketStatusScreen.getInstance();
+		stock.initOscillator();
+		Oscillator.startAll();
+		
 		stock.run();
 	}
 	

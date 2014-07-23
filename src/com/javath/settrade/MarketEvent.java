@@ -8,7 +8,7 @@ import com.javath.util.DateTime;
 public class MarketEvent extends EventObject {
 
 	private static final long serialVersionUID = 1L;
-	public final static int SYMBOL = 0;
+	public final static int NAME = 0;
 	public final static int LAST = 1;
 	public final static int HIGH = 2;
 	public final static int LOW = 3;

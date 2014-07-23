@@ -24,7 +24,8 @@ Class-Path: .
  lib/httpmime-4.2.6.jar 
  lib/mysql-connector-java-5.1.31-bin.jar 
  lib/postgresql-9.3-1101.jdbc3.jar 
- lib/nekohtml.jar stocker-0.0.1_lib/xercesMinimal.jar 
+ lib/nekohtml.jar 
+ lib/xercesMinimal.jar 
  lib/commons-pool-1.6.jar
 Main-Class: com.javath.util.Service
 

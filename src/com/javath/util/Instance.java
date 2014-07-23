@@ -219,15 +219,6 @@ public class Instance {
 				throwable.printStackTrace(System.err);
 			}
 	}
-
-	protected void output(String message, Object... objects) {
-		System.out.printf("%s: %s", DateTime.timestamp(new Date()), 
-				String.format(message, objects));
-	}
-	protected void alarm(String message, Object... objects) {
-		System.err.printf("%s: %s", DateTime.timestamp(new Date()), 
-				String.format(message, objects));
-	}
 	
 	@Override
 	public String toString() {

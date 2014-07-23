@@ -2,6 +2,8 @@ package com.javath.trigger;
 
 import java.util.EventObject;
 
+import com.javath.util.DateTime;
+
 public class OscillatorEvent extends EventObject {
 	
 	private static final long serialVersionUID = 1L;
@@ -26,8 +28,8 @@ public class OscillatorEvent extends EventObject {
 	}
 	
 	public String toString() {
-		return String.format("%s[timestamp=%d]", 
-				this.getClass().getCanonicalName(), timestamp);
+		return String.format("%s[timestamp=%s]", 
+				this.getClass().getCanonicalName(), DateTime.timestamp(timestamp));
 	}
 
 }

@@ -22,7 +22,7 @@ public class DateTime {
 	private final static ObjectPool<Calendar> pool;
 	public final static String Default_Date_Format;
 	public final static String Default_Time_Format;
-	public final static String Default_DateTime_Format;
+	private final static String Default_DateTime_Format;
 	public final static String Default_Timestamp_Format;
 	public final static String Default_Date_Parse;
 	public final static String Default_Time_Parse;

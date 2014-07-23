@@ -42,6 +42,7 @@ import com.javath.util.DateTime;
 import com.javath.util.Instance;
 import com.javath.util.NotificationAdaptor;
 import com.javath.util.NotificationEvent;
+import com.javath.util.NotificationScreen;
 import com.javath.util.NotificationEvent.NoteStatus;
 import com.javath.util.NotificationListener;
 import com.javath.util.NotificationSource;
@@ -111,7 +112,7 @@ public class Listed extends Instance
 		Oscillator oscillator = Oscillator.getInstance(try_again);
 		oscillator.removeListener(this);
 		TaskManager.create(
-				String.format("%s[re-try=\"%s\"]", 
+				String.format("%s[re-try=%s]", 
 						this.getClassName(), DateTime.timestamp(event.getTimestamp())), 
 				this);
 	}
@@ -126,7 +127,7 @@ public class Listed extends Instance
 						this);
 			else
 				//note.output("\"Company listed\" The infomation available is current.");
-				note.output("\"Company listed\" skip.");
+				note.notify(NoteStatus.NOTICE, "\"Company listed\" skip");
 		}
 	}
 	private int getCurrentWeek() {
@@ -575,8 +576,9 @@ public class Listed extends Instance
 			usage();
 			return;
 		}
-		Listed listed = Listed.getInstance();
 		if (line.hasOption("update")) {
+			Listed listed = Listed.getInstance();
+			NotificationScreen.getInstance();
 			if (listed.getCurrentWeek() != listed.getUpdateWeek())
 				TaskManager.create(
 						String.format("%s[update]", 
@@ -584,7 +586,7 @@ public class Listed extends Instance
 								listed);
 			else {
 				//listed.output("\"Company listed\" The infomation available is current.");
-				listed.output("\"Company listed\" skip.");
+				listed.note.notify(NoteStatus.NOTICE, "\"Company listed\" skip");
 			}
 		}
 	}
