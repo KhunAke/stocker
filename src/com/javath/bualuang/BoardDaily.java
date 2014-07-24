@@ -234,12 +234,12 @@ public class BoardDaily extends Instance
 			spliter.setDelimiter(spliter_delimiter);
 		}
 		BualuangBoardDailyHome home = (BualuangBoardDailyHome)
-					Assign.borrowObject(BualuangBoardDailyHome.class.getCanonicalName());
+					Assign.borrowObject(BualuangBoardDailyHome.class);
 		try {
 			//Session session = Assign.getSessionFactory().getCurrentSession();
 			while (spliter.ready()) {
 				Session session = Assign.getSessionFactory().getCurrentSession();
-				Transaction transaction = session.beginTransaction();
+				session.beginTransaction();
 				BualuangBoardDailyId id = null;
 				BualuangBoardDaily board = null;;
 				try {
@@ -261,24 +261,24 @@ public class BoardDaily extends Instance
 							String date =fields[map_headers.get("date")];
 							LOG.WARNING(
 									new ObjectException(e,"\"%s\",\"$s\"; %s", symbol, date, e.getMessage()));
-							transaction.rollback();
+							session.getTransaction().rollback();
 							continue;
 						} else {
-							transaction.rollback();
+							session.getTransaction().rollback();
 							throw e;
 						}
 					}
 					home.persist(board);
-					transaction.commit();
+					session.getTransaction().commit();
 				} catch (IOException e) {
 					LOG.WARNING(e);
-					transaction.rollback();
+					session.getTransaction().rollback();
 				} catch (ConstraintViolationException e) {
 					LOG.FINE(new ObjectException(e.getCause(), "%s; %s", 
 							e.getMessage(), e.getCause().getMessage()));
-					transaction.rollback();
+					session.getTransaction().rollback();
 				} catch (Exception e) {
-					transaction.rollback();
+					session.getTransaction().rollback();
 					throw e;
 				}
 			}

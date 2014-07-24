@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
 "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
-<!-- Generated Jul 21, 2014 12:58:19 PM by Hibernate Tools 4.0.0 -->
+<!-- Generated Jul 24, 2014 1:43:30 PM by Hibernate Tools 4.0.0 -->
 <hibernate-mapping>
     <class name="com.javath.mapping.SetCompany" table="set_company" catalog="stock">
         <id name="symbol" type="string">
@@ -17,14 +17,14 @@
         <property name="sectorId" type="java.lang.Short">
             <column name="sector_id" />
         </property>
-        <property name="set50" type="java.lang.Boolean">
-            <column name="set_50" />
+        <property name="set50" type="boolean">
+            <column name="set_50" not-null="true" />
         </property>
-        <property name="set100" type="java.lang.Boolean">
-            <column name="set_100" />
+        <property name="set100" type="boolean">
+            <column name="set_100" not-null="true" />
         </property>
-        <property name="setHd" type="java.lang.Boolean">
-            <column name="set_hd" />
+        <property name="setHd" type="boolean">
+            <column name="set_hd" not-null="true" />
         </property>
         <property name="nameTh" type="string">
             <column name="name_th" />

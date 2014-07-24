@@ -10,10 +10,11 @@ public class MarketEvent extends EventObject {
 	private static final long serialVersionUID = 1L;
 	public final static int NAME = 0;
 	public final static int LAST = 1;
-	public final static int HIGH = 2;
-	public final static int LOW = 3;
-	public final static int VOLUME = 4;
-	public final static int VALUE = 5;
+	public final static int CHANGE = 2;
+	public final static int HIGH = 3;
+	public final static int LOW = 4;
+	public final static int VOLUME = 5;
+	public final static int VALUE = 6;
 	
 	private final Date date;
 	private final MarketStatus status;
@@ -43,8 +44,8 @@ public class MarketEvent extends EventObject {
 	}
 	
 	public String toString() {
-		return String.format("%s[date=%s]", 
-				this.getClass().getCanonicalName(), DateTime.timestamp(date));
+		return String.format("%s[date=\"%s\"]", 
+				this.getClass().getCanonicalName(), DateTime.string(date));
 	}
 	
 }

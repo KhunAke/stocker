@@ -55,6 +55,7 @@ public class TaskManager {
 					throw new ObjectException(e);
 				} catch (InvocationTargetException e) {
 					throw new ObjectException(e);
+					//e.printStackTrace();
 				} 
 			}	
 		}.setExecute(object, methodName, arguments), name);

@@ -11,7 +11,7 @@ public class ObjectException extends RuntimeException {
 		this(String.format(format, value));
 	}
 	public ObjectException(Throwable cause) {
-		this(cause, cause.getMessage(), cause);
+		this(cause, cause.getMessage());
 	}
 	public ObjectException(Throwable cause, String message) {
 		super(message, cause);

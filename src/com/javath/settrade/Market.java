@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+import org.hibernate.exception.ConstraintViolationException;
 import org.w3c.dom.Node;
 
 import com.javath.html.CustomFilter;
@@ -19,6 +22,10 @@ import com.javath.html.TextNode;
 import com.javath.http.Browser;
 import com.javath.http.Cookie;
 import com.javath.http.Response;
+import com.javath.logger.LOG;
+import com.javath.mapping.SettradeMarket;
+import com.javath.mapping.SettradeMarketHome;
+import com.javath.mapping.SettradeMarketId;
 import com.javath.trigger.MulticastEvent;
 import com.javath.trigger.Oscillator;
 import com.javath.trigger.OscillatorDivideFilter;
@@ -30,7 +37,7 @@ import com.javath.util.Instance;
 import com.javath.util.ObjectException;
 import com.javath.util.TaskManager;
 
-public class Market extends Instance implements OscillatorLoader, CustomHandler, Runnable {
+public class Market extends Instance implements OscillatorLoader, MarketListener, CustomHandler, Runnable {
 	
 	private final static Assign assign;
 	private final static String storage_path;
@@ -69,6 +76,8 @@ public class Market extends Instance implements OscillatorLoader, CustomHandler,
 		//
 		last_update = new Date(0);
 		interval_update = assign.getLongProperty("interval_update", 16000);
+		if (assign.getBooleanProperty("upload", true))
+			this.addMarketListener(this);
 	}
 	
 	public boolean addMarketListener(MarketListener listener) {
@@ -102,6 +111,59 @@ public class Market extends Instance implements OscillatorLoader, CustomHandler,
 				String.format("%s[timestamp=%s]", 
 						this.getClassName(), DateTime.timestamp(event.getTimestamp())), 
 				this);
+	}
+	@Override
+	public void action(MarketEvent event) {
+		TaskManager.create(String.format("%s.upload(date=\"%s\")", this.getClassName(), DateTime.string(event.getDate())),
+				this, "upload", event);
+	}
+	public void upload(MarketEvent event) {
+		String[][] rows = event.getRows();
+		SettradeMarketHome home = (SettradeMarketHome)
+				Assign.borrowObject(SettradeMarketHome.class);
+		try {
+			Session session = Assign.getSessionFactory().getCurrentSession();
+			session.beginTransaction();
+			SettradeMarket market = null;
+			try {
+				for (int index = 0; index < rows.length; index++) {
+					SettradeMarketId id = new SettradeMarketId(
+							rows[index][MarketEvent.NAME],
+							event.getDate());
+					market = new SettradeMarket(id);
+					try {
+						market.setLast(Double.valueOf(rows[index][MarketEvent.LAST]));
+					} catch (NumberFormatException e) {}
+					try {
+						market.setChangePrior(Double.valueOf(rows[index][MarketEvent.CHANGE]));
+					} catch (NumberFormatException e) {}
+					try {
+						market.setHigh(Double.valueOf(rows[index][MarketEvent.HIGH]));
+					} catch (NumberFormatException e) {}
+					try {
+						market.setLow(Double.valueOf(rows[index][MarketEvent.LOW]));
+					} catch (NumberFormatException e) {}
+					try {
+						market.setVolume(Long.valueOf(rows[index][MarketEvent.VOLUME]));
+					} catch (NumberFormatException e) {}
+					try {
+						market.setValue(Double.valueOf(rows[index][MarketEvent.VALUE]));
+					} catch (NumberFormatException e) {}
+					home.persist(market);	
+				}
+				session.getTransaction().commit();
+			} catch (ConstraintViolationException e) {
+				LOG.WARNING(new ObjectException(e.getCause(), "%s; %s", 
+						e.getMessage(), e.getCause().getMessage()));
+				session.getTransaction().rollback();
+			} catch (Exception e) {
+				session.getTransaction().rollback();
+				throw new ObjectException(e);
+			}
+		} finally {
+			Assign.returnObject(home);
+		}
+		
 	}
 	
 	@Override
@@ -255,19 +317,19 @@ public class Market extends Instance implements OscillatorLoader, CustomHandler,
 			if (data[0].equals("2") && (data[2].length() > 0)) {
 				String symbol =data[2].substring(0, data[2].indexOf(" Index"));
 				String last = replace(data[4]);
+				String change = replace(data[6]);
 				String high = replace(data[10]);
 				String low = replace(data[12]);
 				String volume = replace(data[14]);
 				String value = replace(data[16]);
 				rows.add(new String[]
-						{symbol, last, high, low, volume, value});
+						{symbol, last, change, high, low, volume, value});
 			}
 		}
 		this.rows = rows.toArray(new String[][] {});
 	}
 	public static String replace(String data) {
-		String result = data.replace("-", "");
-		return result.replace(",", "");
+		return data.replace(",", "");
 	}
 	private void sendStatusEvent() {
 		try {

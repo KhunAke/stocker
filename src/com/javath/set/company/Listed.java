@@ -209,7 +209,11 @@ public class Listed extends Instance
 		}
 	}
 	private void parser(Response response, boolean thai) {
-		HtmlParser parser = new HtmlParser(response.getContent());
+		HtmlParser parser = null;;
+		if (thai)
+			parser = new HtmlParser(response.getContent(), "windows-874");
+		else
+			parser = new HtmlParser(response.getContent());
 		TextNode text = new TextNode(parser.parse());
 		Date update = null;
 		Map<String,Integer> header = null;
