@@ -123,7 +123,7 @@ public class Assign extends Instance {
 			application = properties.getProperty("application", 
 					system.getProperty("application", "java"));
 			try {
-				debug = getBooleanProperty(properties, "debug");
+				debug = getBooleanProperty(properties, "debug", false);
 			} catch (Exception e) {
 				LOG.CONFIG(new ObjectException(e,
 						"Type mismatch: \"%s\" in \"%s\"", "debug", assign_file.getAbsolutePath()));

@@ -42,6 +42,7 @@ public class Market extends Instance implements OscillatorLoader, MarketListener
 	private final static Assign assign;
 	private final static String storage_path;
 	private final static String market_page;
+	private final static String charset;
 	private static Market instance;
 	
 	static {
@@ -52,6 +53,7 @@ public class Market extends Instance implements OscillatorLoader, MarketListener
 		storage_path = assign.getProperty("storage_path", default_path);
 		market_page = assign.getProperty("market_page",
 				"http://www.settrade.com/C13_MarketSummary.jsp?detail=SET");
+		charset = assign.getProperty("charset", "windows-874");
 		instance = new Market();
 	}
 
@@ -76,7 +78,7 @@ public class Market extends Instance implements OscillatorLoader, MarketListener
 		//
 		last_update = new Date(0);
 		interval_update = assign.getLongProperty("interval_update", 16000);
-		if (assign.getBooleanProperty("upload", true))
+		if (assign.getBooleanProperty("market_upload", false))
 			this.addMarketListener(this);
 	}
 	
@@ -158,7 +160,7 @@ public class Market extends Instance implements OscillatorLoader, MarketListener
 				session.getTransaction().rollback();
 			} catch (Exception e) {
 				session.getTransaction().rollback();
-				throw new ObjectException(e);
+				throw e;
 			}
 		} finally {
 			Assign.returnObject(home);
@@ -186,7 +188,7 @@ public class Market extends Instance implements OscillatorLoader, MarketListener
 	}
 
 	private void parser(Response response) {
-		HtmlParser parser = new HtmlParser(response.getContent(), response.getCharset());
+		HtmlParser parser = new HtmlParser(response.getContent(), charset);
 		CustomFilter filter = new CustomFilter(parser.parse());
 		filter.setHandler(this);
 		List<Node> nodes = filter.filter(6);

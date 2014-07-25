@@ -1,15 +1,15 @@
 <?xml version="1.0"?>
 <!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
 "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
-<!-- Generated Jul 24, 2014 1:43:30 PM by Hibernate Tools 4.0.0 -->
+<!-- Generated Jul 25, 2014 8:28:23 AM by Hibernate Tools 4.0.0 -->
 <hibernate-mapping>
     <class name="com.javath.mapping.SettradeBoard" table="settrade_board" catalog="stock">
         <composite-id name="id" class="com.javath.mapping.SettradeBoardId">
             <key-property name="symbol" type="string">
                 <column name="symbol" length="24" />
             </key-property>
-            <key-property name="date" type="date">
-                <column name="date" length="10" />
+            <key-property name="date" type="timestamp">
+                <column name="date" length="19" />
             </key-property>
         </composite-id>
         <property name="open" type="java.lang.Double">
