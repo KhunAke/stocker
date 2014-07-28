@@ -19,13 +19,15 @@ import com.javath.http.Cookie;
 import com.javath.http.Response;
 import com.javath.trigger.MulticastEvent;
 import com.javath.util.Assign;
+import com.javath.util.DateTime;
 import com.javath.util.Instance;
-import com.javath.util.NotificationAdaptor;
 import com.javath.util.ObjectException;
+import com.javath.util.TaskManager;
 
-public class Board extends Instance implements CustomHandler, Runnable{
+public class Board extends Instance implements MarketListener, CustomHandler{
 	
 	private final static Assign assign;
+	private final static String storage_path;
 	private final static String board_page;
 	private final static String charset;
 	private static Board instance;
@@ -33,7 +35,10 @@ public class Board extends Instance implements CustomHandler, Runnable{
 	static {
 		String default_Properties = Assign.etc + Assign.File_Separator +
 				"settrade.properties";
-		assign = Assign.getInstance(Board.class, default_Properties);
+		assign = Assign.getInstance(Market.class, default_Properties);
+		//String default_path = Assign.temp + Assign.File_Separator + "settrade";
+		String default_path = Assign.temp;
+		storage_path = assign.getProperty("storage_path", default_path);
 		board_page = assign.getProperty("board_page",
 				"http://www.settrade.com/C13_MarketSummaryStockMethod.jsp?method=AOM");
 		charset = assign.getProperty("charset", "windows-874");
@@ -44,24 +49,36 @@ public class Board extends Instance implements CustomHandler, Runnable{
 		return instance;
 	}
 	
-	private final Cookie cookie;
-	private final Set<BoardListener> board_listeners;
+	private final Set<BoardListener> listeners;
 	
+	private final Cookie cookie;
 	private Date last_update;
 	private String[][] rows;
 	
-	private Board() {
+	public Board() {
+		listeners = new HashSet<BoardListener>();
 		cookie = new Cookie();
-		board_listeners = new HashSet<BoardListener>();
-		
-		last_update = new Date(0);
 	}
 	
 	public boolean addListener(BoardListener listener) {
-		return board_listeners.add(listener);
+		return listeners.add(listener);
 	}
 	public boolean removeListener(BoardListener listener) {
-		return board_listeners.remove(listener);
+		return listeners.remove(listener);
+	}
+	private void sendEvent() {
+		try {
+			EventListener[] listeners = new EventListener[] {};
+			listeners = this.listeners.toArray(listeners);
+			if (listeners.length > 0) { 
+				BoardEvent event = new BoardEvent(this, last_update, rows);
+				MulticastEvent.send("action", listeners, event);
+			}
+		} catch (NoSuchElementException e) {
+			throw new ObjectException(e);
+		} catch (IllegalStateException e) {
+			throw new ObjectException(e);
+		}
 	}
 	
 	private Response getWebPage() {
@@ -77,27 +94,6 @@ public class Board extends Instance implements CustomHandler, Runnable{
 	private String getURI() {
 		return board_page;
 	}
-
-	@Override
-	public void run() {
-		Response response = getWebPage();
-		parser(new Date(0), response);
-	}
-	
-	private void parser(Date datetime, Response response) {
-		HtmlParser parser = new HtmlParser(response.getContent(), charset);
-		CustomFilter filter = new CustomFilter(parser.parse());
-		filter.setHandler(this);
-		List<Node> nodes = filter.filter(3);
-		TextNode textNode = null;
-		try {
-			textNode =new TextNode(nodes.get(0));
-		} catch (java.lang.IndexOutOfBoundsException e) {
-			throw new ObjectException(e);
-		}
-		updateRows(datetime, textNode);
-		sendEvent();
-	}
 	@Override
 	public boolean condition(Node node) {
 		try {
@@ -108,48 +104,73 @@ public class Board extends Instance implements CustomHandler, Runnable{
 		}
 		return false;
 	}
-	public void updateRows(Date datetime, TextNode node) {
+	public void updateRows(Date date, TextNode text_node) {
 		ArrayList<String[]> rows = new ArrayList<String[]>();
-		for (int index = 1; index < node.length(); index++) {
-			String[] data = node.getStringArray(index);
+		for (int index = 1; index < text_node.length(); index++) {
+			String[] data = text_node.getStringArray(index);
 			if (data[0].equals("2") && (data[2].length() > 0)) {
-				String[] symbolArray = node.getStringArray(index + 1);
+				String[] symbolArray = text_node.getStringArray(index + 1);
 				String symbol = symbolArray[1];
-				String open = Market.replace(data[4]);
-				String high = Market.replace(data[6]);
-				String low = Market.replace(data[8]);
-				String last = Market.replace(data[10]);
-				String change = Market.replace(data[12]);
-				String bid = Market.replace(data[16]);
-				String offer = Market.replace(data[18]);
-				String volume = Market.replace(data[20]);
-				String value = Market.replace(data[22]);
-				rows.add(new String[]
-						{symbol, open, high, low, last, change, bid, offer, volume, value});
+				try {
+					String open = Market.replace(data[4]);
+					String high = Market.replace(data[6]);
+					String low = Market.replace(data[8]);
+					String last = Market.replace(data[10]);
+					String change = Market.replace(data[12]);
+					String bid = Market.replace(data[16]);
+					String offer = Market.replace(data[18]);
+					String volume = Market.replace(data[20]);
+					String value = Market.replace(data[22]);
+					rows.add(new String[]
+							{symbol, open, high, low, last, change, bid, offer, volume, value});
+				} catch (ArrayIndexOutOfBoundsException e) {
+					throw new ObjectException(e, "Symbol=\"%s\", index=%s", symbol, e.getMessage());
+				}
 			}
+			this.last_update = date;
+			this.rows = rows.toArray(new String[][] {});
 		}
-		last_update = datetime;
-		this.rows = rows.toArray(new String[][] {});
 	}
-	private void sendEvent() {
+	private void parser(Date date, Response response) {
+		HtmlParser parser = new HtmlParser(response.getContent(), charset);
+		CustomFilter filter = new CustomFilter(parser.parse());
+		filter.setHandler(this);
+		List<Node> nodes = filter.filter(3);
+		
+		TextNode text_node = null;
 		try {
-			EventListener[] listeners = new EventListener[] {};
-			listeners = this.board_listeners.toArray(listeners);
-			if (listeners.length > 0) { 
-				BoardEvent event = new BoardEvent(this, last_update, rows);
-				MulticastEvent.send("action", listeners, event);
-			}
-		} catch (NoSuchElementException e) {
-			throw new ObjectException(e);
-		} catch (IllegalStateException e) {
+			text_node = new TextNode(nodes.get(0));
+		} catch (java.lang.IndexOutOfBoundsException e) {
 			throw new ObjectException(e);
 		}
+		updateRows(date, text_node);
+		sendEvent();
 	}
+	public void run(Date date) {
+		Response response = getWebPage();
+		if (response.getStatusCode() == 200) {
+			try {
+				parser(date, response);
+			} catch (Exception e) {
+				String filename = response.save(storage_path + Assign.File_Separator + 
+						response.getFilename());
+				SEVERE("Parser \"%s\"", filename);
+				throw e;
+			}
+		} else 
+			WARNING("%s: %d %s", response.getFilename(), 
+					response.getStatusCode(), response.getReasonPhrase());
+	}
+	@Override
+	public void action(MarketEvent event) {
+		TaskManager.create(String.format("%s(date=\"%s\")", this.getClassName(), DateTime.string(event.getDate())),
+				this, "run", event.getDate());
+	}
+	
 	public static void main(String[] args) {
-		Board stock = Board.getInstance();
+		Board board = Board.getInstance();
 		BoardScreen.getInstance();
-		stock.run();
+		board.run(new Date());
 	}
 
-	
 }

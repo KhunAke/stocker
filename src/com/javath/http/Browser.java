@@ -74,7 +74,7 @@ public class Browser extends Instance implements ObjectPoolable {
 				"Browser.properties";
 		assign = Assign.getInstance(Browser.class, default_Properties);
 		USER_AGENT = assign.getProperty("USER_AGENT", "Mozilla/5.0 (Compatible)");
-		CONNECTION_TIMEOUT = (int) assign.getLongProperty("CONNECTION_TIMEOUT", 20000);
+		CONNECTION_TIMEOUT = (int) assign.getLongProperty("CONNECTION_TIMEOUT", 30000);
 		int max_total = (int) assign.getLongProperty("max_total", 200);
 		int max_per_route = (int) assign.getLongProperty("max_per_route", 20);
 		

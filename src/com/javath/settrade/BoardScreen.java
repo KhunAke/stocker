@@ -21,20 +21,34 @@ public class BoardScreen implements BoardListener {
 	}
 	
 	@Override
-	public void action(MarketEvent event) {
+	public void action(BoardEvent event) {
 		String[][] rows = event.getRows();
 		buffer.delete(0, buffer.length());
 		buffer.append("Update=\"");
 		buffer.append(DateTime.string(event.getDate()));
 		buffer.append("\", ");
+		int gainers = 0;
+		int unchanged = 0; 
+		int losers = 0;
 		for (int index = 0; index < rows.length; index++) {
-			buffer.append(rows[index][MarketEvent.NAME]);
-			buffer.append("=");
-			buffer.append(rows[index][MarketEvent.CHANGE]);
-			buffer.append(", ");
+			double change = 0.0; 
+			try {
+				change = Double.valueOf(rows[index][BoardEvent.CHANGE]);
+			} catch (NumberFormatException e) {}
+			if (change > 0.0)
+				gainers += 1;
+			else if (change < 0.0)
+				losers += 1;
+			else
+				unchanged +=1;
+			
+			//buffer.append(rows[index][BoardEvent.SYMBOL]);
+			//buffer.append("=");
+			//buffer.append(rows[index][BoardEvent.CHANGE]);
+			//buffer.append(", ");
 		}
-		System.out.printf("%s: %s%n", DateTime.timestamp(new Date()), 
-				buffer.substring(0, buffer.length() - 2));
+		System.out.printf("%s: Update=\"%s\", gainers=%d, unchanged=%d, losers=%d%n", DateTime.timestamp(new Date()), 
+				DateTime.string(event.getDate()), gainers, unchanged, losers);
 	}
 
 }
