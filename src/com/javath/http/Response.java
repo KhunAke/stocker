@@ -9,16 +9,21 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
+import java.util.Date;
 
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.HttpVersion;
 import org.apache.http.ParseException;
 import org.apache.http.StatusLine;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
+import org.apache.http.message.BasicHttpResponse;
 import org.apache.http.util.EntityUtils;
 
+import com.javath.util.DateTime;
 import com.javath.util.Instance;
 import com.javath.util.ObjectException;
 
@@ -27,7 +32,8 @@ public class Response extends Instance {
 	private Header[] headers;
 	private Header[] locations;
 	private StatusLine status;
-	private final ByteArrayEntity entity;
+	private final HttpEntity entity;
+	//private final ByteArrayEntity entity;
 	// Content-Type
 	private String mime;
 	private String charset;
@@ -85,7 +91,13 @@ public class Response extends Instance {
 			return charset;
 	}
 	public InputStream getContent() {
-		return entity.getContent();
+		try {
+			return entity.getContent();
+		} catch (IllegalStateException e) {
+			throw new ObjectException(e);
+		} catch (IOException e) {
+			throw new ObjectException(e);
+		}
 	}
 	public long getContentLength() {
 		return entity.getContentLength();

@@ -39,6 +39,8 @@ public class Board extends Instance implements MarketListener, CustomHandler{
 		//String default_path = Assign.temp + Assign.File_Separator + "settrade";
 		String default_path = Assign.temp;
 		storage_path = assign.getProperty("storage_path", default_path);
+		//board_page = assign.getProperty("board_page",
+		//		"http://www.settrade.com/C13_MarketSummaryStockType.jsp?type=S");
 		board_page = assign.getProperty("board_page",
 				"http://www.settrade.com/C13_MarketSummaryStockMethod.jsp?method=AOM");
 		charset = assign.getProperty("charset", "windows-874");
@@ -104,8 +106,16 @@ public class Board extends Instance implements MarketListener, CustomHandler{
 		}
 		return false;
 	}
-	public void updateRows(Date date, TextNode text_node) {
+	public boolean updateRows(Date date, TextNode text_node) {
 		ArrayList<String[]> rows = new ArrayList<String[]>();
+		text_node.printStringArray(0);
+		String[] root = text_node.getStringArray(0);
+		System.out.println(text_node.getString(0,root.length - 2));
+		if (!text_node.getString(0,root.length - 2)
+				.equals("หมายเหตุ: ข้อมูลการซื้อขายแบบ Auto Matching เท่านั้น")) {
+			SEVERE("\"%s\" Data loss", DateTime.string(date));
+			return false;
+		}
 		for (int index = 1; index < text_node.length(); index++) {
 			String[] data = text_node.getStringArray(index);
 			if (data[0].equals("2") && (data[2].length() > 0)) {
@@ -124,12 +134,14 @@ public class Board extends Instance implements MarketListener, CustomHandler{
 					rows.add(new String[]
 							{symbol, open, high, low, last, change, bid, offer, volume, value});
 				} catch (ArrayIndexOutOfBoundsException e) {
-					throw new ObjectException(e, "Symbol=\"%s\", index=%s", symbol, e.getMessage());
+					throw new RuntimeException(
+							String.format("Symbol=\"%s\", index=%s", symbol, e.getMessage()), e);
 				}
 			}
-			this.last_update = date;
-			this.rows = rows.toArray(new String[][] {});
 		}
+		this.last_update = date;
+		this.rows = rows.toArray(new String[][] {});
+		return true;
 	}
 	private void parser(Date date, Response response) {
 		HtmlParser parser = new HtmlParser(response.getContent(), charset);
@@ -143,19 +155,16 @@ public class Board extends Instance implements MarketListener, CustomHandler{
 		} catch (java.lang.IndexOutOfBoundsException e) {
 			throw new ObjectException(e);
 		}
-		updateRows(date, text_node);
-		sendEvent();
+		if (updateRows(date, text_node))
+			sendEvent();
 	}
 	public void run(Date date) {
 		Response response = getWebPage();
 		if (response.getStatusCode() == 200) {
 			try {
 				parser(date, response);
-			} catch (Exception e) {
-				String filename = response.save(storage_path + Assign.File_Separator + 
-						response.getFilename());
-				SEVERE("Parser \"%s\"", filename);
-				throw e;
+			} catch (RuntimeException e) {
+				SEVERE(e);
 			}
 		} else 
 			WARNING("%s: %d %s", response.getFilename(), 

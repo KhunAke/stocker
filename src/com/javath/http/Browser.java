@@ -60,6 +60,8 @@ public class Browser extends Instance implements ObjectPoolable {
 	private final static Assign assign;
 	private final static String USER_AGENT;
 	private final static int CONNECTION_TIMEOUT;
+	private final static int SOCKET_TIMEOUT;
+	private final static boolean TCP_NODELAY;
 	
 	private final static HttpClient default_client;
 	public final static HttpHost LOCALHOST;
@@ -74,7 +76,9 @@ public class Browser extends Instance implements ObjectPoolable {
 				"Browser.properties";
 		assign = Assign.getInstance(Browser.class, default_Properties);
 		USER_AGENT = assign.getProperty("USER_AGENT", "Mozilla/5.0 (Compatible)");
-		CONNECTION_TIMEOUT = (int) assign.getLongProperty("CONNECTION_TIMEOUT", 30000);
+		CONNECTION_TIMEOUT = (int) assign.getLongProperty("CONNECTION_TIMEOUT", 60000);
+		SOCKET_TIMEOUT = (int) assign.getLongProperty("SOCKET_TIMEOUT", 60000);
+		TCP_NODELAY = assign.getBooleanProperty("TCP_NODELAY", true);
 		int max_total = (int) assign.getLongProperty("max_total", 200);
 		int max_per_route = (int) assign.getLongProperty("max_per_route", 20);
 		
@@ -100,7 +104,9 @@ public class Browser extends Instance implements ObjectPoolable {
 		// the timeout in milliseconds until a connection is established.
 		httpParams.setIntParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, CONNECTION_TIMEOUT);
 		// The socket timeout (SO_TIMEOUT) in milliseconds, which is the timeout for waiting for data.
-		//httpParams.setIntParameter(CoreConnectionPNames.SO_TIMEOUT, 20000);
+		httpParams.setIntParameter(CoreConnectionPNames.SO_TIMEOUT, SOCKET_TIMEOUT);
+		// 
+		httpParams.setBooleanParameter(CoreConnectionPNames.TCP_NODELAY, TCP_NODELAY);
 				
 		LOCALHOST = new HttpHost("localhost");
 		default_request = new HttpGet("/");
