@@ -11,7 +11,6 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 import org.hibernate.Session;
-import org.hibernate.Transaction;
 import org.hibernate.exception.ConstraintViolationException;
 import org.w3c.dom.Node;
 
@@ -38,6 +37,14 @@ import com.javath.util.ObjectException;
 import com.javath.util.TaskManager;
 
 public class Market extends Instance implements OscillatorLoader, MarketListener, CustomHandler, Runnable {
+	
+	public final static int NAME = 0;
+	public final static int LAST = 1;
+	public final static int CHANGE = 2;
+	public final static int HIGH = 3;
+	public final static int LOW = 4;
+	public final static int VOLUME = 5;
+	public final static int VALUE = 6;
 	
 	private final static Assign assign;
 	private final static String storage_path;
@@ -67,9 +74,9 @@ public class Market extends Instance implements OscillatorLoader, MarketListener
 	private final long interval_update;
 	
 	private OscillatorDivideFilter oscillator;
-	private Date last_update;
 	private MarketStatus status;
-	private String[][] rows ;
+	private Date last_update;
+	private String[][] data_set ;
 	
 	private Market() {
 		cookie = new Cookie(); 
@@ -77,8 +84,10 @@ public class Market extends Instance implements OscillatorLoader, MarketListener
 		status_listeners = new HashSet<MarketStatusListener>();
 		//
 		last_update = new Date(0);
+		status = MarketStatus.Unknow;
+		//
 		interval_update = assign.getLongProperty("interval_update", 16000);
-		if (assign.getBooleanProperty("market_upload", false))
+		if (assign.getBooleanProperty("market_upload", true))
 			this.addMarketListener(this);
 	}
 	
@@ -88,11 +97,39 @@ public class Market extends Instance implements OscillatorLoader, MarketListener
 	public boolean removeMarketListener(MarketListener listener) {
 		return market_listeners.remove(listener);
 	}
+	private void sendMarketEvent(Date date, MarketStatus status, String[][] data) {
+		try {
+			EventListener[] listeners = new EventListener[] {};
+			listeners = this.market_listeners.toArray(listeners);
+			if (listeners.length > 0) { 
+				MarketEvent event = new MarketEvent(this, date, status, data);
+				MulticastEvent.send("action", listeners, event);
+			}
+		} catch (NoSuchElementException e) {
+			throw new ObjectException(e);
+		} catch (IllegalStateException e) {
+			throw new ObjectException(e);
+		}
+	}
 	public boolean addStatusListener(MarketStatusListener listener) {
 		return status_listeners.add(listener);
 	}
 	public boolean removeStatusListener(MarketStatusListener listener) {
 		return status_listeners.remove(listener);
+	}
+	private void sendStatusEvent(Date date, MarketStatus status) {
+		try {
+			EventListener[] listeners = new EventListener[] {};
+			listeners = this.status_listeners.toArray(listeners);
+			if (listeners.length > 0) { 
+				MarketStatusEvent event = new MarketStatusEvent(this, date, status);
+				MulticastEvent.send("action", listeners, event);
+			}
+		} catch (NoSuchElementException e) {
+			throw new ObjectException(e);
+		} catch (IllegalStateException e) {
+			throw new ObjectException(e);
+		}
 	}
 	
 	@Override
@@ -120,7 +157,7 @@ public class Market extends Instance implements OscillatorLoader, MarketListener
 				this, "upload", event);
 	}
 	public void upload(MarketEvent event) {
-		String[][] rows = event.getRows();
+		String[][] data_set = event.getDataSet();
 		SettradeMarketHome home = (SettradeMarketHome)
 				Assign.borrowObject(SettradeMarketHome.class);
 		try {
@@ -128,28 +165,28 @@ public class Market extends Instance implements OscillatorLoader, MarketListener
 			session.beginTransaction();
 			SettradeMarket market = null;
 			try {
-				for (int index = 0; index < rows.length; index++) {
+				for (int index = 0; index < data_set.length; index++) {
 					SettradeMarketId id = new SettradeMarketId(
-							rows[index][MarketEvent.NAME],
+							data_set[index][NAME],
 							event.getDate());
 					market = new SettradeMarket(id);
 					try {
-						market.setLast(Double.valueOf(rows[index][MarketEvent.LAST]));
+						market.setLast(Double.valueOf(data_set[index][LAST]));
 					} catch (NumberFormatException e) {}
 					try {
-						market.setChangePrior(Double.valueOf(rows[index][MarketEvent.CHANGE]));
+						market.setChangePrior(Double.valueOf(data_set[index][CHANGE]));
 					} catch (NumberFormatException e) {}
 					try {
-						market.setHigh(Double.valueOf(rows[index][MarketEvent.HIGH]));
+						market.setHigh(Double.valueOf(data_set[index][HIGH]));
 					} catch (NumberFormatException e) {}
 					try {
-						market.setLow(Double.valueOf(rows[index][MarketEvent.LOW]));
+						market.setLow(Double.valueOf(data_set[index][LOW]));
 					} catch (NumberFormatException e) {}
 					try {
-						market.setVolume(Long.valueOf(rows[index][MarketEvent.VOLUME]));
+						market.setVolume(Long.valueOf(data_set[index][VOLUME]));
 					} catch (NumberFormatException e) {}
 					try {
-						market.setValue(Double.valueOf(rows[index][MarketEvent.VALUE]));
+						market.setValue(Double.valueOf(data_set[index][VALUE]));
 					} catch (NumberFormatException e) {}
 					home.persist(market);	
 				}
@@ -165,7 +202,6 @@ public class Market extends Instance implements OscillatorLoader, MarketListener
 		} finally {
 			Assign.returnObject(home);
 		}
-		
 	}
 	
 	@Override
@@ -186,51 +222,7 @@ public class Market extends Instance implements OscillatorLoader, MarketListener
 	private String getURI() {
 		return market_page;
 	}
-
-	private void parser(Response response) {
-		HtmlParser parser = new HtmlParser(response.getContent(), charset);
-		CustomFilter filter = new CustomFilter(parser.parse());
-		filter.setHandler(this);
-		List<Node> nodes = filter.filter(6);
-		
-		TextNode text = null;
-		try {
-			text = new TextNode(nodes.get(0));
-		} catch (IndexOutOfBoundsException e) {
-			throw new ObjectException(e);
-		}
-		
-		Date date = null;
-		try {
-			date = DateTime.format("ข้อมูลล่าสุด dd/MM/yyyy HH:mm:ss", text.getString(0, 2));
-		} catch (ObjectException e) {
-			if (e.getCause() instanceof ParseException) {
-				WARNING(e.getMessage());
-				date = DateTime.date();
-			} else {
-				throw e;
-			}
-		}
-		
-		synchronized(last_update) {
-			if (date.after(last_update)) {
-				last_update = date;
-				MarketStatus status = MarketStatus.getStatus(text.getString(8, 4));
-				if (!status.equals(this.status)) {
-					INFO("Status at \"%s\" is \"%s\"", DateTime.string(date), status);
-					this.status = status;
-					sendStatusEvent();
-				}
-				assignNextSchedule();
-				updateRows(text);
-				sendMarketEvent();
-				//printRows();
-			} else if (date.before(last_update)) { //before(when)
-				WARNING("Server delayed because request of \"%s\" but received after \"%s\"", 
-						DateTime.string(date), DateTime.string(last_update));
-			}
-		}
-	}
+	
 	@Override
 	public boolean condition(Node node) {
 		try {
@@ -241,7 +233,7 @@ public class Market extends Instance implements OscillatorLoader, MarketListener
 		}
 		return false;
 	}
-	private void assignNextSchedule() {
+	private void assignNextSchedule(Date date, MarketStatus status) {
 		long timestamp = 0;
 		switch (status) {
 		case Empty:
@@ -253,13 +245,13 @@ public class Market extends Instance implements OscillatorLoader, MarketListener
 		case Open_II:
 		case PreClose:
 		case OffHour:
-			timestamp = last_update.getTime() + interval_update;
+			timestamp = date.getTime() + interval_update;
 			break;
 		case Intermission:
 			timestamp = MarketStatus.PreOpen_II.getBegin(new Date());
 			break;
 		case Closed:
-			long update = last_update.getTime() % 86400000;
+			long update = date.getTime() % 86400000;
 			Calendar calendar = DateTime.borrowCalendar();
 			try {
 				// Trading quotation will be officially updated at around 18:30
@@ -291,64 +283,102 @@ public class Market extends Instance implements OscillatorLoader, MarketListener
 			}
 			break;
 		default:
-			timestamp = last_update.getTime() + interval_update;
-			WARNING("Unknow Status at \"%s\"", DateTime.string(last_update));
+			timestamp = date.getTime() + interval_update;
+			WARNING("Unknow Status at \"%s\"", DateTime.string(date));
 			break;
 		}
 		FINE("Next schedule at \"%s\"", DateTime.timestamp(timestamp));
 		oscillator.setSchedule(timestamp);
 	}
-	private void sendMarketEvent() {
+	
+	private void parser(Response response) {
+		HtmlParser parser = new HtmlParser(response.getContent(), charset);
+		CustomFilter filter = new CustomFilter(parser.parse());
+		filter.setHandler(this);
+		List<Node> nodes = filter.filter(6);
+		
+		TextNode text_node = null;
 		try {
-			EventListener[] listeners = new EventListener[] {};
-			listeners = this.market_listeners.toArray(listeners);
-			if (listeners.length > 0) { 
-				MarketEvent event = new MarketEvent(this, last_update, status, rows);
-				MulticastEvent.send("action", listeners, event);
-			}
-		} catch (NoSuchElementException e) {
-			throw new ObjectException(e);
-		} catch (IllegalStateException e) {
+			text_node = new TextNode(nodes.get(0));
+		} catch (IndexOutOfBoundsException e) {
 			throw new ObjectException(e);
 		}
+		
+		Date date = null;
+		try {
+			date = DateTime.format("ข้อมูลล่าสุด dd/MM/yyyy HH:mm:ss", text_node.getString(0, 2));
+		} catch (ObjectException e) {
+			if (e.getCause() instanceof ParseException) {
+				WARNING(e.getMessage());
+				date = DateTime.date();
+			} else {
+				throw e;
+			}
+		}
+		
+		Date last_update = getLastUpdate();
+		if (date.after(last_update)) {
+			MarketStatus status = MarketStatus.getStatus(text_node.getString(8, 4));
+			if (!status.equals(this.status)) {
+				INFO("Status at \"%s\" is \"%s\"", DateTime.string(date), status);
+				sendStatusEvent(date, status);
+			}
+			assignNextSchedule(date, status);
+			parser(date, status, text_node);
+		} else if (date.before(last_update)) { //before(when)
+			WARNING("Server delayed because request of \"%s\" but received after \"%s\"", 
+					DateTime.string(date), DateTime.string(last_update));
+		}
 	}
-	public void updateRows(TextNode node) {
+	private void parser(Date date, MarketStatus status, TextNode text_node) {
 		ArrayList<String[]> rows = new ArrayList<String[]>();
-		for (int index = 1; index < node.length(); index++) {
-			String[] data = node.getStringArray(index);
+		for (int index = 1; index < text_node.length(); index++) {
+			String[] data = text_node.getStringArray(index);
 			if (data[0].equals("2") && (data[2].length() > 0)) {
-				String symbol =data[2].substring(0, data[2].indexOf(" Index"));
+				String name = data[2].substring(0, data[2].indexOf(" Index"));
 				String last = replace(data[4]);
 				String change = replace(data[6]);
 				String high = replace(data[10]);
 				String low = replace(data[12]);
 				String volume = replace(data[14]);
 				String value = replace(data[16]);
+				//NAME, LAST, CHANGE, HIGH, LOW, VOLUME, VALUE
 				rows.add(new String[]
-						{symbol, last, change, high, low, volume, value});
+						{name, last, change, high, low, volume, value});
 			}
 		}
-		this.rows = rows.toArray(new String[][] {});
+		String[][] data_set = rows.toArray(new String[][] {});
+		update(date, status, data_set);
+		sendMarketEvent(date, status, data_set);
 	}
 	public static String replace(String data) {
 		return data.replace(",", "");
 	}
-	private void sendStatusEvent() {
-		try {
-			EventListener[] listeners = new EventListener[] {};
-			listeners = this.status_listeners.toArray(listeners);
-			if (listeners.length > 0) { 
-				MarketStatusEvent event = new MarketStatusEvent(this, last_update, status);
-				MulticastEvent.send("action", listeners, event);
-			}
-		} catch (NoSuchElementException e) {
-			throw new ObjectException(e);
-		} catch (IllegalStateException e) {
-			throw new ObjectException(e);
+	
+	public Date getLastUpdate() {
+		synchronized (instance) {
+			return last_update;
+		}
+	}
+	private void update(Date date, MarketStatus status, String[][] data_set) {
+		synchronized (instance) {
+			last_update = date;
+			this.status = status;
+			this.data_set = data_set;
+		}
+	}
+	public MarketStatus getStatus() {
+		synchronized (instance) {
+			return status;
+		}
+	}
+	public String[][] getDataSet() {
+		synchronized (instance) {
+			return data_set;
 		}
 	}
 	
-	public static void main(String[] args) {
+ 	public static void main(String[] args) {
 		Market stock = Market.getInstance();
 		MarketScreen.getInstance();
 		MarketStatusScreen.getInstance();

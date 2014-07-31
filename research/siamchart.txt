@@ -1,0 +1,2 @@
+ftp://siamchart.com/set-archive_EOD.zip
+ftp://siamchart.com/set-archive_EOD_LAST.zip

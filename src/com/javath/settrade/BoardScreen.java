@@ -22,7 +22,7 @@ public class BoardScreen implements BoardListener {
 	
 	@Override
 	public void action(BoardEvent event) {
-		String[][] rows = event.getRows();
+		String[][] rows = event.getDataSet();
 		buffer.delete(0, buffer.length());
 		buffer.append("Update=\"");
 		buffer.append(DateTime.string(event.getDate()));
@@ -33,7 +33,7 @@ public class BoardScreen implements BoardListener {
 		for (int index = 0; index < rows.length; index++) {
 			double change = 0.0; 
 			try {
-				change = Double.valueOf(rows[index][BoardEvent.CHANGE]);
+				change = Double.valueOf(rows[index][Board.CHANGE]);
 			} catch (NumberFormatException e) {}
 			if (change > 0.0)
 				gainers += 1;
@@ -41,7 +41,6 @@ public class BoardScreen implements BoardListener {
 				losers += 1;
 			else
 				unchanged +=1;
-			
 			//buffer.append(rows[index][BoardEvent.SYMBOL]);
 			//buffer.append("=");
 			//buffer.append(rows[index][BoardEvent.CHANGE]);

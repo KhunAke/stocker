@@ -22,15 +22,15 @@ public class MarketScreen implements MarketListener {
 	
 	@Override
 	public void action(MarketEvent event) {
-		String[][] rows = event.getRows();
+		String[][] rows = event.getDataSet();
 		buffer.delete(0, buffer.length());
 		buffer.append("Update=\"");
 		buffer.append(DateTime.string(event.getDate()));
 		buffer.append("\", ");
 		for (int index = 0; index < rows.length; index++) {
-			buffer.append(rows[index][MarketEvent.NAME]);
+			buffer.append(rows[index][Market.NAME]);
 			buffer.append("=");
-			buffer.append(rows[index][MarketEvent.LAST]);
+			buffer.append(rows[index][Market.LAST]);
 			buffer.append(", ");
 		}
 		System.out.printf("%s: %s%n", DateTime.timestamp(new Date()), 
