@@ -38,14 +38,6 @@ import com.javath.util.TaskManager;
 
 public class Market extends Instance implements OscillatorLoader, MarketListener, CustomHandler, Runnable {
 	
-	public final static int NAME = 0;
-	public final static int LAST = 1;
-	public final static int CHANGE = 2;
-	public final static int HIGH = 3;
-	public final static int LOW = 4;
-	public final static int VOLUME = 5;
-	public final static int VALUE = 6;
-	
 	private final static Assign assign;
 	private final static String storage_path;
 	private final static String market_page;
@@ -167,26 +159,26 @@ public class Market extends Instance implements OscillatorLoader, MarketListener
 			try {
 				for (int index = 0; index < data_set.length; index++) {
 					SettradeMarketId id = new SettradeMarketId(
-							data_set[index][NAME],
+							data_set[index][MarketEvent.NAME],
 							event.getDate());
 					market = new SettradeMarket(id);
 					try {
-						market.setLast(Double.valueOf(data_set[index][LAST]));
+						market.setLast(Double.valueOf(data_set[index][MarketEvent.LAST]));
 					} catch (NumberFormatException e) {}
 					try {
-						market.setChangePrior(Double.valueOf(data_set[index][CHANGE]));
+						market.setChangePrior(Double.valueOf(data_set[index][MarketEvent.CHANGE]));
 					} catch (NumberFormatException e) {}
 					try {
-						market.setHigh(Double.valueOf(data_set[index][HIGH]));
+						market.setHigh(Double.valueOf(data_set[index][MarketEvent.HIGH]));
 					} catch (NumberFormatException e) {}
 					try {
-						market.setLow(Double.valueOf(data_set[index][LOW]));
+						market.setLow(Double.valueOf(data_set[index][MarketEvent.LOW]));
 					} catch (NumberFormatException e) {}
 					try {
-						market.setVolume(Long.valueOf(data_set[index][VOLUME]));
+						market.setVolume(Long.valueOf(data_set[index][MarketEvent.VOLUME]));
 					} catch (NumberFormatException e) {}
 					try {
-						market.setValue(Double.valueOf(data_set[index][VALUE]));
+						market.setValue(Double.valueOf(data_set[index][MarketEvent.VALUE]));
 					} catch (NumberFormatException e) {}
 					home.persist(market);	
 				}
@@ -383,8 +375,8 @@ public class Market extends Instance implements OscillatorLoader, MarketListener
 		MarketScreen.getInstance();
 		MarketStatusScreen.getInstance();
 		
-		stock.addMarketListener(Board.getInstance());
-		BoardScreen.getInstance();
+		//stock.addMarketListener(Board.getInstance());
+		//BoardScreen.getInstance();
 		
 		stock.initOscillator();
 		Oscillator.startAll();

@@ -87,11 +87,55 @@ public class DateTime {
 		}
 	}
 	
+	public static Date splitTime(Date time) {
+		Calendar calendar = borrowCalendar();
+		calendar.setTime(time);
+		calendar.set(Calendar.DAY_OF_MONTH, 0);
+		calendar.set(Calendar.MONTH, 0);
+		calendar.set(Calendar.YEAR, 0);
+		Date result = calendar.getTime();
+		returnCalendar(calendar);
+		return result;
+	}
+	public static Date splitTime(long time) {
+		Calendar calendar = borrowCalendar();
+		calendar.setTimeInMillis(time);
+		calendar.set(Calendar.DAY_OF_MONTH, 0);
+		calendar.set(Calendar.MONTH, 0);
+		calendar.set(Calendar.YEAR, 0);
+		Date result = calendar.getTime();
+		returnCalendar(calendar);
+		return result;
+	}
+	public static Date splitDate(Date date) {
+		Calendar calendar = borrowCalendar();
+		calendar.setTime(date);
+		calendar.set(Calendar.HOUR_OF_DAY, 0);
+		calendar.set(Calendar.MINUTE, 0);
+		calendar.set(Calendar.SECOND, 0);
+		calendar.set(Calendar.MILLISECOND, 0);
+		Date result = calendar.getTime();
+		returnCalendar(calendar);
+		return result;
+	}
+	public static Date splitDate(long date) {
+		Calendar calendar = borrowCalendar();
+		calendar.setTimeInMillis(date);
+		calendar.set(Calendar.HOUR_OF_DAY, 0);
+		calendar.set(Calendar.MINUTE, 0);
+		calendar.set(Calendar.SECOND, 0);
+		calendar.set(Calendar.MILLISECOND, 0);
+		Date result = calendar.getTime();
+		returnCalendar(calendar);
+		return result;
+	}
+	public static Date merge(Date date, Date time) {
+		return merge(date.getTime(), time.getTime());
+	}
 	public static Date merge(long date, long time) {
 		Calendar calendar = borrowCalendar();
 		TimeZone  timezone = calendar.getTimeZone();
 		returnCalendar(calendar);
-		timezone.getRawOffset();
 		return new Date(date + time + (long) timezone.getRawOffset());
 	}
 	

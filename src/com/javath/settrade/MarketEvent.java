@@ -8,6 +8,13 @@ import com.javath.util.DateTime;
 public class MarketEvent extends EventObject {
 
 	private static final long serialVersionUID = 1L;
+	public final static int NAME = 0;
+	public final static int LAST = 1;
+	public final static int CHANGE = 2;
+	public final static int HIGH = 3;
+	public final static int LOW = 4;
+	public final static int VOLUME = 5;
+	public final static int VALUE = 6;
 	
 	private final Date date;
 	private final MarketStatus status;

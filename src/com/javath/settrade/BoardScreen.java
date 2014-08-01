@@ -6,17 +6,10 @@ import com.javath.util.DateTime;
 
 public class BoardScreen implements BoardListener {
 	
-	private static BoardScreen instance = new BoardScreen();
-	
-	public static BoardScreen getInstance() {
-		return instance;
-	}
-	
 	private StringBuffer buffer;
 	
-	private BoardScreen() {
+	public BoardScreen(Board board) {
 		buffer = new StringBuffer();
-		Board board = Board.getInstance();
 		board.addListener(this);
 	}
 	
@@ -33,7 +26,7 @@ public class BoardScreen implements BoardListener {
 		for (int index = 0; index < rows.length; index++) {
 			double change = 0.0; 
 			try {
-				change = Double.valueOf(rows[index][Board.CHANGE]);
+				change = Double.valueOf(rows[index][BoardEvent.CHANGE]);
 			} catch (NumberFormatException e) {}
 			if (change > 0.0)
 				gainers += 1;

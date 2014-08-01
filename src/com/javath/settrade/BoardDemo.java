@@ -23,6 +23,9 @@ import com.javath.logger.LOG;
 import com.javath.mapping.SettradeBoard;
 import com.javath.mapping.SettradeBoardHome;
 import com.javath.mapping.SettradeBoardId;
+import com.javath.mapping.SettradeMarket;
+import com.javath.mapping.SettradeMarketHome;
+import com.javath.mapping.SettradeMarketId;
 import com.javath.trigger.MulticastEvent;
 import com.javath.util.Assign;
 import com.javath.util.DateTime;
@@ -30,34 +33,48 @@ import com.javath.util.Instance;
 import com.javath.util.ObjectException;
 import com.javath.util.TaskManager;
 
-public abstract class Board extends Instance implements BoardSource, BoardListener, MarketListener, CustomHandler{
+public class BoardDemo extends Instance implements BoardListener, MarketListener, CustomHandler{
 	
-	protected final static Assign assign;
-	protected final static String charset;
+	private final static Assign assign;
+	private final static String storage_path;
+	private final static String board_page;
+	private final static String board_data_check;
+	private final static String charset;
+	private static BoardDemo instance;
 	
 	static {
 		String default_Properties = Assign.etc + Assign.File_Separator +
 				"settrade.properties";
-		assign = Assign.getInstance(Board.class, default_Properties);
+		assign = Assign.getInstance(Market.class, default_Properties);
+		//String default_path = Assign.temp + Assign.File_Separator + "settrade";
+		String default_path = Assign.temp;
+		storage_path = assign.getProperty("storage_path", default_path);
+		//board_page = assign.getProperty("board_page",
+		//		"http://www.settrade.com/C13_MarketSummaryStockType.jsp?type=S");
+		board_page = assign.getProperty("board_page",
+				"http://www.settrade.com/C13_MarketSummaryStockMethod.jsp?method=AOM");
 		charset = assign.getProperty("charset", "windows-874");
+		board_data_check = assign.getProperty("board_data_check", "หมายเหตุ: ข้อมูลการซื้อขายแบบ Auto Matching เท่านั้น");
+		instance = new BoardDemo();
+	}
+	
+	public static BoardDemo getInstance() {
+		return instance;
 	}
 	
 	private final Set<BoardListener> listeners;
-	protected final Cookie cookie;
 	
+	private final Cookie cookie;
 	private Date last_update;
 	private String[][] data_set;
-	private Date current_date;
-	private int max_length; 
 	
-	public Board() {
+	public BoardDemo() {
 		listeners = new HashSet<BoardListener>();
 		cookie = new Cookie();
-		//
-		last_update = new Date(0);
-		data_set = new String[][] {};
-		current_date = DateTime.splitDate(last_update);
-		max_length = data_set.length;
+		
+		last_update = new Date(0); 
+		if (assign.getBooleanProperty("board_upload", true))
+			this.addListener(this);
 	}
 	
 	public boolean addListener(BoardListener listener) {
@@ -81,24 +98,7 @@ public abstract class Board extends Instance implements BoardSource, BoardListen
 		}
 	}
 	
-	@Override
-	public void action(MarketEvent event) {
-		TaskManager.create(String.format("%s(date=\"%s\")", this.getClassName(), DateTime.string(event.getDate())),
-				this, "run", event.getDate());
-	}
-	public void run(Date date) {
-		Response response = getWebPage();
-		if (response.getStatusCode() == 200) {
-			try {
-				parser(date, response);
-			} catch (RuntimeException e) {
-				SEVERE(e);
-			}
-		} else 
-			WARNING("%s: %d %s", response.getFilename(), 
-					response.getStatusCode(), response.getReasonPhrase());
-	}
-	protected Response getWebPage() {
+	private Response getWebPage() {
 		Browser browser = (Browser) Assign.borrowObject(Browser.class);
 		browser.setCookie(cookie.getCookieStore());
 		try {
@@ -108,20 +108,8 @@ public abstract class Board extends Instance implements BoardSource, BoardListen
 			Assign.returnObject(browser);
 		}
 	}
-	protected abstract String getURI();
-	protected void parser(Date date, Response response) {
-		HtmlParser parser = new HtmlParser(response.getContent(), charset);
-		CustomFilter filter = new CustomFilter(parser.parse());
-		filter.setHandler(this);
-		List<Node> nodes = filter.filter(3);
-		
-		TextNode text_node = null;
-		try {
-			text_node = new TextNode(nodes.get(0));
-		} catch (java.lang.IndexOutOfBoundsException e) {
-			throw new ObjectException(e);
-		}
-		parser(date, text_node);
+	private String getURI() {
+		return board_page;
 	}
 	@Override
 	public boolean condition(Node node) {
@@ -133,7 +121,7 @@ public abstract class Board extends Instance implements BoardSource, BoardListen
 		}
 		return false;
 	}
-	protected void parser(Date date, TextNode text_node) {
+	private void parser(Date date, TextNode text_node) {
 		ArrayList<String[]> rows = new ArrayList<String[]>();
 		for (int index = 1; index < text_node.length(); index++) {
 			String[] data = text_node.getStringArray(index);
@@ -153,58 +141,68 @@ public abstract class Board extends Instance implements BoardSource, BoardListen
 					rows.add(new String[]
 							{symbol, open, high, low, last, change, bid, offer, volume, value});
 				} catch (ArrayIndexOutOfBoundsException e) {
-					WARNING(new RuntimeException(
-								String.format("\"%s\" has data loss at %d", rows.size()), e));
+					//text_node.getStringArray(0);
+					String[] root = text_node.getStringArray(0);
+					if (root[root.length - 2]
+							.equals(board_data_check))
+						throw new ObjectException(e,
+								"Date=\"%s\", Symbol=\"%s\", index=%s", 
+								DateTime.string(date), symbol, e.getMessage());
+					else {
+						WARNING(new RuntimeException(
+								String.format("\"%s\" has data loss at Symbol=\"%s\", index=%s", 
+								DateTime.string(date), symbol, e.getMessage()), e));
 						sendEvent(date, rows.toArray(new String[][] {}));
 						return;
+					}
 				}
 			}
 		}
+		String[] root = text_node.getStringArray(0);
+		if (!root[root.length - 2]
+				.equals(board_data_check))
+			WARNING("\"%s\" has data loss", DateTime.string(date));
+		Date last_update = getLastUpdate();
 		String[][] data_set = rows.toArray(new String[][] {});
 		if (date.after(last_update))
-			if (!update(date, data_set))
-				WARNING(new RuntimeException(
-						String.format("\"%s\" has data loss at %d", data_set.length)));
+			update(date, data_set);
 		else //before(when)
 			WARNING("Server delayed because request of \"%s\" but received after \"%s\"", 
 					DateTime.string(date), DateTime.string(last_update));
 		sendEvent(date, data_set);
 	}
-	
-	public Date getLastUpdate() {
-		synchronized (this) {
-			return last_update;
+	private void parser(Date date, Response response) {
+		HtmlParser parser = new HtmlParser(response.getContent(), charset);
+		CustomFilter filter = new CustomFilter(parser.parse());
+		filter.setHandler(this);
+		List<Node> nodes = filter.filter(3);
+		
+		TextNode text_node = null;
+		try {
+			text_node = new TextNode(nodes.get(0));
+		} catch (java.lang.IndexOutOfBoundsException e) {
+			throw new ObjectException(e);
 		}
+		parser(date, text_node);
 	}
-	private boolean update(Date date, String[][] data_set) {
-		synchronized (this) {
-			last_update = date;
-			this.data_set = data_set;
-			if (current_date.equals(DateTime.splitDate(last_update))) {
-				if (data_set.length < max_length)
-					return false;
-				else {
-					max_length = data_set.length;
-					return true;
-				}
-			} else {
-				current_date = DateTime.splitDate(last_update);
-				max_length = data_set.length;
-				return true;
+	
+	public void run(Date date) {
+		Response response = getWebPage();
+		if (response.getStatusCode() == 200) {
+			try {
+				parser(date, response);
+			} catch (RuntimeException e) {
+				SEVERE(e);
 			}
-		}
+		} else 
+			WARNING("%s: %d %s", response.getFilename(), 
+					response.getStatusCode(), response.getReasonPhrase());
 	}
-	public String[][] getDataSet() {
-		synchronized (this) {
-			return data_set;
-		}
+	@Override
+	public void action(MarketEvent event) {
+		TaskManager.create(String.format("%s(date=\"%s\")", this.getClassName(), DateTime.string(event.getDate())),
+				this, "run", event.getDate());
 	}
-	protected int getMaxLength() {
-		synchronized (this) {
-			return max_length;
-		}
-	}
-	
 	@Override
 	public void action(BoardEvent event) {
 		TaskManager.create(String.format("%s.upload(date=\"%s\")", this.getClassName(), DateTime.string(event.getDate())),
@@ -266,5 +264,29 @@ public abstract class Board extends Instance implements BoardSource, BoardListen
 			Assign.returnObject(home);
 		}
 	}
+	
+	public Date getLastUpdate() {
+		synchronized (instance) {
+			return last_update;
+		}
+	}
+	private void update(Date date, String[][] data_set) {
+		synchronized (instance) {
+			last_update = date;
+			this.data_set = data_set;
+		}
+	}
+	public String[][] getDataSet() {
+		synchronized (instance) {
+			return data_set;
+		}
+	}
+	
+	public static void main(String[] args) {
+		BoardDemo board = BoardDemo.getInstance();
+		//BoardScreen(board);
+		board.run(new Date());
+	}
+
 
 }
