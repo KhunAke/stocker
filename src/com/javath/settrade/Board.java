@@ -3,8 +3,10 @@ package com.javath.settrade;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EventListener;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
@@ -30,19 +32,51 @@ import com.javath.util.Instance;
 import com.javath.util.ObjectException;
 import com.javath.util.TaskManager;
 
-public abstract class Board extends Instance implements BoardSource, BoardListener, MarketListener, CustomHandler{
+public abstract class Board extends Instance implements BoardListener, MarketListener, CustomHandler{
 	
 	protected final static Assign assign;
 	protected final static String charset;
+	private final static Map<String,Board> instances;
+	private final static Set<BoardListener> listeners;
 	
 	static {
 		String default_Properties = Assign.etc + Assign.File_Separator +
 				"settrade.properties";
 		assign = Assign.getInstance(Board.class, default_Properties);
 		charset = assign.getProperty("charset", "windows-874");
+		instances = new HashMap<String,Board>();
+		listeners = new HashSet<BoardListener>();
 	}
 	
-	private final Set<BoardListener> listeners;
+	public static boolean addListener(BoardListener listener) {
+		return listeners.add(listener);
+	}
+	public static boolean removeListener(BoardListener listener) {
+		return listeners.remove(listener);
+	}
+	private static void sendEvent(Object source, Date date, String[][] data) {
+		try {
+			EventListener[] listeners = 
+					Board.listeners.toArray(new EventListener[] {});
+			if (listeners.length > 0) { 
+				BoardEvent event = new BoardEvent(source, date, data);
+				MulticastEvent.send("action", listeners, event);
+			}
+		} catch (NoSuchElementException e) {
+			throw new ObjectException(e);
+		} catch (IllegalStateException e) {
+			throw new ObjectException(e);
+		}
+	}
+	
+	protected static Board get(String key) {
+		return instances.get(key);
+	}
+	protected static Board put(String key, Board value) {
+		return instances.put(key, value);
+	}
+	
+	//private final Set<BoardListener> listeners;
 	protected final Cookie cookie;
 	
 	private Date last_update;
@@ -51,15 +85,17 @@ public abstract class Board extends Instance implements BoardSource, BoardListen
 	private int max_length; 
 	
 	public Board() {
-		listeners = new HashSet<BoardListener>();
 		cookie = new Cookie();
 		//
 		last_update = new Date(0);
 		data_set = new String[][] {};
 		current_date = DateTime.splitDate(last_update);
 		max_length = data_set.length;
+		//
+		Market.getInstance().addMarketListener(this);
 	}
 	
+	/**
 	public boolean addListener(BoardListener listener) {
 		return listeners.add(listener);
 	}
@@ -80,6 +116,7 @@ public abstract class Board extends Instance implements BoardSource, BoardListen
 			throw new ObjectException(e);
 		}
 	}
+	/**/
 	
 	@Override
 	public void action(MarketEvent event) {
@@ -134,6 +171,7 @@ public abstract class Board extends Instance implements BoardSource, BoardListen
 		return false;
 	}
 	protected void parser(Date date, TextNode text_node) {
+		//text_node.print();
 		ArrayList<String[]> rows = new ArrayList<String[]>();
 		for (int index = 1; index < text_node.length(); index++) {
 			String[] data = text_node.getStringArray(index);
@@ -154,21 +192,24 @@ public abstract class Board extends Instance implements BoardSource, BoardListen
 							{symbol, open, high, low, last, change, bid, offer, volume, value});
 				} catch (ArrayIndexOutOfBoundsException e) {
 					WARNING(new RuntimeException(
-								String.format("\"%s\" has data loss at %d", rows.size()), e));
-						sendEvent(date, rows.toArray(new String[][] {}));
-						return;
+								String.format("%s,\"%s\" has data loss later \"%s\"", 
+								getKey(), DateTime.string(date), rows.get(rows.size() - 1)[0]), e));
+					sendEvent(this, date, rows.toArray(new String[][] {}));
+					return;
 				}
 			}
 		}
 		String[][] data_set = rows.toArray(new String[][] {});
+		Date last_update = getLastUpdate();
 		if (date.after(last_update))
 			if (!update(date, data_set))
 				WARNING(new RuntimeException(
-						String.format("\"%s\" has data loss at %d", data_set.length)));
-		else //before(when)
+						String.format("%s,\"%s\" has data loss later \"%s\"", 
+						getKey(), DateTime.string(date), data_set[data_set.length - 1][0])));
+		else if (date.before(last_update))//before(when)
 			WARNING("Server delayed because request of \"%s\" but received after \"%s\"", 
 					DateTime.string(date), DateTime.string(last_update));
-		sendEvent(date, data_set);
+		sendEvent(this, date, data_set);
 	}
 	
 	public Date getLastUpdate() {
@@ -204,6 +245,7 @@ public abstract class Board extends Instance implements BoardSource, BoardListen
 			return max_length;
 		}
 	}
+	public abstract String getKey();
 	
 	@Override
 	public void action(BoardEvent event) {

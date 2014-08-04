@@ -209,10 +209,15 @@ public class Instance {
 				break;
 			}
 		}
-		logger.logp(level, classname, methodname, 
-				String.format("[@%d] %s: %s (%s:%d)", InstanceId, 
-						throwable.getClass().getCanonicalName(), throwable.getMessage(), 
-						filename, linenumber));
+		if (filename == null)
+			logger.logp(level, classname, methodname, 
+					String.format("[@%d] %s: %s", InstanceId, 
+							throwable.getClass().getCanonicalName(), throwable.getMessage()));
+		else
+			logger.logp(level, classname, methodname, 
+					String.format("[@%d] %s: %s (%s:%d)", InstanceId, 
+							throwable.getClass().getCanonicalName(), throwable.getMessage(), 
+							filename, linenumber));
 		if (Assign.debug)
 			synchronized (System.err) {
 				System.err.printf("%s [@%d] ", DateTime.timestamp(new Date()), InstanceId);

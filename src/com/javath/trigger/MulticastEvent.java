@@ -4,66 +4,17 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.EventListener;
 import java.util.EventObject;
-import java.util.NoSuchElementException;
 
-import org.apache.commons.pool.ObjectPool;
-import org.apache.commons.pool.PoolableObjectFactory;
-import org.apache.commons.pool.impl.GenericObjectPool;
-
+import com.javath.util.Assign;
 import com.javath.util.Instance;
 import com.javath.util.ObjectException;
 import com.javath.util.TaskManager;
 
 public class MulticastEvent extends Instance implements Runnable {
-
-	private static ObjectPool<MulticastEvent> pool;
 	
-	static {
-		pool = new GenericObjectPool<MulticastEvent>(
-				new PoolableObjectFactory<MulticastEvent>() {
-					@Override
-					public MulticastEvent makeObject() 
-							throws Exception {
-						return new MulticastEvent();
-					}
-					@Override
-					public void activateObject(MulticastEvent event) 
-							throws Exception {}
-					@Override
-					public void passivateObject(MulticastEvent event) 
-							throws Exception {}
-					@Override
-					public boolean validateObject(MulticastEvent event) {
-						return true;
-					}
-					@Override
-					public void destroyObject(MulticastEvent event) 
-							throws Exception {}
-				});
-	}
-
-	private static MulticastEvent borrowObject() {
-		try {
-			return pool.borrowObject();
-		} catch (NoSuchElementException e) {
-			throw new ObjectException(e);
-		} catch (IllegalStateException e) {
-			throw new ObjectException(e);
-		} catch (Exception e) {
-			throw new ObjectException(e);
-		}
-	}
-	
-	private static void returnObject(MulticastEvent multicast) {
-		try {
-			pool.returnObject(multicast);
-		} catch (Exception e) {
-			throw new ObjectException(e);
-		}
-	}
-	
-	public static void send(String method,EventListener[] receivers,EventObject event) {
-		MulticastEvent multicast = borrowObject();
+	public static void send(String method, EventListener[] receivers, EventObject event) {
+		MulticastEvent multicast = 
+				(MulticastEvent) Assign.borrowObject(MulticastEvent.class);
 		multicast.initial(method, receivers, event);
 		
 		TaskManager.create(String.format("%s", event), multicast);
@@ -73,14 +24,13 @@ public class MulticastEvent extends Instance implements Runnable {
 	private EventListener[] receivers;
 	private EventObject event;
 	
-	private MulticastEvent() {}
+	public MulticastEvent() {}
 
-	private void initial(String method,EventListener[] receivers,EventObject event) {
+	private void initial(String method, EventListener[] receivers, EventObject event) {
 		this.method = method;
 		this.receivers = receivers;
 		this.event = event;
 	}
-	
 	public void run() {
 		for (int index = 0; index < receivers.length; index++) {
 			try {
@@ -99,7 +49,7 @@ public class MulticastEvent extends Instance implements Runnable {
 				throw new ObjectException(e);
 			} catch (ObjectException e) {}
 		}
-		MulticastEvent.returnObject(this);
+		Assign.returnObject(this);
 	}
 	
 }

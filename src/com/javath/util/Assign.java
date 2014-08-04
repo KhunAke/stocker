@@ -169,6 +169,7 @@ public class Assign extends Instance {
 	private static String getProperty(Properties properties, String key, String default_value) {
 		return properties.getProperty(key, system.getProperty(key, default_value));
 	}
+	/**
 	private static boolean getBooleanProperty(Properties properties, String key) {
 		String value = properties.getProperty(key, 
 				system.getProperty(key, "0"));
@@ -184,6 +185,7 @@ public class Assign extends Instance {
 			return false;
 		throw new ObjectException("For input string: \"%s\"", value);
 	}
+	/**/
 	private static boolean getBooleanProperty(Properties properties, String key, boolean default_value) {
 		String value = properties.getProperty(key, 
 				system.getProperty(key, default_value?"1":"0"));

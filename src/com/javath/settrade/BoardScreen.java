@@ -1,18 +1,29 @@
 package com.javath.settrade;
 
 import java.util.Date;
+import java.util.Map;
 
 import com.javath.util.DateTime;
 
 public class BoardScreen implements BoardListener {
 	
-	private StringBuffer buffer;
+	private final static BoardScreen instance;
 	
-	public BoardScreen(Board board) {
-		buffer = new StringBuffer();
-		board.addListener(this);
+	static {
+		instance = new BoardScreen();
 	}
 	
+	public static BoardScreen getInstance() {
+		return instance;
+	}
+	
+	private StringBuffer buffer;
+	
+	private BoardScreen() {
+		buffer = new StringBuffer();
+		Board.addListener(this);
+	}
+
 	@Override
 	public void action(BoardEvent event) {
 		String[][] rows = event.getDataSet();
@@ -39,8 +50,9 @@ public class BoardScreen implements BoardListener {
 			//buffer.append(rows[index][BoardEvent.CHANGE]);
 			//buffer.append(", ");
 		}
-		System.out.printf("%s: Update=\"%s\", gainers=%d, unchanged=%d, losers=%d%n", DateTime.timestamp(new Date()), 
-				DateTime.string(event.getDate()), gainers, unchanged, losers);
+		Board board = (Board) event.getSource();
+		System.out.printf("%s: Update=\"%s\", %s, gainers=%d, unchanged=%d, losers=%d%n", DateTime.timestamp(new Date()), 
+				DateTime.string(event.getDate()), board.getKey(), gainers, unchanged, losers);
 	}
 
 }
