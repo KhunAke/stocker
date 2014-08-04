@@ -13,7 +13,7 @@ public class StockType extends Board {
 		StockType instance = (StockType) Board.get("type=" + type);
 		if (instance == null) {
 			instance = new StockType(type);
-			Board.put(instance.getKey(), instance);
+			Board.put("type=" + type, instance);
 		}
 		return instance;
 	}

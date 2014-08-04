@@ -13,7 +13,7 @@ public class StockMethod extends Board {
 		StockMethod instance = (StockMethod) Board.get("method=" + method);
 		if (instance == null) {
 			instance = new StockMethod(method);
-			Board.put(instance.getKey(), instance);
+			Board.put("method=" + method, instance);
 		}
 		return instance;
 	}
