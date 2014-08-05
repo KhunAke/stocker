@@ -5,7 +5,7 @@ public class StockMethod extends Board {
 	private final static String method_page;
 	
 	static {
-		method_page = assign.getProperty("board_page",
+		method_page = assign.getProperty("method_page",
 				"http://www.settrade.com/C13_MarketSummaryStockMethod.jsp?method=%s");
 	}
 	

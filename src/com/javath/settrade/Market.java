@@ -79,7 +79,7 @@ public class Market extends Instance implements OscillatorLoader, MarketListener
 		status = MarketStatus.Unknow;
 		//
 		interval_update = assign.getLongProperty("interval_update", 16000);
-		if (assign.getBooleanProperty("market_upload", false))
+		if (assign.getBooleanProperty("market_upload", true))
 			this.addMarketListener(this);
 	}
 	
@@ -375,8 +375,18 @@ public class Market extends Instance implements OscillatorLoader, MarketListener
 		MarketScreen.getInstance();
 		MarketStatusScreen.getInstance();
 		
-		StockMethod.getInstance("AOM");
-		StockType.getInstance("L");
+		StockIndustry.getInstance("", "AGRO");
+		StockIndustry.getInstance("", "CONSUMP");
+		//StockIndustry.getInstance("", "FINCIAL");
+		//StockIndustry.getInstance("", "INDUS");
+		//StockIndustry.getInstance("", "PROPCON");
+		//StockIndustry.getInstance("", "RESOURC");
+		//StockIndustry.getInstance("", "SERVICE");
+		//StockIndustry.getInstance("", "TECH");
+		
+		//StockCommand.getInstance("MEDSIZE");
+		//StockMethod.getInstance("AOM");
+		//StockType.getInstance("L");
 		BoardScreen.getInstance();
 		
 		stock.initOscillator();

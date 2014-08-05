@@ -93,6 +93,8 @@ public abstract class Board extends Instance implements BoardListener, MarketLis
 		max_length = data_set.length;
 		//
 		Market.getInstance().addMarketListener(this);
+		if (assign.getBooleanProperty("board_upload", true))
+			Board.addListener(this);
 	}
 	
 	/**

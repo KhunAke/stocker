@@ -5,7 +5,7 @@ public class StockType extends Board {
 	private final static String type_page;
 	
 	static {
-		type_page = assign.getProperty("board_page",
+		type_page = assign.getProperty("type_page",
 				"http://www.settrade.com/C13_MarketSummaryStockType.jsp?type=%s");
 	}
 	
