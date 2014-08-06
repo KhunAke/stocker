@@ -1,31 +1,30 @@
 package com.javath.settrade;
 
 import java.util.Date;
-import java.util.Map;
 
 import com.javath.util.DateTime;
 
-public class BoardScreen implements BoardListener {
+public class StockScreen implements StockListener {
 	
-	private final static BoardScreen instance;
+	private final static StockScreen instance;
 	
 	static {
-		instance = new BoardScreen();
+		instance = new StockScreen();
 	}
 	
-	public static BoardScreen getInstance() {
+	public static StockScreen getInstance() {
 		return instance;
 	}
 	
 	private StringBuffer buffer;
 	
-	private BoardScreen() {
+	private StockScreen() {
 		buffer = new StringBuffer();
-		Board.addListener(this);
+		Stock.addListener(this);
 	}
 
 	@Override
-	public void action(BoardEvent event) {
+	public void action(StockEvent event) {
 		String[][] rows = event.getDataSet();
 		buffer.delete(0, buffer.length());
 		buffer.append("Update=\"");
@@ -37,7 +36,7 @@ public class BoardScreen implements BoardListener {
 		for (int index = 0; index < rows.length; index++) {
 			double change = 0.0; 
 			try {
-				change = Double.valueOf(rows[index][BoardEvent.CHANGE]);
+				change = Double.valueOf(rows[index][StockEvent.CHANGE]);
 			} catch (NumberFormatException e) {}
 			if (change > 0.0)
 				gainers += 1;
@@ -50,7 +49,7 @@ public class BoardScreen implements BoardListener {
 			//buffer.append(rows[index][BoardEvent.CHANGE]);
 			//buffer.append(", ");
 		}
-		Board board = (Board) event.getSource();
+		Stock board = (Stock) event.getSource();
 		System.out.printf("%s: Update=\"%s\", %s, gainers=%d, unchanged=%d, losers=%d%n", DateTime.timestamp(new Date()), 
 				DateTime.string(event.getDate()), board.getKey(), gainers, unchanged, losers);
 	}

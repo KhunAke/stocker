@@ -5,7 +5,7 @@ import java.util.EventObject;
 
 import com.javath.util.DateTime;
 
-public class BoardEvent extends EventObject {
+public class StockEvent extends EventObject {
 	
 	private static final long serialVersionUID = 1L;
 	public final static int SYMBOL = 0;
@@ -22,11 +22,11 @@ public class BoardEvent extends EventObject {
 	private final Date date;
 	private final String[][] data_set;
 	
-	public BoardEvent(Object source) {
+	public StockEvent(Object source) {
 		this(source, new Date(), null);
 	}
 	
-	public BoardEvent(Object source, Date date, String[][] data_set) {
+	public StockEvent(Object source, Date date, String[][] data_set) {
 		super(source);
 		this.date = date;
 		this.data_set = data_set;

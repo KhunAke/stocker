@@ -1,6 +1,6 @@
 package com.javath.settrade;
 
-public class StockMethod extends Board {
+public class StockMethod extends Stock {
 	
 	private final static String method_page;
 	
@@ -10,10 +10,10 @@ public class StockMethod extends Board {
 	}
 	
 	public static StockMethod getInstance(String method) {
-		StockMethod instance = (StockMethod) Board.get("method=" + method);
+		StockMethod instance = (StockMethod) Stock.get("method=" + method);
 		if (instance == null) {
 			instance = new StockMethod(method);
-			Board.put("method=" + method, instance);
+			Stock.put("method=" + method, instance);
 		}
 		return instance;
 	}

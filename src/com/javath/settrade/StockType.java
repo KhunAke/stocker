@@ -1,6 +1,6 @@
 package com.javath.settrade;
 
-public class StockType extends Board {
+public class StockType extends Stock {
 
 	private final static String type_page;
 	
@@ -10,10 +10,10 @@ public class StockType extends Board {
 	}
 	
 	public static StockType getInstance(String type) {
-		StockType instance = (StockType) Board.get("type=" + type);
+		StockType instance = (StockType) Stock.get("type=" + type);
 		if (instance == null) {
 			instance = new StockType(type);
-			Board.put("type=" + type, instance);
+			Stock.put("type=" + type, instance);
 		}
 		return instance;
 	}

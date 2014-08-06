@@ -22,9 +22,9 @@ import com.javath.http.Browser;
 import com.javath.http.Cookie;
 import com.javath.http.Response;
 import com.javath.logger.LOG;
-import com.javath.mapping.SettradeBoard;
-import com.javath.mapping.SettradeBoardHome;
-import com.javath.mapping.SettradeBoardId;
+import com.javath.mapping.SettradeQuote;
+import com.javath.mapping.SettradeQuoteHome;
+import com.javath.mapping.SettradeQuoteId;
 import com.javath.trigger.MulticastEvent;
 import com.javath.util.Assign;
 import com.javath.util.DateTime;
@@ -32,34 +32,34 @@ import com.javath.util.Instance;
 import com.javath.util.ObjectException;
 import com.javath.util.TaskManager;
 
-public abstract class Board extends Instance implements BoardListener, MarketListener, CustomHandler{
+public abstract class Stock extends Instance implements MarketListener, CustomHandler{
 	
 	protected final static Assign assign;
 	protected final static String charset;
-	private final static Map<String,Board> instances;
-	private final static Set<BoardListener> listeners;
+	private final static Map<String,Stock> instances;
+	private final static Set<StockListener> listeners;
 	
 	static {
 		String default_Properties = Assign.etc + Assign.File_Separator +
 				"settrade.properties";
-		assign = Assign.getInstance(Board.class, default_Properties);
+		assign = Assign.getInstance(Stock.class, default_Properties);
 		charset = assign.getProperty("charset", "windows-874");
-		instances = new HashMap<String,Board>();
-		listeners = new HashSet<BoardListener>();
+		instances = new HashMap<String,Stock>();
+		listeners = new HashSet<StockListener>();
 	}
 	
-	public static boolean addListener(BoardListener listener) {
+	public static boolean addListener(StockListener listener) {
 		return listeners.add(listener);
 	}
-	public static boolean removeListener(BoardListener listener) {
+	public static boolean removeListener(StockListener listener) {
 		return listeners.remove(listener);
 	}
 	private static void sendEvent(Object source, Date date, String[][] data) {
 		try {
 			EventListener[] listeners = 
-					Board.listeners.toArray(new EventListener[] {});
+					Stock.listeners.toArray(new EventListener[] {});
 			if (listeners.length > 0) { 
-				BoardEvent event = new BoardEvent(source, date, data);
+				StockEvent event = new StockEvent(source, date, data);
 				MulticastEvent.send("action", listeners, event);
 			}
 		} catch (NoSuchElementException e) {
@@ -69,10 +69,10 @@ public abstract class Board extends Instance implements BoardListener, MarketLis
 		}
 	}
 	
-	protected static Board get(String key) {
+	protected static Stock get(String key) {
 		return instances.get(key);
 	}
-	protected static Board put(String key, Board value) {
+	protected static Stock put(String key, Stock value) {
 		return instances.put(key, value);
 	}
 	
@@ -84,7 +84,7 @@ public abstract class Board extends Instance implements BoardListener, MarketLis
 	private Date current_date;
 	private int max_length; 
 	
-	public Board() {
+	public Stock() {
 		cookie = new Cookie();
 		//
 		last_update = new Date(0);
@@ -93,8 +93,6 @@ public abstract class Board extends Instance implements BoardListener, MarketLis
 		max_length = data_set.length;
 		//
 		Market.getInstance().addMarketListener(this);
-		if (assign.getBooleanProperty("board_upload", true))
-			Board.addListener(this);
 	}
 	
 	/**
@@ -248,67 +246,5 @@ public abstract class Board extends Instance implements BoardListener, MarketLis
 		}
 	}
 	public abstract String getKey();
-	
-	@Override
-	public void action(BoardEvent event) {
-		TaskManager.create(String.format("%s.upload(date=\"%s\")", this.getClassName(), DateTime.string(event.getDate())),
-				this, "upload", event);
-	}
-	public void upload(BoardEvent event) {
-		String[][] data_set = event.getDataSet();
-		SettradeBoardHome home = (SettradeBoardHome)
-				Assign.borrowObject(SettradeBoardHome.class);
-		try {
-			Session session = Assign.getSessionFactory().getCurrentSession();
-			session.beginTransaction();
-			SettradeBoard board = null;
-			try {
-				for (int index = 0; index < data_set.length; index++) {
-					SettradeBoardId id = new SettradeBoardId(
-							data_set[index][BoardEvent.SYMBOL],
-							event.getDate());
-					board = new SettradeBoard(id);
-					try {
-						board.setOpen(Double.valueOf(data_set[index][BoardEvent.OPEN]));
-					} catch (NumberFormatException e) {}
-					try {
-						board.setHigh(Double.valueOf(data_set[index][BoardEvent.HIGH]));
-					} catch (NumberFormatException e) {}
-					try {
-						board.setLow(Double.valueOf(data_set[index][BoardEvent.LOW]));
-					} catch (NumberFormatException e) {}
-					try {
-						board.setLast(Double.valueOf(data_set[index][BoardEvent.LAST]));
-					} catch (NumberFormatException e) {}
-					try {
-						board.setChangePrior(Double.valueOf(data_set[index][BoardEvent.CHANGE]));
-					} catch (NumberFormatException e) {}
-					try {
-						board.setBid(Double.valueOf(data_set[index][BoardEvent.BID]));
-					} catch (NumberFormatException e) {}
-					try {
-						board.setOffer(Double.valueOf(data_set[index][BoardEvent.OFFER]));
-					} catch (NumberFormatException e) {}
-					try {
-						board.setVolume(Long.valueOf(data_set[index][BoardEvent.VOLUME]));
-					} catch (NumberFormatException e) {}
-					try {
-						board.setValue(Double.valueOf(data_set[index][BoardEvent.VALUE]));
-					} catch (NumberFormatException e) {}
-					home.persist(board);	
-				}
-				session.getTransaction().commit();
-			} catch (ConstraintViolationException e) {
-				LOG.WARNING(new ObjectException(e.getCause(), "%s; %s", 
-						e.getMessage(), e.getCause().getMessage()));
-				session.getTransaction().rollback();
-			} catch (Exception e) {
-				session.getTransaction().rollback();
-				throw e;
-			}
-		} finally {
-			Assign.returnObject(home);
-		}
-	}
 
 }

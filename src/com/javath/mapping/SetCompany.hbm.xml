@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
 "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
-<!-- Generated Jul 31, 2014 2:50:57 PM by Hibernate Tools 4.0.0 -->
+<!-- Generated Aug 6, 2014 8:47:30 AM by Hibernate Tools 4.0.0 -->
 <hibernate-mapping>
     <class name="com.javath.mapping.SetCompany" table="set_company" catalog="stock">
         <id name="symbol" type="string">

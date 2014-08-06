@@ -18,7 +18,7 @@ import org.apache.commons.cli.ParseException;
 import org.hibernate.Query;
 import org.hibernate.Session;
 
-import com.javath.bualuang.BoardDaily;
+import com.javath.bualuang.QuoteDaily;
 import com.javath.html.HtmlParser;
 import com.javath.html.TextNode;
 import com.javath.http.Browser;
@@ -88,7 +88,7 @@ public class Listed extends Instance
 	private Listed() {
 		cookie = new Cookie();
 		note = new NotificationAdaptor(this);
-		NotificationSource source = BoardDaily.getInstance();
+		NotificationSource source = QuoteDaily.getInstance();
 		source.addListener(this);
 	}
 	
@@ -118,7 +118,7 @@ public class Listed extends Instance
 	}
 	@Override
 	public void notify(NotificationEvent event) {
-		if (event.isClass(BoardDaily.class) 
+		if (event.isClass(QuoteDaily.class) 
 			&& (event.getStatus() == NoteStatus.SUCCESS)) {
 			if (getCurrentWeek() != getUpdateWeek())
 				TaskManager.create(

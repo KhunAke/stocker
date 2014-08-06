@@ -2,8 +2,6 @@ package com.javath.settrade;
 
 import java.util.EventObject;
 
-import com.javath.mapping.SettradeBoard;
-
 public class SymbolEvent extends EventObject {
 
 	private static final long serialVersionUID = 1L;

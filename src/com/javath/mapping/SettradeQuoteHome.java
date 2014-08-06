@@ -11,13 +11,13 @@ import org.hibernate.SessionFactory;
 import static org.hibernate.criterion.Example.create;
 
 /**
- * Home object for domain model class SetIndustry.
- * @see com.javath.mapping.SetIndustry
+ * Home object for domain model class SettradeQuote.
+ * @see com.javath.mapping.SettradeQuote
  * @author Hibernate Tools
  */
-public class SetIndustryHome {
+public class SettradeQuoteHome {
 
-    private static final Log log = LogFactory.getLog(SetIndustryHome.class);
+    private static final Log log = LogFactory.getLog(SettradeQuoteHome.class);
 
     private final SessionFactory sessionFactory = getSessionFactory();
     
@@ -31,8 +31,8 @@ public class SetIndustryHome {
         }
     }
     
-    public void persist(SetIndustry transientInstance) {
-        log.debug("persisting SetIndustry instance");
+    public void persist(SettradeQuote transientInstance) {
+        log.debug("persisting SettradeQuote instance");
         try {
             sessionFactory.getCurrentSession().persist(transientInstance);
             log.debug("persist successful");
@@ -43,8 +43,8 @@ public class SetIndustryHome {
         }
     }
     
-    public void attachDirty(SetIndustry instance) {
-        log.debug("attaching dirty SetIndustry instance");
+    public void attachDirty(SettradeQuote instance) {
+        log.debug("attaching dirty SettradeQuote instance");
         try {
             sessionFactory.getCurrentSession().saveOrUpdate(instance);
             log.debug("attach successful");
@@ -55,8 +55,8 @@ public class SetIndustryHome {
         }
     }
     
-    public void attachClean(SetIndustry instance) {
-        log.debug("attaching clean SetIndustry instance");
+    public void attachClean(SettradeQuote instance) {
+        log.debug("attaching clean SettradeQuote instance");
         try {
             sessionFactory.getCurrentSession().lock(instance, LockMode.NONE);
             log.debug("attach successful");
@@ -67,8 +67,8 @@ public class SetIndustryHome {
         }
     }
     
-    public void delete(SetIndustry persistentInstance) {
-        log.debug("deleting SetIndustry instance");
+    public void delete(SettradeQuote persistentInstance) {
+        log.debug("deleting SettradeQuote instance");
         try {
             sessionFactory.getCurrentSession().delete(persistentInstance);
             log.debug("delete successful");
@@ -79,10 +79,10 @@ public class SetIndustryHome {
         }
     }
     
-    public SetIndustry merge(SetIndustry detachedInstance) {
-        log.debug("merging SetIndustry instance");
+    public SettradeQuote merge(SettradeQuote detachedInstance) {
+        log.debug("merging SettradeQuote instance");
         try {
-            SetIndustry result = (SetIndustry) sessionFactory.getCurrentSession()
+            SettradeQuote result = (SettradeQuote) sessionFactory.getCurrentSession()
                     .merge(detachedInstance);
             log.debug("merge successful");
             return result;
@@ -93,11 +93,11 @@ public class SetIndustryHome {
         }
     }
     
-    public SetIndustry findById( com.javath.mapping.SetIndustryId id) {
-        log.debug("getting SetIndustry instance with id: " + id);
+    public SettradeQuote findById( com.javath.mapping.SettradeQuoteId id) {
+        log.debug("getting SettradeQuote instance with id: " + id);
         try {
-            SetIndustry instance = (SetIndustry) sessionFactory.getCurrentSession()
-                    .get("com.javath.mapping.SetIndustry", id);
+            SettradeQuote instance = (SettradeQuote) sessionFactory.getCurrentSession()
+                    .get("com.javath.mapping.SettradeQuote", id);
             if (instance==null) {
                 log.debug("get successful, no instance found");
             }
@@ -112,11 +112,11 @@ public class SetIndustryHome {
         }
     }
     
-    public List<SetIndustry> findByExample(SetIndustry instance) {
-        log.debug("finding SetIndustry instance by example");
+    public List<SettradeQuote> findByExample(SettradeQuote instance) {
+        log.debug("finding SettradeQuote instance by example");
         try {
-            List<SetIndustry> results = (List<SetIndustry>) sessionFactory.getCurrentSession()
-                    .createCriteria("com.javath.mapping.SetIndustry")
+            List<SettradeQuote> results = (List<SettradeQuote>) sessionFactory.getCurrentSession()
+                    .createCriteria("com.javath.mapping.SettradeQuote")
                     .add( create(instance) )
             .list();
             log.debug("find by example successful, result size: " + results.size());

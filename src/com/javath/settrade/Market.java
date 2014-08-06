@@ -375,19 +375,25 @@ public class Market extends Instance implements OscillatorLoader, MarketListener
 		MarketScreen.getInstance();
 		MarketStatusScreen.getInstance();
 		
-		StockIndustry.getInstance("", "AGRO");
-		StockIndustry.getInstance("", "CONSUMP");
+		StockMethod.getInstance("AOM");
+		//
+		//StockIndustry.getInstance("", "AGRO");
+		//StockIndustry.getInstance("", "CONSUMP");
 		//StockIndustry.getInstance("", "FINCIAL");
 		//StockIndustry.getInstance("", "INDUS");
 		//StockIndustry.getInstance("", "PROPCON");
 		//StockIndustry.getInstance("", "RESOURC");
 		//StockIndustry.getInstance("", "SERVICE");
 		//StockIndustry.getInstance("", "TECH");
-		
+		//
 		//StockCommand.getInstance("MEDSIZE");
-		//StockMethod.getInstance("AOM");
+		//
+		//StockType.getInstance("W");
+		//StockType.getInstance("V");
 		//StockType.getInstance("L");
-		BoardScreen.getInstance();
+		//
+		StockScreen.getInstance();
+		Quote.getInstance();
 		
 		stock.initOscillator();
 		Oscillator.startAll();

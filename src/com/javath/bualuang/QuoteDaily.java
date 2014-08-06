@@ -23,16 +23,15 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.hibernate.Query;
 import org.hibernate.Session;
-import org.hibernate.Transaction;
 import org.hibernate.exception.ConstraintViolationException;
 
 import com.javath.http.Browser;
 import com.javath.http.Cookie;
 import com.javath.http.Response;
 import com.javath.logger.LOG;
-import com.javath.mapping.BualuangBoardDaily;
-import com.javath.mapping.BualuangBoardDailyHome;
-import com.javath.mapping.BualuangBoardDailyId;
+import com.javath.mapping.BualuangQuoteDaily;
+import com.javath.mapping.BualuangQuoteDailyHome;
+import com.javath.mapping.BualuangQuoteDailyId;
 import com.javath.trigger.Oscillator;
 import com.javath.trigger.OscillatorDivideFilter;
 import com.javath.trigger.OscillatorEvent;
@@ -48,7 +47,7 @@ import com.javath.util.ObjectException;
 import com.javath.util.TaskManager;
 import com.javath.util.TextSpliter;
 
-public class BoardDaily extends Instance 
+public class QuoteDaily extends Instance 
 		implements NotificationSource, OscillatorLoader, Runnable {
 	
 	private final static Assign assign;
@@ -61,14 +60,14 @@ public class BoardDaily extends Instance
 	private final static String spliter_date_parse;
 	private final static String spliter_delimiter;
 	private final static String storage_path;
-	private final static BoardDaily instance;
+	private final static QuoteDaily instance;
 	//
 	private static final Options options;
 
 	static {
 		String default_Properties = Assign.etc + Assign.File_Separator +
 				"bualuang.properties";
-		assign = Assign.getInstance(BoardDaily.class, default_Properties);
+		assign = Assign.getInstance(QuoteDaily.class, default_Properties);
 		String default_path = Assign.var + Assign.File_Separator + "bualuang"
 				+ Assign.File_Separator + "quotation";
 		storage_path = assign.getProperty("storage_path", default_path);
@@ -101,11 +100,11 @@ public class BoardDaily extends Instance
 		}
 		spliter_date_parse = assign.getProperty("spliter_date_parse","yyMMdd");
 		spliter_delimiter = assign.getProperty("spliter_delimiter","\\s");
-		instance = new BoardDaily();
+		instance = new QuoteDaily();
 		options = buildOptions();
 	}
 	
-	public static BoardDaily getInstance() {
+	public static QuoteDaily getInstance() {
 		return instance;
 	}
 	public static Date getLastUpdate() {
@@ -123,7 +122,7 @@ public class BoardDaily extends Instance
 	
 	private final NotificationAdaptor note;
 	
-	private BoardDaily() {
+	private QuoteDaily() {
 		cookie = new Cookie();
 		note = new NotificationAdaptor(this);
 	}
@@ -204,7 +203,7 @@ public class BoardDaily extends Instance
 				return;
 			}
 			note.notify(NoteStatus.SUCCESS, getURI(wait_update));
-			long date = setUpdate(BoardDaily.getLastUpdate());
+			long date = setUpdate(QuoteDaily.getLastUpdate());
 			long time = DateTime.time(
 					assign.getProperty("schedule", "18:30:00")).getTime();
 			//System.out.printf("Schedule: \"%s\"%n", DateTime.timestamp(time));
@@ -233,22 +232,22 @@ public class BoardDaily extends Instance
 			spliter = new TextSpliter(input_stream, false);
 			spliter.setDelimiter(spliter_delimiter);
 		}
-		BualuangBoardDailyHome home = (BualuangBoardDailyHome)
-					Assign.borrowObject(BualuangBoardDailyHome.class);
+		BualuangQuoteDailyHome home = (BualuangQuoteDailyHome)
+					Assign.borrowObject(BualuangQuoteDailyHome.class);
 		try {
 			//Session session = Assign.getSessionFactory().getCurrentSession();
 			while (spliter.ready()) {
 				Session session = Assign.getSessionFactory().getCurrentSession();
 				session.beginTransaction();
-				BualuangBoardDailyId id = null;
-				BualuangBoardDaily board = null;;
+				BualuangQuoteDailyId id = null;
+				BualuangQuoteDaily quote = null;;
 				try {
 					String[] fields = spliter.readLine();
 					try {
-						id = new BualuangBoardDailyId(
+						id = new BualuangQuoteDailyId(
 								fields[map_headers.get("symbol")],
 								DateTime.format(spliter_date_parse, fields[map_headers.get("date")]));
-						board = new BualuangBoardDaily(id,
+						quote = new BualuangQuoteDaily(id,
 								Double.valueOf(fields[map_headers.get("open")]),
 								Double.valueOf(fields[map_headers.get("high")]),
 								Double.valueOf(fields[map_headers.get("low")]),
@@ -268,7 +267,7 @@ public class BoardDaily extends Instance
 							throw e;
 						}
 					}
-					home.persist(board);
+					home.persist(quote);
 					session.getTransaction().commit();
 				} catch (IOException e) {
 					LOG.WARNING(e);
@@ -304,7 +303,7 @@ public class BoardDaily extends Instance
 			return;
 		long clock = assign.getLongProperty("clock", 900000); // 15m
 		Oscillator source = Oscillator.getInstance(clock);
-		long date = setUpdate(BoardDaily.getLastUpdate());
+		long date = setUpdate(QuoteDaily.getLastUpdate());
 		long time = DateTime.time(
 				assign.getProperty("schedule", "19:30:00")).getTime();
 		//System.out.printf("Schedule: \"%s\"%n", DateTime.timestamp(time));
@@ -336,7 +335,7 @@ public class BoardDaily extends Instance
 		}
 		boolean show_name = line.hasOption("show");
 		if (line.hasOption("schedule")) {
-			BoardDaily.getInstance().initOscillator();
+			QuoteDaily.getInstance().initOscillator();
 			Oscillator.startAll();
 		} else if (line.hasOption("restore")) {
 			File filepath = new File(line.getOptionValue("restore"));
@@ -354,7 +353,7 @@ public class BoardDaily extends Instance
 				}
 			}
 		} else if (line.hasOption("date")) {
-			Response response = BoardDaily.getInstance()
+			Response response = QuoteDaily.getInstance()
 					.getWebPage(DateTime.date(line.getOptionValue("date")));
 			if (response.getStatusCode() == 200)
 				print(response.getContent(), show_name);
@@ -488,7 +487,7 @@ public class BoardDaily extends Instance
 	}
 	private static void usage() {
 		HelpFormatter formatter = new HelpFormatter();
-		formatter.printHelp("BoardDaily", options);
+		formatter.printHelp("QuoteDaily", options);
 	}
 	
 }

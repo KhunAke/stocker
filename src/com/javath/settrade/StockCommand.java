@@ -1,6 +1,6 @@
 package com.javath.settrade;
 
-public class StockCommand extends Board {
+public class StockCommand extends Stock {
 	
 	private final static String command_page;
 	
@@ -11,10 +11,10 @@ public class StockCommand extends Board {
 	
 	public static StockCommand getInstance(String command) {
 		String key = String.format("command=%s", command);
-		StockCommand instance = (StockCommand) Board.get(key);
+		StockCommand instance = (StockCommand) Stock.get(key);
 		if (instance == null) {
 			instance = new StockCommand(command);
-			Board.put(key, instance);
+			Stock.put(key, instance);
 		}
 		return instance;
 	}

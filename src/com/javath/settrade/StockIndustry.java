@@ -11,7 +11,7 @@ import com.javath.html.TextNode;
 import com.javath.http.Response;
 import com.javath.util.ObjectException;
 
-public class StockIndustry extends Board {
+public class StockIndustry extends Stock {
 	
 	private final static String industry_page;
 	
@@ -22,10 +22,10 @@ public class StockIndustry extends Board {
 	
 	public static StockIndustry getInstance(String sector, String industry) {
 		String key = String.format("industry=%s,%s", sector, industry);
-		StockIndustry instance = (StockIndustry) Board.get(key);
+		StockIndustry instance = (StockIndustry) Stock.get(key);
 		if (instance == null) {
 			instance = new StockIndustry(sector, industry);
-			Board.put(key, instance);
+			Stock.put(key, instance);
 		}
 		return instance;
 	}
@@ -71,7 +71,7 @@ public class StockIndustry extends Board {
 		StockIndustry industry6 = StockIndustry.getInstance("", "RESOURC");
 		StockIndustry industry7 = StockIndustry.getInstance("", "SERVICE");
 		StockIndustry industry8 = StockIndustry.getInstance("", "TECH");
-		BoardScreen.getInstance();
+		StockScreen.getInstance();
 		industry1.run(new Date(0));
 		industry2.run(new Date(0));
 		industry3.run(new Date(0));
