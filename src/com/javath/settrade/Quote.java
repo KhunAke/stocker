@@ -22,7 +22,7 @@ import com.javath.util.Instance;
 import com.javath.util.ObjectException;
 import com.javath.util.TaskManager;
 
-public class Quote extends Instance implements StockListener {
+public class Quote extends Instance implements QuoteSource, StockListener {
 	
 	private final static Map<String,SettradeQuote> map_quote;
 	private final static Quote instance;
@@ -158,4 +158,5 @@ public class Quote extends Instance implements StockListener {
 			throw new ObjectException(e);
 		}
 	}
+
 }

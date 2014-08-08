@@ -110,7 +110,7 @@ public class QuoteDaily extends Instance
 	public static Date getLastUpdate() {
 		Session session = Assign.getSessionFactory().getCurrentSession();
 		session.beginTransaction();
-		Query query = session.createQuery("select max(board.id.date) from BualuangBoardDaily as board");
+		Query query = session.createQuery("select max(quote.id.date) from BualuangQuoteDaily as quote");
 		Date date = (Date) query.uniqueResult();
 		session.getTransaction().commit();
 		return date;

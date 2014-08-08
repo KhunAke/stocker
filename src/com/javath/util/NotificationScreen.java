@@ -44,7 +44,7 @@ public class NotificationScreen implements NotificationListener{
 				String method_name = null;
 				String[] arguments = null;
 				String pattern_not_arguments = "^\\w+(.\\w+)*\\(\\s*\\)$";
-				String pattern_arguments = "^\\w+(.\\w+)*\\(\\s*\\w+\\s*(\\s*,\\s*\\w+)*\\)$";
+				String pattern_arguments = "^\\w+(.\\w+)*\\(\\s*\\w*\\s*(\\s*,\\s*\\w*)*\\)$";
 				if (Pattern.matches(pattern_not_arguments, line)) {
 					classname = line.substring(0,line.indexOf('('));
 					method_name = "getInstance";
@@ -52,7 +52,7 @@ public class NotificationScreen implements NotificationListener{
 					classname = line.substring(0,line.indexOf('('));
 					method_name = "getInstance";
 					arguments = line.substring(line.indexOf('(') + 1, line.indexOf(')'))
-							.split(",\\s");
+							.replaceAll("\\s", "").split(",");
 				}
 				Class<?> clazz = null;
 				NotificationSource object = null;
@@ -65,7 +65,7 @@ public class NotificationScreen implements NotificationListener{
 							object = (NotificationSource) Assign.forConstructor(classname, arguments);
 					}
 				} catch (ClassNotFoundException e) {
-					method_name = classname.substring(classname.lastIndexOf('.'));
+					method_name = classname.substring(classname.lastIndexOf('.') + 1);
 					classname = classname.substring(0, classname.lastIndexOf('.'));
 					try {
 						clazz = Class.forName(classname);

@@ -66,7 +66,7 @@ public class Service extends Instance implements Daemon, OscillatorListener {
 				String method_name = null;
 				String[] arguments = null;
 				String pattern_not_arguments = "^\\w+(.\\w+)*\\(\\s*\\)$";
-				String pattern_arguments = "^\\w+(.\\w+)*\\(\\s*\\w+\\s*(\\s*,\\s*\\w+)*\\)$";
+				String pattern_arguments = "^\\w+(.\\w+)*\\(\\s*\\w*\\s*(\\s*,\\s*\\w*)*\\)$";
 				if (Pattern.matches(pattern_not_arguments, line)) {
 					classname = line.substring(0,line.indexOf('('));
 					method_name = "getInstance";
@@ -74,7 +74,7 @@ public class Service extends Instance implements Daemon, OscillatorListener {
 					classname = line.substring(0,line.indexOf('('));
 					method_name = "getInstance";
 					arguments = line.substring(line.indexOf('(') + 1, line.indexOf(')'))
-							.split(",\\s");
+							.replaceAll("\\s", "").split(",");
 				}
 				Object object = null;
 				// Instance for Constructor
@@ -87,7 +87,7 @@ public class Service extends Instance implements Daemon, OscillatorListener {
 					if (OscillatorLoader.class.isAssignableFrom(object.getClass()))
 						((OscillatorLoader) object).initOscillator();
 				} else { // Instance for Method
-					method_name = classname.substring(classname.lastIndexOf('.'));
+					method_name = classname.substring(classname.lastIndexOf('.') + 1);
 					classname = classname.substring(0, classname.lastIndexOf('.'));
 					if (arguments == null)
 						object = Assign.forMethod(classname, method_name);

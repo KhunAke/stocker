@@ -372,28 +372,31 @@ public class Market extends Instance implements OscillatorLoader, MarketListener
 	
  	public static void main(String[] args) {
 		Market stock = Market.getInstance();
-		MarketScreen.getInstance();
+		//MarketScreen.getInstance();
 		MarketStatusScreen.getInstance();
 		
-		StockMethod.getInstance("AOM");
+		//StockMethod.getInstance("AOM");
 		//
-		//StockIndustry.getInstance("", "AGRO");
-		//StockIndustry.getInstance("", "CONSUMP");
-		//StockIndustry.getInstance("", "FINCIAL");
-		//StockIndustry.getInstance("", "INDUS");
-		//StockIndustry.getInstance("", "PROPCON");
-		//StockIndustry.getInstance("", "RESOURC");
-		//StockIndustry.getInstance("", "SERVICE");
-		//StockIndustry.getInstance("", "TECH");
+		StockIndustry.getInstance("", "AGRO");
+		StockIndustry.getInstance("", "CONSUMP");
+		StockIndustry.getInstance("", "FINCIAL");
+		StockIndustry.getInstance("", "INDUS");
+		StockIndustry.getInstance("", "PROPCON");
+		StockIndustry.getInstance("", "RESOURC");
+		StockIndustry.getInstance("", "SERVICE");
+		StockIndustry.getInstance("", "TECH");
 		//
-		//StockCommand.getInstance("MEDSIZE");
+		StockCommand.getInstance("MEDSIZE");
 		//
-		//StockType.getInstance("W");
-		//StockType.getInstance("V");
-		//StockType.getInstance("L");
+		StockType.getInstance("W");
+		StockType.getInstance("V");
+		StockType.getInstance("L");
 		//
-		StockScreen.getInstance();
+		//StockScreen.getInstance();
 		Quote.getInstance();
+		//QuoteScreen.getInstance("PTT");
+		QuoteFilterChangeLastScreen.getInstance("PTT");
+		QuoteFilterChangeVolumeScreen.getInstance("PTT");
 		
 		stock.initOscillator();
 		Oscillator.startAll();

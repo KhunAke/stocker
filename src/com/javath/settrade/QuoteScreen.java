@@ -1,9 +1,11 @@
 package com.javath.settrade;
 
+import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
+
+import com.javath.mapping.SettradeQuote;
+import com.javath.util.DateTime;
 
 public class QuoteScreen implements QuoteListener {
 	
@@ -14,8 +16,12 @@ public class QuoteScreen implements QuoteListener {
 	}
 	
 	public static QuoteScreen getInstance(String symbol) {
-		
-		return instance;
+		QuoteScreen result = instances.get(symbol);
+		if (result == null) {
+			result = new QuoteScreen(symbol);
+			instances.put(symbol, result);
+		}
+		return result;
 	}
 	
 	private QuoteScreen(String symbol) {
@@ -24,8 +30,10 @@ public class QuoteScreen implements QuoteListener {
 	
 	@Override
 	public void action(QuoteEvent event) {
-		// TODO Auto-generated method stub
-		
+		SettradeQuote quote = event.getQuote();
+		System.out.printf("%s: %s, \"%s\", %s, %s, %s, %s%n", 
+				DateTime.timestamp(new Date()), event.getSymbol(), DateTime.string(event.getDate()), 
+				quote.getLast(), quote.getChangePrior(), quote.getVolume(), quote.getValue());
 	}
 
 }
