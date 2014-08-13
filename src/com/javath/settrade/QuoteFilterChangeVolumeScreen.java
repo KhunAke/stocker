@@ -36,5 +36,4 @@ public class QuoteFilterChangeVolumeScreen implements QuoteListener {
 				quote.getLast(), quote.getChangePrior(), quote.getVolume(), quote.getValue());
 	}
 	
-
 }

@@ -11,7 +11,6 @@ import java.util.Set;
 import org.hibernate.Session;
 import org.hibernate.exception.ConstraintViolationException;
 
-import com.javath.logger.LOG;
 import com.javath.mapping.SettradeQuote;
 import com.javath.mapping.SettradeQuoteHome;
 import com.javath.mapping.SettradeQuoteId;
@@ -38,7 +37,7 @@ public class Quote extends Instance implements QuoteSource, StockListener {
 	
 	private final Map<String,Set<QuoteListener>> map_listeners;
 
-	public Quote() {
+	private Quote() {
 		map_listeners = new HashMap<String,Set<QuoteListener>>();
 		Stock.addListener(this);
 	}
@@ -97,7 +96,7 @@ public class Quote extends Instance implements QuoteSource, StockListener {
 				}
 				session.getTransaction().commit();
 			} catch (ConstraintViolationException e) {
-				LOG.WARNING(new ObjectException(e.getCause(), "%s; %s", 
+				WARNING(new ObjectException(e.getCause(), "%s; %s", 
 						e.getMessage(), e.getCause().getMessage()));
 				session.getTransaction().rollback();
 			} catch (Exception e) {

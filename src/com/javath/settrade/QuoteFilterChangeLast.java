@@ -34,7 +34,7 @@ public class QuoteFilterChangeLast extends Instance implements QuoteSource, Quot
 	private final Set<QuoteListener> listeners;
 	private SettradeQuote data;
 	
-	public QuoteFilterChangeLast(String symbol) {
+	private QuoteFilterChangeLast(String symbol) {
 		listeners = new HashSet<QuoteListener>();
 		//
 		Quote.getInstance().addSymbolListener(symbol, this);

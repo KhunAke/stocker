@@ -34,7 +34,7 @@ public class QuoteFilterChangeVolume extends Instance implements QuoteSource, Qu
 	private final Set<QuoteListener> listeners;
 	private SettradeQuote data;
 	
-	public QuoteFilterChangeVolume(String symbol) {
+	private QuoteFilterChangeVolume(String symbol) {
 		listeners = new HashSet<QuoteListener>();
 		//
 		Quote.getInstance().addSymbolListener(symbol, this);

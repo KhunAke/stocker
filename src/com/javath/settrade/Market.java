@@ -21,7 +21,6 @@ import com.javath.html.TextNode;
 import com.javath.http.Browser;
 import com.javath.http.Cookie;
 import com.javath.http.Response;
-import com.javath.logger.LOG;
 import com.javath.mapping.SettradeMarket;
 import com.javath.mapping.SettradeMarketHome;
 import com.javath.mapping.SettradeMarketId;
@@ -68,7 +67,7 @@ public class Market extends Instance implements OscillatorLoader, MarketListener
 	private OscillatorDivideFilter oscillator;
 	private MarketStatus status;
 	private Date last_update;
-	private String[][] data_set ;
+	private String[][] data_set;
 	
 	private Market() {
 		cookie = new Cookie(); 
@@ -184,7 +183,7 @@ public class Market extends Instance implements OscillatorLoader, MarketListener
 				}
 				session.getTransaction().commit();
 			} catch (ConstraintViolationException e) {
-				LOG.WARNING(new ObjectException(e.getCause(), "%s; %s", 
+				WARNING(new ObjectException(e.getCause(), "%s; %s", 
 						e.getMessage(), e.getCause().getMessage()));
 				session.getTransaction().rollback();
 			} catch (Exception e) {
