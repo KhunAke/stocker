@@ -18,33 +18,33 @@ import com.javath.util.ObjectException;
 
 public class DataProviderBinary extends Instance {
 
-	private boolean updateSequenceId = false;
-	private int sequenceId = -1;
-	private int optionSequenceId = -1;
+	private boolean update_sequence_id = false;
+	private int sequence_id = -1;
+	private int option_sequence_id = -1;
 	
 	// Result from method Read(InputStream)
-	private String[] marketTicker;
+	private String[] market_ticker;
 	private String[] bid_offer;
 	// map symbol, date
 	private Map<String,String> symbol_date = new HashMap<String,String>();
 	//private Set<String> symbols = new HashSet<String>();
 	
 	private void clearDataResult() {
-		marketTicker = null;
+		market_ticker = null;
 		bid_offer = null;
 		symbol_date = new HashMap<String,String>();
 	}
 	
 	public int getSequenceId() {
-		return sequenceId;
+		return sequence_id;
 	}
 	
 	public int getOptionSequenceId() {
-		return optionSequenceId;
+		return option_sequence_id;
 	}
 	
 	public String[] getMarketTicker() {
-		return marketTicker;
+		return market_ticker;
 	}
 	
 	public String[] getBidOffer() {
@@ -238,18 +238,18 @@ public class DataProviderBinary extends Instance {
 		case 0x05: // service = S4MarketTicker
 			FINEST("service = S4MarketTicker");
 			int marketTickers = readInteger(input, 2);
-			marketTicker = new String[marketTickers];
-			updateSequenceId = true;
+			market_ticker = new String[marketTickers];
+			update_sequence_id = true;
 			for (int index = 0; index < marketTickers; index++) {
 				int size = readInteger(input, 2); 
 				byte[] buffer = new byte[size];
 				if (read(input, buffer) == size)
-					marketTicker[index] = ticker(buffer);
+					market_ticker[index] = ticker(buffer);
 					//ticker(buffer);
 				else
 					throw new ObjectException("Blocksize mismatch.");
 			}
-			updateSequenceId = false;
+			update_sequence_id = false;
 			break;
 		default:
 			throw new ObjectException(String.format("Unknow type 0x%02X", type));
@@ -648,11 +648,11 @@ public class DataProviderBinary extends Instance {
 		String symbol = readString(input, input.available());
 		symbol_date.put(symbol,date);
 		//symbols.add(symbol);
-		if (updateSequenceId)
+		if (update_sequence_id)
 			if (market == 255)
-				sequenceId = sequence;
+				sequence_id = sequence;
 			else
-				optionSequenceId = sequence;
+				option_sequence_id = sequence;
 		FINER("Ticker: %d, %d, %d, %s, %s, %.2f, %.2f, %.2f, %.2f, %d, {%s}, {%s}, %d, %s", type, market, n, 
 				date, side, price/power, close/power, change/power, changePercent/power, sequence,
 				a, b,

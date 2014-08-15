@@ -15,3 +15,9 @@ Disabling contextual LOB creation as createClob() method threw error : java.lang
 Solution:
 In hibernate.cfg.xml file add below property
 <property name="hibernate.temp.use_jdbc_metadata_defaults">false</property>
+
+Solution: Hibernate + MySQL: How to set the encoding utf-8
+<property name="hibernate.connection.CharSet">utf8</property>
+<property name="hibernate.connection.characterEncoding">utf8</property>
+<property name="hibernate.connection.useUnicode">true</property>
+

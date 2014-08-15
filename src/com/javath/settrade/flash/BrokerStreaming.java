@@ -5,9 +5,11 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import com.javath.http.Browser;
 import com.javath.http.Form;
 import com.javath.http.Response;
 import com.javath.set.Broker;
+import com.javath.util.Assign;
 import com.javath.util.ObjectException;
 
 public abstract class BrokerStreaming extends Broker implements Runnable {
@@ -22,41 +24,41 @@ public abstract class BrokerStreaming extends Broker implements Runnable {
 	// service = S4MarketSummary
 	private String mode = "Pull";
 	// service = S4InstrumentInfo
-	private String initiatedFlag = "1";
-	private String newInstInfo = "";
-	private String oldInstInfo = "";
+	private String initiated_flag = "1";
+	private String new_inst_info = "";
+	private String old_inst_info = "";
 	// service = S4InstrumentTicker
-	private String sequenceId = ""; //
-	private String newInstTicker = "";
-	private String newMarket = "";
-	private String oldInstTicker = "";
-	private String oldMarket = "";
+	private String sequence_id = ""; //
+	private String new_inst_ticker = "";
+	private String new_market = "";
+	private String old_inst_ticker = "";
+	private String old_market = "";
 	// service = S4MarketTicker
-	private String optionSequenceId2 = "-1"; //
-	private String sequenceId2 = "-1"; //
-	private String newMarket2 = "A";
-	private String newInstTicker2 = "_all";
-	private String newSum2 = "N";
-	private String oldMarket2 = "";
-	private String oldInstTicker2 = "";
-	private String oldSum2 = "";
+	private String option_sequence_id_2 = "-1"; //
+	private String sequence_id_2 = "-1"; //
+	private String new_market_2 = "A";
+	private String new_inst_ticker_2 = "_all";
+	private String new_sum_2 = "N";
+	private String old_market_2 = "";
+	private String old_inst_ticker_2 = "";
+	private String old_sum_2 = "";
 	
-	private Map<String,String> flashVars;
+	private Map<String,String> flash_vars;
 
 	protected abstract void loadFlashVars();
-	protected void setFlashVars(String[] flashVars) {
-		this.flashVars = new HashMap<String,String>();
-		for (int index = 0; index < flashVars.length; index++) {
-			String[] vars = flashVars[index].split("[=]");
+	protected void setFlashVars(String[] flash_vars) {
+		this.flash_vars = new HashMap<String,String>();
+		for (int index = 0; index < flash_vars.length; index++) {
+			String[] vars = flash_vars[index].split("[=]");
 			if (vars.length == 1)
-				this.flashVars.put(vars[0],"");
+				this.flash_vars.put(vars[0],"");
 			else
-				this.flashVars.put(vars[0],vars[1]);
+				this.flash_vars.put(vars[0],vars[1]);
 		}
 	}
 	public String getFlashVar(String name) {
 		try {
-			return flashVars.get(name);
+			return flash_vars.get(name);
 		} catch (NullPointerException e) {
 			WARNING("flashVars is %s. Please call method \"loadFlashVars()\" before", e.getMessage());
 			loadFlashVars();
@@ -65,12 +67,12 @@ public abstract class BrokerStreaming extends Broker implements Runnable {
 	}
 	public void printFlashVars() {
 		try {
-			for (Iterator<String> iterator = flashVars.keySet().iterator(); iterator.hasNext();) {
+			for (Iterator<String> iterator = flash_vars.keySet().iterator(); iterator.hasNext();) {
 				String key = iterator.next();
-				System.out.printf("%s = %s%n",key,flashVars.get(key));
+				System.out.printf("%s = %s%n",key,flash_vars.get(key));
 			}
 		} catch (NullPointerException e) {
-			WARNING("flashVars is %s. Please call method \"loadFlashVars()\" before", e.getMessage());
+			WARNING("flash_vars is %s. Please call method \"loadFlashVars()\" before", e.getMessage());
 			loadFlashVars();
 			printFlashVars();
 		}
@@ -109,43 +111,55 @@ public abstract class BrokerStreaming extends Broker implements Runnable {
 		return synctime("fvPrimaryHost");
 	}
 	protected long synctime(String fvHostName) {
-		long time = new Date().getTime();
-		//browser.address("https://pushctw1.settrade.com/realtime/streaming4/synctime.jsp");
-		browser.address(fvHttpsLink(fvHostName, "fvSyncTimeServlet"));
-		Response response = browser.get();
-		if (response.getStatusCode() != 200) {
-			SEVERE("HTTP Status %s \"%s\"",response.getStatusCode(), response.getReasonPhrase());
-			return 0;
+		Browser browser = (Browser) Assign.borrowObject(Browser.class);
+		browser.setCookie(cookie.getCookieStore());
+		try {
+			long time = new Date().getTime();
+			//browser.address("https://pushctw1.settrade.com/realtime/streaming4/synctime.jsp");
+			browser.address(fvHttpsLink(fvHostName, "fvSyncTimeServlet"));
+			Response response = browser.get();
+			if (response.getStatusCode() != 200) {
+				SEVERE("HTTP Status %s \"%s\"",response.getStatusCode(), response.getReasonPhrase());
+				return 0;
+			}
+			DataProvider dataProvider = new DataProvider().read(response.getContent());
+			long result = Long.valueOf(dataProvider.get(0,0,2)) - time ;
+			INFO("Adjust time Settrade server offset %.3f sec",result/1000.0d);
+			//logger.finest(message.toString());
+			return result;
+		} finally {
+			Assign.returnObject(browser);
 		}
-		DataProvider dataProvider = new DataProvider().read(response.getContent());
-		long result = Long.valueOf(dataProvider.get(0,0,2)) - time ;
-		INFO("Adjust time Settrade server offset %.3f sec",result/1000.0d);
-		//logger.finest(message.toString());
-		return result;
 	}
 	
 	protected String fvITPHostLink(String path) {
 		return getFlashVar("fvITPHost") + path;
 	}	
 	protected DataProvider seos(Form form) {
-		// browser httpContext
-		browser.address("https://click2win.settrade.com/daytradeflex/streamingSeos.jsp");
-		//browser.address(fvITPHostLink("/daytradeflex/streamingSeos.jsp"));
-		browser.body(form);
-		Response response = browser.post();
-		
-		DataProvider dataProvider = null;
+		Browser browser = (Browser) Assign.borrowObject(Browser.class);
+		browser.setCookie(cookie.getCookieStore());
 		try {
-			dataProvider = new DataProvider().read(response.getContent());
-		} catch (ObjectException e) {
-			if (e.getMessage().equals("Unauthorized Access.")) {
-				WARNING(e.getMessage());
-				authentication(browser, cookie);
-				dataProvider = seos(form);
-			} else
-				throw e;
+			// browser httpContext
+			browser.address("https://click2win.settrade.com/daytradeflex/streamingSeos.jsp");
+			//browser.address(fvITPHostLink("/daytradeflex/streamingSeos.jsp"));
+			browser.body(form);
+			Response response = browser.post();
+			
+			DataProvider dataProvider = null;
+			try {
+				dataProvider = new DataProvider().read(response.getContent());
+			} catch (ObjectException e) {
+				if (e.getMessage().equals("Unauthorized Access.")) {
+					WARNING(e.getMessage());
+					browser.setCookie(authentication(cookie));
+					dataProvider = seos(form);
+				} else
+					throw e;
+			}
+			return dataProvider;
+		} finally {
+			Assign.returnObject(browser);
 		}
-		return dataProvider;	
 	}
 	protected DataProvider seos(String service) {
 		Form form = new Form();
@@ -217,26 +231,38 @@ public abstract class BrokerStreaming extends Broker implements Runnable {
 	}
 	
 	protected DataProvider dataProvider(Form form) {
-		browser.address(fvHttpsLink("fvPrimaryHost","fvDataStrServlet"));
-		browser.body(form);
-		Response response = browser.post();
-		DataProvider dataProvider = new DataProvider().read(response.getContent());
-		return dataProvider;
+		Browser browser = (Browser) Assign.borrowObject(Browser.class);
+		browser.setCookie(cookie.getCookieStore());
+		try {
+			browser.address(fvHttpsLink("fvPrimaryHost","fvDataStrServlet"));
+			browser.body(form);
+			Response response = browser.post();
+			DataProvider dataProvider = new DataProvider().read(response.getContent());
+			return dataProvider;
+		} finally {
+			Assign.returnObject(browser);
+		}
 	}
 	
 	public void getPage(String address) {
-		browser.address(address);
-		Response response = browser.get();
-		//response.print();
-		try {
-			DataProvider data = new DataProvider();
-			data.read(response.getContent());
-			System.out.println(data);
-		} catch (ObjectException e) {
-			if (e.getMessage().equals("Unauthorize Access")) {
-				authentication(browser, cookie);
-				getPage(address);
-			}	
+		Browser browser = (Browser) Assign.borrowObject(Browser.class);
+		browser.setCookie(cookie.getCookieStore());
+			try {
+			browser.address(address);
+			Response response = browser.get();
+			//response.print();
+			try {
+				DataProvider data = new DataProvider();
+				data.read(response.getContent());
+				System.out.println(data);
+			} catch (ObjectException e) {
+				if (e.getMessage().equals("Unauthorize Access")) {
+					browser.setCookie(authentication(cookie));
+					getPage(address);
+				}	
+			}
+		} finally {
+			Assign.returnObject(browser);
 		}
 	}
 

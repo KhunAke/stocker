@@ -10,12 +10,12 @@ import com.javath.util.ObjectException;
 
 public class DataProvider extends Instance {
 	
-	private String[][][] data; // response, service, field
+	private String[][][] data_set; // response, service, field
 	
 	public int getNumberOfServices() {
 		// response = 1, service = 0, field = 0
-		if (data.length >= 2)
-			return Integer.valueOf(data[1][0][0]);
+		if (data_set.length >= 2)
+			return Integer.valueOf(data_set[1][0][0]);
 		else
 			return 0;
 	}
@@ -24,7 +24,7 @@ public class DataProvider extends Instance {
 		// response = 1, service = 0, field = 0
 		int services = getNumberOfServices();
 		for (int service = 0; service < services; service++) {
-			if (data[2 + service][1][0].equals(name))
+			if (data_set[2 + service][1][0].equals(name))
 				return service;
 		}
 		throw new ObjectException("Service not found."); 
@@ -32,22 +32,22 @@ public class DataProvider extends Instance {
 
 	public int getNumberOfResults(int service) {
 		// response = 2, service = 3, field = 0
-		if (data.length >= 3)
-			return Integer.valueOf(data[2 + service][3][0]);
+		if (data_set.length >= 3)
+			return Integer.valueOf(data_set[2 + service][3][0]);
 		else
 			return 0;
 	}
 	
 	public String[] getResult(int service, int result) {
 		// response = 2, service = 3, field = ?
-		if (data.length >= 3)
-			return data[2 + service][5 + result];
+		if (data_set.length >= 3)
+			return data_set[2 + service][5 + result];
 		else
 			return null;
 	}
 	
 	public String get(int response, int service, int field) {
-		return data[response][service][field].trim();
+		return data_set[response][service][field].trim();
 	}
 	
 	public DataProvider read(InputStream input) {
@@ -68,8 +68,8 @@ public class DataProvider extends Instance {
 				}
 			
 			if (getNumberOfServices() > 0)
-				if (data[2][2][0].equals("F"))
-					throw new ObjectException("%s", data[2][5][0].trim());
+				if (data_set[2][2][0].equals("F"))
+					throw new ObjectException("%s", data_set[2][5][0].trim());
 			return this;
 		} catch (IOException e) {
 			SEVERE(e);
@@ -79,15 +79,15 @@ public class DataProvider extends Instance {
 	
 	public void read(String input) {
 		String[] responses = input.split("[~]");
-		data = new String[responses.length][][];
+		data_set = new String[responses.length][][];
 		for (int response = 0; response < responses.length; response++) {
 			String[] services = responses[response].split("[\\^]");
-			data[response] = new String[services.length][];
+			data_set[response] = new String[services.length][];
 			for (int service = 0; service < services.length; service++) {
 				String[] fields = services[service].trim().split("[|]");
-				data[response][service] = new String[fields.length];
+				data_set[response][service] = new String[fields.length];
 				for (int field = 0; field < fields.length; field++) {
-					data[response][service][field] = fields[field];
+					data_set[response][service][field] = fields[field];
 				}
 			}
 		}
@@ -95,12 +95,12 @@ public class DataProvider extends Instance {
 	
 	public String toString() {
 		StringBuffer buffer = new StringBuffer();
-		for (int response = 0; response < data.length; response++) {
+		for (int response = 0; response < data_set.length; response++) {
 			buffer.append('[');
-			for (int service = 0; service < data[response].length; service++) {
+			for (int service = 0; service < data_set[response].length; service++) {
 				buffer.append('[');
-				for (int field = 0; field < data[response][service].length; field++) {
-					buffer.append(data[response][service][field] + ",");
+				for (int field = 0; field < data_set[response][service].length; field++) {
+					buffer.append(data_set[response][service][field] + ",");
 				}
 				buffer.replace(buffer.length() - 1, buffer.length(), "");
 				buffer.append(']');

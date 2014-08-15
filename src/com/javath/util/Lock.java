@@ -11,12 +11,13 @@ public class Lock<Type> {
 	
 	public boolean acquire(boolean write) {
 		if (write)
-			if (owner == 0) {
-				lock.writeLock().lock();
-				owner = Thread.currentThread().getId();
-				return true;
-			} else {
-				return false;
+			synchronized (lock) {
+				if (owner == 0) {
+					lock.writeLock().lock();
+					owner = Thread.currentThread().getId();
+					return true;
+				} else 
+					return false;
 			}
 		else {
 			lock.readLock().lock();

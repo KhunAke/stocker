@@ -11,6 +11,7 @@ import com.javath.html.FormFilter;
 import com.javath.html.HtmlParser;
 import com.javath.html.InputFilter;
 import com.javath.html.ParamFilter;
+import com.javath.http.Cookie;
 import com.javath.http.Form;
 import com.javath.http.Browser;
 import com.javath.http.Response;
@@ -26,22 +27,24 @@ public class Click2Win extends BrokerStreaming {
 	private final static String[] login_request;
 	
 	static {
-		assign = Assign.getInstance( 
-				Assign.getInstance().getProperty("stock.settrade.Click2Win.assign"));
+		String default_Properties = Assign.etc + Assign.File_Separator +
+				"broker" + Assign.File_Separator +
+				"settrade.properties";
+		assign = Assign.getInstance(Click2Win.class, default_Properties);
 		// static login_request
-		int step = (int) assign.getPropertyLong("stock.settrade.Click2Win.login_request.length");
+		int step = (int) assign.getLongProperty("login_request.length");
 		login_request = new String[step];
 		for (int index = 0; index < step; index++) {
 			login_request[index] = 
-					assign.getProperty(String.format("stock.settrade.Click2Win.login_request[%d]",index));
+					assign.getProperty(String.format("login_request[%d]",index));
 		}
 		// static put brokers
-		int size = (int) assign.getPropertyLong("stock.settrade.Click2Win.brokers.size");
+		int size = (int) assign.getLongProperty("brokers.size");
 		for (int index = 0; index < size; index++) {
 			String username = 
-					assign.getProperty(String.format("stock.settrade.Click2Win.brokers[%d].username",index));
+					assign.getProperty(String.format("brokers[%d].username",index));
 			String password = 
-					assign.getPropertySecure(String.format("stock.settrade.Click2Win.brokers[%d].password",index));
+					assign.getSecureProperty(String.format("brokers[%d].password",index));
 			try {
 				getBroker(username, password);
 			} catch (ObjectException e) {
@@ -54,7 +57,7 @@ public class Click2Win extends BrokerStreaming {
 	private String password;
 	
 	public synchronized static Broker getBroker(String username, String password) {
-		Broker result = Broker.getInstance(Click2Win.class.getCanonicalName(), username);
+		Broker result = Broker.getInstance(Click2Win.class, username);
 		if (result == null) {
 			result = new Click2Win(username, password);
 			Broker.putBroker(result, username);
@@ -69,14 +72,13 @@ public class Click2Win extends BrokerStreaming {
 	private Click2Win(String username, String password) {
 		this.username = username;
 		this.password = password;
-		cookie = State.borrowObject();
-		browser = Browser.borrowObject(cookie.getCookieStore());
+		cookie = new Cookie();
 		initial();
 	}
 	
 	private void initial() {
 		INFO("Initial \"%s[username=%s]\"", getClassName(), username);
-		authentication(browser, cookie);
+		authentication(cookie);
 		loadFlashVars();
 	}
 	
@@ -191,48 +193,48 @@ public class Click2Win extends BrokerStreaming {
 	}
 	
 	protected void loadFlashVars() {
-		HtmlParser parser = new HtmlParser(null);
-		browser.address("https://click2win.settrade.com/realtime/streaming4/flash/Streaming4Screen.jsp");
-		//browser.setCookie(cookie.getResource());
-		Response response = browser.get();
-		parser.setInputStream(response.getContent());
-		if (response.getStatusCode() != 200) {
-			if (response.getStatusCode() == 404) {
-				//** Function search "txtMsg" in URI 
-				String uri = browser.getRequestLine().getUri();
-				int begin = uri.indexOf("txtMsg=");
-				int end = uri.indexOf('&',begin);
-				if (end == -1)
-					uri = uri.substring(begin + 7);
-				else
-					uri = uri.substring(begin + 7, end);
-				if (uri.equals("Settrade+Cookies+can%27t+be+found")) {
-					WARNING("Settrade Cookies can't be found. Please call method \"authentication()\" before");
-					//** Login Process
-					authentication(browser, cookie);
-					loadFlashVars();
-					return;
+		Browser browser = (Browser) Assign.borrowObject(Browser.class);
+		browser.setCookie(cookie.getCookieStore());
+		try {
+			HtmlParser parser = new HtmlParser(null);
+			browser.address("https://click2win.settrade.com/realtime/streaming4/flash/Streaming4Screen.jsp");
+			//browser.setCookie(cookie.getResource());
+			Response response = browser.get();
+			parser.setInputStream(response.getContent());
+			if (response.getStatusCode() != 200) {
+				if (response.getStatusCode() == 404) {
+					//** Function search "txtMsg" in URI 
+					String uri = browser.getRequestLine().getUri();
+					int begin = uri.indexOf("txtMsg=");
+					int end = uri.indexOf('&',begin);
+					if (end == -1)
+						uri = uri.substring(begin + 7);
+					else
+						uri = uri.substring(begin + 7, end);
+					if (uri.equals("Settrade+Cookies+can%27t+be+found")) {
+						WARNING("Settrade Cookies can't be found. Please call method \"authentication()\" before");
+						//** Login Process
+						browser.setCookie(authentication(cookie));
+						loadFlashVars();
+						return;
+						/**/
+					}
 					/**/
-				}
-				/**/
-			}		
-			throw new ObjectException(String.format("%s \"%s\"", 
-					response.getStatusCode(), response.getReasonPhrase()));
+				}		
+				throw new ObjectException(String.format("%s \"%s\"", 
+						response.getStatusCode(), response.getReasonPhrase()));
+			}
+			ParamFilter param_filter = new ParamFilter(parser.parse());
+			param_filter.filter();
+			// 
+			NamedNodeMap attributes = param_filter.name("FlashVars").getAttributes();
+			for (int index = 0; index < attributes.getLength(); index++) {
+				if (attributes.item(index).getNodeName().equals("value"))
+					setFlashVars(attributes.item(index).getNodeValue().split("[&]"));
+			}
+		} finally {
+			Assign.returnObject(browser);
 		}
-		ParamFilter paramFilter = new ParamFilter(parser.parse());
-		paramFilter.filter();
-		// 
-		NamedNodeMap attributes = paramFilter.name("FlashVars").getAttributes();
-		for (int index = 0; index < attributes.getLength(); index++) {
-			if (attributes.item(index).getNodeName().equals("value"))
-				setFlashVars(attributes.item(index).getNodeValue().split("[&]"));
-		}		
-	}
-	
-	@Override
-	protected void finalize() throws Throwable {
-		Browser.returnObject(browser);
-		super.finalize();
 	}
 
 	@Override
