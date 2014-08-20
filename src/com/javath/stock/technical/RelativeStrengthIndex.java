@@ -54,6 +54,7 @@ public class RelativeStrengthIndex extends Instance {
 	public RelativeStrengthIndex(String symbol, int periods, Object[] data_set) {
 		this.symbol = symbol;
 		this.periods = periods;
+		map_date = new HashMap<Date, Double>();
 		init(data_set);
 	}
 	private void init(Object[] data_set) {
@@ -76,9 +77,17 @@ public class RelativeStrengthIndex extends Instance {
 		}
 		double avg_gain = sum_gain / periods;
 		double avg_loss = sum_loss / periods;
-		double rsi = 100 - (100 / (1 + (avg_gain/avg_loss)));
+		double rsi = 0;
+		try {
+			rsi = 100 - (100 / (1 + (avg_gain/avg_loss)));
+		} catch (ArithmeticException e) {
+			if (avg_gain == 0.0)
+				rsi = 50;
+			else
+				rsi = 100;
+		}
 		map_date.put(date, rsi);
-		//System.out.printf("%s,%f,%f%n", DateTime.date(date), period, rsi);
+		System.out.printf("%s,%f,%f%n", DateTime.string(date), period, rsi);
 		// calculations are based on the prior averages and the current gain loss
 		for (int index = data_set.length - periods - 2; index > -1; index--) {
 			date = (Date) ((Object[]) data_set[index])[0];
@@ -97,9 +106,16 @@ public class RelativeStrengthIndex extends Instance {
 				avg_gain = avg_gain * (periods - 1) / periods;
 				avg_loss = avg_loss * (periods - 1) / periods;
 			}
-			rsi = 100 - (100 / (1 + (avg_gain/avg_loss)));
+			try {
+				rsi = 100 - (100 / (1 + (avg_gain/avg_loss)));
+			} catch (ArithmeticException e) {
+				if (avg_gain == 0.0)
+					rsi = 50;
+				else
+					rsi = 100;
+			}
 			map_date.put(date, rsi);
-			//System.out.printf("%s,%f,%f%n", DateTime.date(date), period,  rsi);
+			System.out.printf("%s,%f,%f%n", DateTime.string(date), period,  rsi);
 		}
 		this.date = date;
 		this.value = rsi;
@@ -126,10 +142,33 @@ public class RelativeStrengthIndex extends Instance {
 	}
 	
 	public static void main(String[] args) {
+		/**
 		RelativeStrengthIndex RSI = new RelativeStrengthIndex("PTT", 14, "2014-08-18", 150);
 		System.out.println(RSI.getValue("2014-08-18"));
 		RSI = new RelativeStrengthIndex("PTT", 14, 150);
 		System.out.println(RSI.getValue("2014-08-18"));
+		/**/
+		String hql = "SELECT quote.id.date as date, quote.last as last, quote.changePrior, quote.value " +
+				"FROM SettradeQuote as quote " +
+				"WHERE quote.id.symbol = 'PTT' " +
+				"AND quote.id.date >= '2014-08-18' " +
+				"AND quote.last != null " +
+				"ORDER BY date DESC";
+		Object[] data_set = null;
+		Session session = Assign.getSessionFactory().getCurrentSession();
+		session.beginTransaction();
+		try {
+			Query query = session.createQuery(hql);
+			//query.setString("symbol", "PTT");
+			//query.setDate("date", DateTime.date(date));
+			//query.setMaxResults(records);
+			List<?> list = query.list();
+			data_set = list.toArray();
+			session.getTransaction().commit();
+		} catch (Exception e) {
+			session.getTransaction().rollback();
+		}
+		RelativeStrengthIndex RSI = new RelativeStrengthIndex("PTT", 14, data_set);
 	}
 
 }
