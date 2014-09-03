@@ -139,6 +139,14 @@ public class DateTime {
 		return new Date(date + time + (long) timezone.getRawOffset());
 	}
 	
+	public static long differenceDate(Date arg1, Date arg2) {
+		long date1 = arg1.getTime() / (86400000);
+		long date2 = arg2.getTime() / (86400000);
+		return date1 - date2;
+	}
+
+	 
+	
 	// Method name : format
 	public static Date format(String format, String datetime) {
 		return format(Default_Locale, format, datetime);
