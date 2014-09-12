@@ -11,13 +11,13 @@ import org.hibernate.SessionFactory;
 import static org.hibernate.criterion.Example.create;
 
 /**
- * Home object for domain model class SettradeQuote.
- * @see com.javath.mapping.SettradeQuote
+ * Home object for domain model class SetBroker.
+ * @see com.javath.mapping.SetBroker
  * @author Hibernate Tools
  */
-public class SettradeQuoteHome {
+public class SetBrokerHome {
 
-	private static final Log log = LogFactory.getLog(SettradeQuoteHome.class);
+	private static final Log log = LogFactory.getLog(SetBrokerHome.class);
 
 	private final SessionFactory sessionFactory = getSessionFactory();
 
@@ -32,8 +32,8 @@ public class SettradeQuoteHome {
 		}
 	}
 
-	public void persist(SettradeQuote transientInstance) {
-		log.debug("persisting SettradeQuote instance");
+	public void persist(SetBroker transientInstance) {
+		log.debug("persisting SetBroker instance");
 		try {
 			sessionFactory.getCurrentSession().persist(transientInstance);
 			log.debug("persist successful");
@@ -43,8 +43,8 @@ public class SettradeQuoteHome {
 		}
 	}
 
-	public void attachDirty(SettradeQuote instance) {
-		log.debug("attaching dirty SettradeQuote instance");
+	public void attachDirty(SetBroker instance) {
+		log.debug("attaching dirty SetBroker instance");
 		try {
 			sessionFactory.getCurrentSession().saveOrUpdate(instance);
 			log.debug("attach successful");
@@ -54,8 +54,8 @@ public class SettradeQuoteHome {
 		}
 	}
 
-	public void attachClean(SettradeQuote instance) {
-		log.debug("attaching clean SettradeQuote instance");
+	public void attachClean(SetBroker instance) {
+		log.debug("attaching clean SetBroker instance");
 		try {
 			sessionFactory.getCurrentSession().lock(instance, LockMode.NONE);
 			log.debug("attach successful");
@@ -65,8 +65,8 @@ public class SettradeQuoteHome {
 		}
 	}
 
-	public void delete(SettradeQuote persistentInstance) {
-		log.debug("deleting SettradeQuote instance");
+	public void delete(SetBroker persistentInstance) {
+		log.debug("deleting SetBroker instance");
 		try {
 			sessionFactory.getCurrentSession().delete(persistentInstance);
 			log.debug("delete successful");
@@ -76,11 +76,11 @@ public class SettradeQuoteHome {
 		}
 	}
 
-	public SettradeQuote merge(SettradeQuote detachedInstance) {
-		log.debug("merging SettradeQuote instance");
+	public SetBroker merge(SetBroker detachedInstance) {
+		log.debug("merging SetBroker instance");
 		try {
-			SettradeQuote result = (SettradeQuote) sessionFactory
-					.getCurrentSession().merge(detachedInstance);
+			SetBroker result = (SetBroker) sessionFactory.getCurrentSession()
+					.merge(detachedInstance);
 			log.debug("merge successful");
 			return result;
 		} catch (RuntimeException re) {
@@ -89,12 +89,11 @@ public class SettradeQuoteHome {
 		}
 	}
 
-	public SettradeQuote findById(com.javath.mapping.SettradeQuoteId id) {
-		log.debug("getting SettradeQuote instance with id: " + id);
+	public SetBroker findById(java.lang.Integer id) {
+		log.debug("getting SetBroker instance with id: " + id);
 		try {
-			SettradeQuote instance = (SettradeQuote) sessionFactory
-					.getCurrentSession().get(
-							"com.javath.mapping.SettradeQuote", id);
+			SetBroker instance = (SetBroker) sessionFactory.getCurrentSession()
+					.get("com.javath.mapping.SetBroker", id);
 			if (instance == null) {
 				log.debug("get successful, no instance found");
 			} else {
@@ -107,12 +106,12 @@ public class SettradeQuoteHome {
 		}
 	}
 
-	public List<SettradeQuote> findByExample(SettradeQuote instance) {
-		log.debug("finding SettradeQuote instance by example");
+	public List<SetBroker> findByExample(SetBroker instance) {
+		log.debug("finding SetBroker instance by example");
 		try {
-			List<SettradeQuote> results = (List<SettradeQuote>) sessionFactory
+			List<SetBroker> results = (List<SetBroker>) sessionFactory
 					.getCurrentSession()
-					.createCriteria("com.javath.mapping.SettradeQuote")
+					.createCriteria("com.javath.mapping.SetBroker")
 					.add(create(instance)).list();
 			log.debug("find by example successful, result size: "
 					+ results.size());

@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.apache.http.Header;
 import org.apache.http.client.CookieStore;
+import org.hibernate.Session;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 
@@ -16,6 +17,8 @@ import com.javath.http.Form;
 import com.javath.http.Browser;
 import com.javath.http.Response;
 import com.javath.logger.LOG;
+import com.javath.mapping.SetBroker;
+import com.javath.mapping.SetBrokerHome;
 import com.javath.set.Broker;
 import com.javath.settrade.flash.BrokerStreaming;
 import com.javath.util.Assign;
@@ -55,8 +58,8 @@ public class Click2Win extends BrokerStreaming {
 
 	private String username;
 	private String password;
-	
-	public synchronized static Broker getBroker(String username, String password) {
+	//public synchronized static Broker getBroker(String username, String password)
+	public static Broker getBroker(String username, String password) {
 		Broker result = Broker.getInstance(Click2Win.class, username);
 		if (result == null) {
 			result = new Click2Win(username, password);
@@ -80,6 +83,20 @@ public class Click2Win extends BrokerStreaming {
 		INFO("Initial \"%s[username=%s]\"", getClassName(), username);
 		authentication(cookie);
 		loadFlashVars();
+	}
+	public void save() {
+		Session session = Assign.getSessionFactory().getCurrentSession();
+		SetBrokerHome home =  (SetBrokerHome) Assign.borrowObject(SetBrokerHome.class);
+		session.beginTransaction();
+		try {
+			SetBroker broker = new SetBroker(this.getClassName(), username, Assign.encrypt(password));
+			home.attachDirty(broker);
+			session.getTransaction().commit();
+		} catch (Exception e) {
+			session.getTransaction().rollback();
+		} finally {
+			Assign.returnObject(home);
+		}
 	}
 	
 	public boolean checkPassword(String password) {

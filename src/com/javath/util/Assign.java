@@ -10,6 +10,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
@@ -454,10 +455,10 @@ public class Assign extends Instance {
 		}
 		return string_builder.toString() + "==";
 	}
-	private static String encrypt(String message) {
+	public static String encrypt(String message) {
 		return aes.encrypt(message);
 	}
-	private static String decrypt(String message) {
+	public static String decrypt(String message) {
 		return aes.decrypt(message);
 	}
 	public static String hex(long data) {

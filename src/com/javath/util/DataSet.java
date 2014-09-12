@@ -22,11 +22,23 @@ public class DataSet implements Iterator<Object[]> {
 	public int size() {
 		return data.length;
 	}
+	public Object[] get(int index) {
+		return (Object[]) data[index];
+	}
 	
 	private int current;
+	public  Iterator<Object[]> iterator() {
+		current = -1;
+		return this;
+	}
+	public Object[] seek(int index) {
+		Object[] result =  (Object[]) data[index];
+		current = index;
+		return result;
+	}
 	@Override
 	public boolean hasNext() {
-		return current == data.length ? false : true;
+		return current >= data.length - 1 ? false : true;
 	}
 	@Override
 	public Object[] next() {
@@ -35,7 +47,7 @@ public class DataSet implements Iterator<Object[]> {
 	}
 	@Override
 	public void remove() {
-		data[current] = null;
+		throw new ObjectException("class does not implement interface member"); 
 	}
 	
 	public int fields() {
@@ -85,7 +97,11 @@ public class DataSet implements Iterator<Object[]> {
 		}
 	}
 	public int column(String name) {
-		return map_header.get(name);
+		try {
+			return map_header.get(name);
+		} catch (NullPointerException e) {
+			throw new ObjectException("Header not initiated.");
+		}
 	}
 
 }
