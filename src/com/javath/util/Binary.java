@@ -28,14 +28,101 @@ public class Binary {
 		return Arrays.copyOfRange(binary, this.offset + offset, length);
 	}
 	
-	public int getInteger() {
-		return getInteger(0, 4);
+	public short getShort() {
+		return getShort(0, 2);
 	}
-	public int getInteger(int offset) {
-		return getInteger(offset, 4);
+	public short getShort(int offset) {
+		return getShort(offset, 2);
 	}
-	public int getInteger(int offset, int length) {
-		return 0;
+	public short getShort(int offset, int length) {
+		Binary binary = new Binary(this, offset, length);
+		try {
+			String hex = binary.toHexString();
+			return Short.decode(hex);
+		} catch (NumberFormatException e) {
+			String hex = binary.toInvertHexString();
+			return (short) ((Short.decode(hex) + 1) * (-1));
+		}
+	}
+	public int getInt() {
+		return getInt(0, 4);
+	}
+	public int getInt(int offset) {
+		return getInt(offset, 4);
+	}
+	public int getInt(int offset, int length) {
+		Binary binary = new Binary(this, offset, length);
+		try {
+			String hex = binary.toHexString();
+			return Integer.decode(hex);
+		} catch (NumberFormatException e) {
+			String hex = binary.toInvertHexString();
+			return (Integer.decode(hex) + 1) * (-1);
+		}
+	}
+	public long getLong() {
+		return getLong(0, 8);
+	}
+	public long getLong(int offset) {
+		return getLong(offset, 8);
+	}
+	public long getLong(int offset, int length) {
+		Binary binary = new Binary(this, offset, length);
+		try {
+			String hex = binary.toHexString();
+			return Long.decode(hex);
+		} catch (NumberFormatException e) {
+			String hex = binary.toInvertHexString();
+			return (Long.decode(hex) + (int) 1) * (int) (-1);
+		}
+	}
+	public float getFloat() {
+		return getFloat(0, 4);
+	}
+	public float getFloat(int offset) {
+		return getFloat(offset, 4);
+	}
+	public float getFloat(int offset, int length) {
+		return Float.intBitsToFloat(getInt(offset, length));
+	}
+	public double getDouble() {
+		return getDouble(0, 8);
+	}
+	public double getDouble(int offset) {
+		return getDouble(offset, 8);
+	}
+	public double getDouble(int offset, int length) {
+		return Double.longBitsToDouble(getLong(offset, length));
+	}
+	
+	private String toInvertHexString() {
+		StringBuffer buffer = (StringBuffer)
+				Assign.borrowObject(StringBuffer.class);
+		try {
+			buffer.delete(0, buffer.length());
+			buffer.append("0x");
+			for (int index = offset; index < offset + length; index++) {
+				buffer.append(String.format("%02X", (binary[index] ^ (byte) 0xFF)));
+			}
+			return buffer.toString();
+		} finally {
+			Assign.returnObject(buffer);
+		}
+	}
+	public String toHexString() {
+		StringBuffer buffer = (StringBuffer)
+				Assign.borrowObject(StringBuffer.class);
+		try {
+			buffer.delete(0, buffer.length());
+			buffer.append("0x");
+			for (int index = offset; index < offset + length; index++) {
+				buffer.append(String.format("%02X", binary[index]));
+			}
+			return buffer.toString();
+		} finally {
+			Assign.returnObject(buffer);
+		}
+		
 	}
 	
  	public String toString() {
@@ -53,12 +140,28 @@ public class Binary {
 	
 	public static void main(String[] args) {
 		//new Integer(1).
-		Binary a = new Binary(new byte[] {0, 15, 31, 63, 127, -1});
+		/**/
+		float f = 1.0f;
+		System.out.println(Float.floatToIntBits(f));
+		int i = Float.floatToIntBits(f);
+		System.out.printf("%08x%n", i);
+		System.out.printf("%08x%n", i);
+		/**/
+		
+		Binary a = new Binary(new byte[] {0, 15, 63,-128,0,0});
+		System.out.println(a.getInt(2,2));
+		System.out.println(a.getFloat(2,2));
+		
+		/**
 		Binary b = new Binary(a,1,4);
 		Binary c = new Binary(b,1,2);
 		System.out.println(a);
 		System.out.println(b);
 		System.out.println(c);
+		System.out.println(a.getInteger());
+		System.out.println(a.getInteger(2));
+		System.out.println(a.getInteger(1, 1));
+		**/
 	}
 
 }
