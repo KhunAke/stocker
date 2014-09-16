@@ -1,5 +1,8 @@
 package com.javath.util;
 
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 
 public class Binary {
@@ -18,7 +21,7 @@ public class Binary {
 	}
 	public Binary(Binary binary, int offset, int length) {
 		this(binary.binary, binary.offset + offset, 
-				length < binary.length ? length : binary.length);
+				(offset + length) < binary.length ? length : binary.length - offset);
 	}
 	
 	public byte[] getByte() {
@@ -27,102 +30,195 @@ public class Binary {
 	public byte[] getByte(int offset, int length) {
 		return Arrays.copyOfRange(binary, this.offset + offset, length);
 	}
+	public byte getByte(int index) {
+		if (index < length)
+			return binary[offset + index];
+		else
+			throw new ObjectException("Index \"%d\" out of range", index);
+	}
 	
 	public short getShort() {
-		return getShort(0, 2);
+		return getShort(0, 2, false);
+	}
+	public short getShort(boolean little_endian) {
+		return getShort(0, 2, little_endian);
 	}
 	public short getShort(int offset) {
-		return getShort(offset, 2);
+		return getShort(offset, 2, false);
+	}
+	public short getShort(int offset, boolean little_endian) {
+		return getShort(offset, 2, little_endian);
 	}
 	public short getShort(int offset, int length) {
+		return getShort(offset, length, false);
+	}
+	public short getShort(int offset, int length, boolean little_endian) {
+		final int limit = Short.SIZE / 8;
+		if (length > limit)
+			throw new ObjectException("Length not support %d byte", length);
 		Binary binary = new Binary(this, offset, length);
 		try {
-			String hex = binary.toHexString();
+			String hex = binary.toHexString(little_endian);
 			return Short.decode(hex);
-		} catch (NumberFormatException e) {
-			String hex = binary.toInvertHexString();
+		} catch (NumberFormatException e) { 
+			String hex = binary.toInvertHexString(little_endian);
 			return (short) ((Short.decode(hex) + 1) * (-1));
 		}
 	}
 	public int getInt() {
-		return getInt(0, 4);
+		return getInt(0, 4, false);
+	}
+	public int getInt(boolean little_endian) {
+		return getInt(0, 4, little_endian);
 	}
 	public int getInt(int offset) {
-		return getInt(offset, 4);
+		return getInt(offset, 4, false);
+	}
+	public int getInt(int offset, boolean little_endian) {
+		return getInt(offset, 4, little_endian);
 	}
 	public int getInt(int offset, int length) {
+		return getInt(offset, length, false);
+	}
+	public int getInt(int offset, int length, boolean little_endian) {
+		final int limit = Integer.SIZE / 8;
+		if (length > limit)
+			throw new ObjectException("Length not support %d byte", length);
 		Binary binary = new Binary(this, offset, length);
 		try {
-			String hex = binary.toHexString();
+			String hex = binary.toHexString(little_endian);
 			return Integer.decode(hex);
 		} catch (NumberFormatException e) {
-			String hex = binary.toInvertHexString();
+			String hex = binary.toInvertHexString(little_endian);
 			return (Integer.decode(hex) + 1) * (-1);
 		}
 	}
 	public long getLong() {
-		return getLong(0, 8);
+		return getLong(0, 8, false);
+	}
+	public long getLong(boolean little_endian) {
+		return getLong(0, 8, little_endian);
 	}
 	public long getLong(int offset) {
-		return getLong(offset, 8);
+		return getLong(offset, 8, false);
+	}
+	public long getLong(int offset, boolean little_endian) {
+		return getLong(offset, 8, little_endian);
 	}
 	public long getLong(int offset, int length) {
+		return getLong(offset, length, false);
+	}
+	public long getLong(int offset, int length, boolean little_endian) {
+		final int limit = Long.SIZE / 8;
+		if (length > limit)
+			throw new ObjectException("Length not support %d byte", length);
 		Binary binary = new Binary(this, offset, length);
 		try {
-			String hex = binary.toHexString();
+			String hex = binary.toHexString(little_endian);
 			return Long.decode(hex);
 		} catch (NumberFormatException e) {
-			String hex = binary.toInvertHexString();
+			String hex = binary.toInvertHexString(little_endian);
 			return (Long.decode(hex) + (int) 1) * (int) (-1);
 		}
 	}
 	public float getFloat() {
-		return getFloat(0, 4);
+		return getFloat(0, 4, false);
+	}
+	public float getFloat(boolean little_endian) {
+		return getFloat(0, 4, little_endian);
 	}
 	public float getFloat(int offset) {
-		return getFloat(offset, 4);
+		return getFloat(offset, 4, false);
+	}
+	public float getFloat(int offset, boolean little_endian) {
+		return getFloat(offset, 4, little_endian);
 	}
 	public float getFloat(int offset, int length) {
-		return Float.intBitsToFloat(getInt(offset, length));
+		return getFloat(offset, length, false);
+	}
+	public float getFloat(int offset, int length, boolean little_endian) {
+		return Float.intBitsToFloat(getInt(offset, length, little_endian));
 	}
 	public double getDouble() {
-		return getDouble(0, 8);
+		return getDouble(0, 8, false);
+	}
+	public double getDouble(boolean little_endian) {
+		return getDouble(0, 8, little_endian);
 	}
 	public double getDouble(int offset) {
-		return getDouble(offset, 8);
+		return getDouble(offset, 8, false);
+	}
+	public double getDouble(int offset, boolean little_endian) {
+		return getDouble(offset, 8, little_endian);
 	}
 	public double getDouble(int offset, int length) {
-		return Double.longBitsToDouble(getLong(offset, length));
+		return getDouble(offset, length, false);
+	}
+	public double getDouble(int offset, int length, boolean little_endian) {
+		return Double.longBitsToDouble(getLong(offset, length, little_endian));
+	}
+	public String getString() {
+		return getString(offset, length, Charset.defaultCharset().displayName());
+	}
+	public String getString(String charset) {
+		return getString(offset, length, charset);
+	}
+	public String getString(int offset) {
+		return getString(offset, length, Charset.defaultCharset().displayName());
+	}
+	public String getString(int offset, String charset) {
+		return getString(offset, length, charset);
+	}
+	public String getString(int offset, int length) {
+		return getString(offset, length, Charset.defaultCharset().displayName());
+	}
+	public String getString(int offset, int length, String charset) {
+		ByteBuffer bb = ByteBuffer.wrap(binary, offset, 
+				(offset + length) < binary.length ? length : binary.length - offset);
+		CharBuffer buffer = Charset.forName(charset).decode(bb);
+		return buffer.toString();
 	}
 	
-	private String toInvertHexString() {
+	private String toInvertHexString(boolean little_endian) {
 		StringBuffer buffer = (StringBuffer)
 				Assign.borrowObject(StringBuffer.class);
 		try {
 			buffer.delete(0, buffer.length());
 			buffer.append("0x");
-			for (int index = offset; index < offset + length; index++) {
-				buffer.append(String.format("%02X", (binary[index] ^ (byte) 0xFF)));
-			}
+			if (little_endian)
+				for (int index = (offset + length - 1); index >= offset; index--)
+					buffer.append(String.format("%02X", (byte) (binary[index] ^ 0xFF)));
+			else
+				for (int index = offset; index < offset + length; index++)
+					buffer.append(String.format("%02X", (byte) (binary[index] ^ 0xFF)));
 			return buffer.toString();
 		} finally {
 			Assign.returnObject(buffer);
 		}
 	}
 	public String toHexString() {
+		return toHexString(false);
+	}
+	public String toHexString(boolean little_endian) {
 		StringBuffer buffer = (StringBuffer)
 				Assign.borrowObject(StringBuffer.class);
 		try {
 			buffer.delete(0, buffer.length());
 			buffer.append("0x");
-			for (int index = offset; index < offset + length; index++) {
-				buffer.append(String.format("%02X", binary[index]));
-			}
+			if (little_endian)
+				for (int index = (offset + length - 1); index >= offset; index--)
+					buffer.append(String.format("%02X", binary[index]));
+			else
+				for (int index = offset; index < offset + length; index++)
+					buffer.append(String.format("%02X", binary[index]));
 			return buffer.toString();
 		} finally {
 			Assign.returnObject(buffer);
 		}
-		
+	}
+	
+	public int length() {
+		return length;
 	}
 	
  	public String toString() {
@@ -136,32 +232,6 @@ public class Binary {
 		}
 		buffer.replace(buffer.length() - 2, buffer.length(), "]");
 		return buffer.toString();
-	}
-	
-	public static void main(String[] args) {
-		//new Integer(1).
-		/**/
-		float f = 1.0f;
-		System.out.println(Float.floatToIntBits(f));
-		int i = Float.floatToIntBits(f);
-		System.out.printf("%08x%n", i);
-		System.out.printf("%08x%n", i);
-		/**/
-		
-		Binary a = new Binary(new byte[] {0, 15, 63,-128,0,0});
-		System.out.println(a.getInt(2,2));
-		System.out.println(a.getFloat(2,2));
-		
-		/**
-		Binary b = new Binary(a,1,4);
-		Binary c = new Binary(b,1,2);
-		System.out.println(a);
-		System.out.println(b);
-		System.out.println(c);
-		System.out.println(a.getInteger());
-		System.out.println(a.getInteger(2));
-		System.out.println(a.getInteger(1, 1));
-		**/
 	}
 
 }
