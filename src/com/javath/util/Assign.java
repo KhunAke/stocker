@@ -203,6 +203,11 @@ public class Assign extends Instance {
 		throw new ObjectException("For input string: \"%s\"", value);
 	}
 	
+	public static String classname() {
+		StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+		return stack[2].getClassName();
+	}
+	
 	public static Object forConstructor(String classname, String... arguments) {
 		Class<?> clazz = null;
 		try {

@@ -53,34 +53,34 @@ public class DataSet implements Iterator<Object[]> {
 	public int fields() {
 		return ((Object[]) data[current]).length;
 	}
-	public byte byteField(int column) {
+	public byte fieldByte(int column) {
 		return (Byte) ((Object[]) data[current])[column];
 	}
-	public short shortField(int column) {
+	public short fieldShort(int column) {
 		return (Short) ((Object[]) data[current])[column];
 	}
-	public int intField(int column) {
+	public int fieldInteger(int column) {
 		return (Integer) ((Object[]) data[current])[column];
 	}
-	public long longField(int column) {
+	public long fieldLong(int column) {
 		return (Long) ((Object[]) data[current])[column];
 	}
-	public float floatField(int column) {
+	public float fieldFloat(int column) {
 		return (Float) ((Object[]) data[current])[column];
 	}
-	public double doubleField(int column) {
+	public double fieldDouble(int column) {
 		return (Double) ((Object[]) data[current])[column];
 	}
-	public String stringField(int column) {
+	public String fieldString(int column) {
 		return (String) ((Object[]) data[current])[column];
 	}
-	public char charField(int column) {
+	public char fieldChar(int column) {
 		return (Character) ((Object[]) data[current])[column];
 	}
-	public boolean booleanField(int column) {
+	public boolean fieldBoolean(int column) {
 		return (Boolean) ((Object[]) data[current])[column];
 	}
-	public Object objectField(int column) {
+	public Object fieldObject(int column) {
 		return ((Object[]) data[current])[column];
 	}
 	

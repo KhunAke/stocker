@@ -9,18 +9,22 @@ import com.javath.logger.LOG;
 
 public class Instance {
 	
-	private static final String INIT = "com.javath.util.Instance";
+	//private static final String INIT = "com.javath.util.Instance";
 	
 	protected final Logger logger;
 	private final int logger_level;
 	protected final int InstanceId;
 	
-	private String classname;
-	private String packagename;
+	private final String classname;
+	private final String packagename;
 	
 	public Instance() {
 		InstanceId = hashCode();
-
+		classname = this.getClass().getCanonicalName();
+		packagename = this.getClass().getPackage().getName();
+		logger = Logger.getLogger(classname);
+		logger_level = LOG.getLoggerLevel(logger);
+		/**
 		try {
 			StackTraceElement[] stack = new Throwable().getStackTrace();
 			int index = 0;
@@ -50,6 +54,7 @@ public class Instance {
 				logger = Logger.getLogger(classname);
 			logger_level = LOG.getLoggerLevel(logger);
 		}
+		/**/
 		FINE("Create instance of \"%s\"", classname);
 	}
 	

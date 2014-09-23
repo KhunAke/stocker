@@ -1,109 +1,91 @@
 package com.javath.set;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
-import org.apache.http.client.CookieStore;
 import org.hibernate.Query;
 import org.hibernate.Session;
 
-import com.javath.http.Browser;
-import com.javath.http.Cookie;
+import com.javath.mapping.SetExtendsBroker;
+import com.javath.mapping.SetExtendsBrokerHome;
 import com.javath.util.Assign;
 import com.javath.util.DataSet;
-import com.javath.util.DateTime;
 import com.javath.util.Instance;
 
 public abstract class Broker extends Instance {
-
-	// Key is username@classname
-	private static Map<String,Broker> brokers;
-	public final static Broker dummy = new Broker() {
-			@Override
-			public boolean checkPassword(String password) {
-				return true;
-			}
-			@Override
-			protected CookieStore login(Browser browser) {
-				return null;
-			}
-			@Override
-			public void save() {}
-		};	
-
-	private static void initMapBrokers() {
-		DataSet data_set = null;
-		String hql ="SELECT broker.classname, broker.username, broker.password " + 
-					"FROM SetBroker as broker";
+	
+	// Key is username@extend_id
+	private static Map<String,Broker> brokers = new HashMap<String,Broker>();
+	
+	static {
+		brokers = new HashMap<String,Broker>();
+		DataSet data_set = loadBrokers();
+		while(data_set.hasNext()) {
+			data_set.next();
+			Broker broker = (Broker) Assign.forConstructor(
+					data_set.fieldString(0), data_set.fieldString(1) , data_set.fieldString(2));
+		}
+	}
+	
+	private static DataSet loadBrokers() {
 		Session session = Assign.getSessionFactory().getCurrentSession();
 		session.beginTransaction();
 		try {
-			Query query = session.createQuery(hql);
-			data_set = new DataSet(query.list());
+			Query query = session.createQuery(
+					"SELECT " + 
+					"extends.classname as classname, " +
+					"broker.id.username as username, " +
+					"broker.password as password " + 
+					"FROM SetBroker as broker, SetExtendsBroker as extends " +
+					"WHERE broker.id.extendId = extends.id");
+			DataSet data_set = new DataSet(query.list());
 			session.getTransaction().commit();
+			return data_set;
 		} catch (Exception e) {
 			session.getTransaction().rollback();
+			throw e;
 		}
-		brokers = new HashMap<String,Broker>();
-		try {
-			for (Iterator<Object[]> broker = data_set.iterator(); broker.hasNext();) {
-				//Object[] current = broker.next();
-				broker.next();
-				String classname = data_set.stringField(0);
-				String username = data_set.stringField(1);
-				String password = Assign.decrypt(data_set.stringField(2));
-				Broker object = (Broker) Assign.forMethod(classname, "getBroker", username, password);
-				putBroker(object, username);
-			}
-		} catch (NullPointerException e) {}
-	}
-		
-	protected static Broker getInstance(Class<? extends Broker> classname, String username) {
-		try {
-			return brokers.get(String.format("%s@%s", username, classname.getCanonicalName()));
-		} catch (NullPointerException e) {
-			initMapBrokers();
-			return brokers.get(String.format("%s@%s", username, classname.getCanonicalName()));
-		}
-	}
-	public static Broker getInstance(Class<? extends Broker> classname, String username, String password) {
-		Broker result = getInstance(classname, username);
-		try {
-			if (result.checkPassword(password))
-				return result;
-			else
-				return dummy;
-		} catch (NullPointerException e) {
-			return dummy;
-		}
-	}
-	protected static void putBroker(Broker broker, String username) {
-		brokers.put(
-				String.format("%s@%s", username, broker.getClass().getCanonicalName()), 
-				broker);
 	}
 	
-	protected Cookie cookie;
-	
-	public abstract boolean checkPassword(String password);
-	protected CookieStore authentication(Cookie cookie) {
-		Browser browser = (Browser) Assign.borrowObject(Browser.class);
+	protected static int getExtendId(String classname) {
+		Session session = Assign.getSessionFactory().getCurrentSession();
+		session.beginTransaction();
 		try {
-			if (cookie.acquire(true))
+			Query query = session.createQuery(
+					"select broker.id as id " + 
+					"from SetExtendsBroker as broker " +
+					"where broker.classname = :classname");
+			query.setString("classname", classname);
+			Integer id = (Integer) query.uniqueResult();
+			if (id == null) {
+				SetExtendsBrokerHome home = (SetExtendsBrokerHome) 
+					Assign.borrowObject(SetExtendsBrokerHome.class);
 				try {
-					browser.setCookie(cookie.getCookieStore());
-					cookie.setCookieStore(login(browser));
+					SetExtendsBroker broker = new SetExtendsBroker(classname);
+					home.attachDirty(broker);
+				} catch (Exception e) {
+					throw e;
 				} finally {
-					cookie.release(true);
-				}
-			return cookie.getCookieStore();
-		} finally {
-			Assign.returnObject(browser);
+					id = (Integer) query.uniqueResult();
+					Assign.returnObject(home);
+				}	
+			}
+			session.getTransaction().commit();
+			return id;
+		} catch (Exception e) {
+			session.getTransaction().rollback();
+			throw e;
 		}
 	}
-	protected abstract CookieStore login(Browser browser);
-	// Save to DB
-	public abstract void save();
 	
+	protected static Broker getInstance(String username, int extend_id) {
+		return brokers.get(String.format("%s@%d", username, extend_id));
+	}
+	
+	protected String username;
+	protected String password;
+	
+	public boolean checkPassword(String password) {
+		return this.password.equals(password);
+	}
 }

@@ -1,6 +1,6 @@
 package com.javath.mapping;
 
-// Generated Sep 10, 2014 9:53:58 AM by Hibernate Tools 4.0.0
+// Generated Sep 23, 2014 1:12:16 PM by Hibernate Tools 4.0.0
 
 import java.util.List;
 import javax.naming.InitialContext;
@@ -89,7 +89,7 @@ public class SetBrokerHome {
 		}
 	}
 
-	public SetBroker findById(java.lang.Integer id) {
+	public SetBroker findById(com.javath.mapping.SetBrokerId id) {
 		log.debug("getting SetBroker instance with id: " + id);
 		try {
 			SetBroker instance = (SetBroker) sessionFactory.getCurrentSession()
