@@ -11,14 +11,13 @@ import org.hibernate.SessionFactory;
 import static org.hibernate.criterion.Example.create;
 
 /**
- * Home object for domain model class BualuangQuoteDaily.
- * @see com.javath.mapping.BualuangQuoteDaily
+ * Home object for domain model class SetStrategy.
+ * @see com.javath.mapping.SetStrategy
  * @author Hibernate Tools
  */
-public class BualuangQuoteDailyHome {
+public class SetStrategyHome {
 
-	private static final Log log = LogFactory
-			.getLog(BualuangQuoteDailyHome.class);
+	private static final Log log = LogFactory.getLog(SetStrategyHome.class);
 
 	private final SessionFactory sessionFactory = getSessionFactory();
 
@@ -33,8 +32,8 @@ public class BualuangQuoteDailyHome {
 		}
 	}
 
-	public void persist(BualuangQuoteDaily transientInstance) {
-		log.debug("persisting BualuangQuoteDaily instance");
+	public void persist(SetStrategy transientInstance) {
+		log.debug("persisting SetStrategy instance");
 		try {
 			sessionFactory.getCurrentSession().persist(transientInstance);
 			log.debug("persist successful");
@@ -44,8 +43,8 @@ public class BualuangQuoteDailyHome {
 		}
 	}
 
-	public void attachDirty(BualuangQuoteDaily instance) {
-		log.debug("attaching dirty BualuangQuoteDaily instance");
+	public void attachDirty(SetStrategy instance) {
+		log.debug("attaching dirty SetStrategy instance");
 		try {
 			sessionFactory.getCurrentSession().saveOrUpdate(instance);
 			log.debug("attach successful");
@@ -55,8 +54,8 @@ public class BualuangQuoteDailyHome {
 		}
 	}
 
-	public void attachClean(BualuangQuoteDaily instance) {
-		log.debug("attaching clean BualuangQuoteDaily instance");
+	public void attachClean(SetStrategy instance) {
+		log.debug("attaching clean SetStrategy instance");
 		try {
 			sessionFactory.getCurrentSession().lock(instance, LockMode.NONE);
 			log.debug("attach successful");
@@ -66,8 +65,8 @@ public class BualuangQuoteDailyHome {
 		}
 	}
 
-	public void delete(BualuangQuoteDaily persistentInstance) {
-		log.debug("deleting BualuangQuoteDaily instance");
+	public void delete(SetStrategy persistentInstance) {
+		log.debug("deleting SetStrategy instance");
 		try {
 			sessionFactory.getCurrentSession().delete(persistentInstance);
 			log.debug("delete successful");
@@ -77,10 +76,10 @@ public class BualuangQuoteDailyHome {
 		}
 	}
 
-	public BualuangQuoteDaily merge(BualuangQuoteDaily detachedInstance) {
-		log.debug("merging BualuangQuoteDaily instance");
+	public SetStrategy merge(SetStrategy detachedInstance) {
+		log.debug("merging SetStrategy instance");
 		try {
-			BualuangQuoteDaily result = (BualuangQuoteDaily) sessionFactory
+			SetStrategy result = (SetStrategy) sessionFactory
 					.getCurrentSession().merge(detachedInstance);
 			log.debug("merge successful");
 			return result;
@@ -90,13 +89,12 @@ public class BualuangQuoteDailyHome {
 		}
 	}
 
-	public BualuangQuoteDaily findById(
-			com.javath.mapping.BualuangQuoteDailyId id) {
-		log.debug("getting BualuangQuoteDaily instance with id: " + id);
+	public SetStrategy findById(java.lang.Integer id) {
+		log.debug("getting SetStrategy instance with id: " + id);
 		try {
-			BualuangQuoteDaily instance = (BualuangQuoteDaily) sessionFactory
-					.getCurrentSession().get(
-							"com.javath.mapping.BualuangQuoteDaily", id);
+			SetStrategy instance = (SetStrategy) sessionFactory
+					.getCurrentSession().get("com.javath.mapping.SetStrategy",
+							id);
 			if (instance == null) {
 				log.debug("get successful, no instance found");
 			} else {
@@ -109,12 +107,12 @@ public class BualuangQuoteDailyHome {
 		}
 	}
 
-	public List<BualuangQuoteDaily> findByExample(BualuangQuoteDaily instance) {
-		log.debug("finding BualuangQuoteDaily instance by example");
+	public List<SetStrategy> findByExample(SetStrategy instance) {
+		log.debug("finding SetStrategy instance by example");
 		try {
-			List<BualuangQuoteDaily> results = (List<BualuangQuoteDaily>) sessionFactory
+			List<SetStrategy> results = (List<SetStrategy>) sessionFactory
 					.getCurrentSession()
-					.createCriteria("com.javath.mapping.BualuangQuoteDaily")
+					.createCriteria("com.javath.mapping.SetStrategy")
 					.add(create(instance)).list();
 			log.debug("find by example successful, result size: "
 					+ results.size());

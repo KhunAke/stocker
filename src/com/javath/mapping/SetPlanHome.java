@@ -1,6 +1,6 @@
 package com.javath.mapping;
 
-// Generated Sep 23, 2014 1:12:16 PM by Hibernate Tools 4.0.0
+// Generated Sep 29, 2014 1:56:13 PM by Hibernate Tools 4.0.0
 
 import java.util.List;
 import javax.naming.InitialContext;
@@ -11,14 +11,13 @@ import org.hibernate.SessionFactory;
 import static org.hibernate.criterion.Example.create;
 
 /**
- * Home object for domain model class SetExtendsBroker.
- * @see com.javath.mapping.SetExtendsBroker
+ * Home object for domain model class SetPlan.
+ * @see com.javath.mapping.SetPlan
  * @author Hibernate Tools
  */
-public class SetExtendsBrokerHome {
+public class SetPlanHome {
 
-	private static final Log log = LogFactory
-			.getLog(SetExtendsBrokerHome.class);
+	private static final Log log = LogFactory.getLog(SetPlanHome.class);
 
 	private final SessionFactory sessionFactory = getSessionFactory();
 
@@ -33,8 +32,8 @@ public class SetExtendsBrokerHome {
 		}
 	}
 
-	public void persist(SetExtendsBroker transientInstance) {
-		log.debug("persisting SetExtendsBroker instance");
+	public void persist(SetPlan transientInstance) {
+		log.debug("persisting SetPlan instance");
 		try {
 			sessionFactory.getCurrentSession().persist(transientInstance);
 			log.debug("persist successful");
@@ -44,8 +43,8 @@ public class SetExtendsBrokerHome {
 		}
 	}
 
-	public void attachDirty(SetExtendsBroker instance) {
-		log.debug("attaching dirty SetExtendsBroker instance");
+	public void attachDirty(SetPlan instance) {
+		log.debug("attaching dirty SetPlan instance");
 		try {
 			sessionFactory.getCurrentSession().saveOrUpdate(instance);
 			log.debug("attach successful");
@@ -55,8 +54,8 @@ public class SetExtendsBrokerHome {
 		}
 	}
 
-	public void attachClean(SetExtendsBroker instance) {
-		log.debug("attaching clean SetExtendsBroker instance");
+	public void attachClean(SetPlan instance) {
+		log.debug("attaching clean SetPlan instance");
 		try {
 			sessionFactory.getCurrentSession().lock(instance, LockMode.NONE);
 			log.debug("attach successful");
@@ -66,8 +65,8 @@ public class SetExtendsBrokerHome {
 		}
 	}
 
-	public void delete(SetExtendsBroker persistentInstance) {
-		log.debug("deleting SetExtendsBroker instance");
+	public void delete(SetPlan persistentInstance) {
+		log.debug("deleting SetPlan instance");
 		try {
 			sessionFactory.getCurrentSession().delete(persistentInstance);
 			log.debug("delete successful");
@@ -77,11 +76,11 @@ public class SetExtendsBrokerHome {
 		}
 	}
 
-	public SetExtendsBroker merge(SetExtendsBroker detachedInstance) {
-		log.debug("merging SetExtendsBroker instance");
+	public SetPlan merge(SetPlan detachedInstance) {
+		log.debug("merging SetPlan instance");
 		try {
-			SetExtendsBroker result = (SetExtendsBroker) sessionFactory
-					.getCurrentSession().merge(detachedInstance);
+			SetPlan result = (SetPlan) sessionFactory.getCurrentSession()
+					.merge(detachedInstance);
 			log.debug("merge successful");
 			return result;
 		} catch (RuntimeException re) {
@@ -90,12 +89,11 @@ public class SetExtendsBrokerHome {
 		}
 	}
 
-	public SetExtendsBroker findById(java.lang.Integer id) {
-		log.debug("getting SetExtendsBroker instance with id: " + id);
+	public SetPlan findById(java.lang.Integer id) {
+		log.debug("getting SetPlan instance with id: " + id);
 		try {
-			SetExtendsBroker instance = (SetExtendsBroker) sessionFactory
-					.getCurrentSession().get(
-							"com.javath.mapping.SetExtendsBroker", id);
+			SetPlan instance = (SetPlan) sessionFactory.getCurrentSession()
+					.get("com.javath.mapping.SetPlan", id);
 			if (instance == null) {
 				log.debug("get successful, no instance found");
 			} else {
@@ -108,12 +106,12 @@ public class SetExtendsBrokerHome {
 		}
 	}
 
-	public List<SetExtendsBroker> findByExample(SetExtendsBroker instance) {
-		log.debug("finding SetExtendsBroker instance by example");
+	public List<SetPlan> findByExample(SetPlan instance) {
+		log.debug("finding SetPlan instance by example");
 		try {
-			List<SetExtendsBroker> results = (List<SetExtendsBroker>) sessionFactory
+			List<SetPlan> results = (List<SetPlan>) sessionFactory
 					.getCurrentSession()
-					.createCriteria("com.javath.mapping.SetExtendsBroker")
+					.createCriteria("com.javath.mapping.SetPlan")
 					.add(create(instance)).list();
 			log.debug("find by example successful, result size: "
 					+ results.size());

@@ -3,13 +3,19 @@
 "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 <!-- Generated Sep 29, 2014 1:56:13 PM by Hibernate Tools 4.0.0 -->
 <hibernate-mapping>
-    <class name="com.javath.mapping.SetBroker" table="set_broker" catalog="stock">
+    <class name="com.javath.mapping.SetAccount" table="set_account" catalog="stock">
         <id name="id" type="java.lang.Integer">
             <column name="id" />
             <generator class="identity" />
         </id>
-        <property name="classname" type="string">
-            <column name="classname" />
+        <property name="brokerId" type="int">
+            <column name="broker_id" not-null="true" />
+        </property>
+        <property name="username" type="string">
+            <column name="username" length="10" not-null="true" />
+        </property>
+        <property name="password" type="string">
+            <column name="password" length="24" />
         </property>
     </class>
 </hibernate-mapping>

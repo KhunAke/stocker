@@ -15,14 +15,14 @@ import com.javath.util.Assign;
 
 public class Click2Win extends BrokerStreaming {
 	
-	private static final int EXTEND_ID;
+	private static final int BROKER_ID;
 	private final static Assign assign;
 	private final static String[] login_request;
 	private final static String streaming_page;
 	
 	static {
 		String classname = Assign.classname();
-		EXTEND_ID = getExtendId(classname);
+		BROKER_ID = getBrokerId(classname);
 		String default_Properties = Assign.etc + Assign.File_Separator +
 				"streaming" + Assign.File_Separator +
 				"click2win.properties";
@@ -38,7 +38,7 @@ public class Click2Win extends BrokerStreaming {
 	}
 	
 	public static Click2Win getInstance(String username, String password) {
-		Broker broker = Broker.getBroker(username, EXTEND_ID);
+		Broker broker = Broker.getBroker(username, BROKER_ID);
 		try {
 			if (broker.checkPassword(password))
 				return (Click2Win) broker;
@@ -53,8 +53,8 @@ public class Click2Win extends BrokerStreaming {
 		initBroker(username, password);
 	}
 	
-	protected int getExtendId() {
-		return EXTEND_ID;
+	protected int getBrokerId() {
+		return BROKER_ID;
 	}
 	public void login() {
 		Browser browser = (Browser) Assign.borrowObject(Browser.class);

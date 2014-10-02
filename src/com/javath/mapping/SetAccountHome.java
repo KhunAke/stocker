@@ -11,14 +11,13 @@ import org.hibernate.SessionFactory;
 import static org.hibernate.criterion.Example.create;
 
 /**
- * Home object for domain model class BualuangQuoteDaily.
- * @see com.javath.mapping.BualuangQuoteDaily
+ * Home object for domain model class SetAccount.
+ * @see com.javath.mapping.SetAccount
  * @author Hibernate Tools
  */
-public class BualuangQuoteDailyHome {
+public class SetAccountHome {
 
-	private static final Log log = LogFactory
-			.getLog(BualuangQuoteDailyHome.class);
+	private static final Log log = LogFactory.getLog(SetAccountHome.class);
 
 	private final SessionFactory sessionFactory = getSessionFactory();
 
@@ -33,8 +32,8 @@ public class BualuangQuoteDailyHome {
 		}
 	}
 
-	public void persist(BualuangQuoteDaily transientInstance) {
-		log.debug("persisting BualuangQuoteDaily instance");
+	public void persist(SetAccount transientInstance) {
+		log.debug("persisting SetAccount instance");
 		try {
 			sessionFactory.getCurrentSession().persist(transientInstance);
 			log.debug("persist successful");
@@ -44,8 +43,8 @@ public class BualuangQuoteDailyHome {
 		}
 	}
 
-	public void attachDirty(BualuangQuoteDaily instance) {
-		log.debug("attaching dirty BualuangQuoteDaily instance");
+	public void attachDirty(SetAccount instance) {
+		log.debug("attaching dirty SetAccount instance");
 		try {
 			sessionFactory.getCurrentSession().saveOrUpdate(instance);
 			log.debug("attach successful");
@@ -55,8 +54,8 @@ public class BualuangQuoteDailyHome {
 		}
 	}
 
-	public void attachClean(BualuangQuoteDaily instance) {
-		log.debug("attaching clean BualuangQuoteDaily instance");
+	public void attachClean(SetAccount instance) {
+		log.debug("attaching clean SetAccount instance");
 		try {
 			sessionFactory.getCurrentSession().lock(instance, LockMode.NONE);
 			log.debug("attach successful");
@@ -66,8 +65,8 @@ public class BualuangQuoteDailyHome {
 		}
 	}
 
-	public void delete(BualuangQuoteDaily persistentInstance) {
-		log.debug("deleting BualuangQuoteDaily instance");
+	public void delete(SetAccount persistentInstance) {
+		log.debug("deleting SetAccount instance");
 		try {
 			sessionFactory.getCurrentSession().delete(persistentInstance);
 			log.debug("delete successful");
@@ -77,11 +76,11 @@ public class BualuangQuoteDailyHome {
 		}
 	}
 
-	public BualuangQuoteDaily merge(BualuangQuoteDaily detachedInstance) {
-		log.debug("merging BualuangQuoteDaily instance");
+	public SetAccount merge(SetAccount detachedInstance) {
+		log.debug("merging SetAccount instance");
 		try {
-			BualuangQuoteDaily result = (BualuangQuoteDaily) sessionFactory
-					.getCurrentSession().merge(detachedInstance);
+			SetAccount result = (SetAccount) sessionFactory.getCurrentSession()
+					.merge(detachedInstance);
 			log.debug("merge successful");
 			return result;
 		} catch (RuntimeException re) {
@@ -90,13 +89,12 @@ public class BualuangQuoteDailyHome {
 		}
 	}
 
-	public BualuangQuoteDaily findById(
-			com.javath.mapping.BualuangQuoteDailyId id) {
-		log.debug("getting BualuangQuoteDaily instance with id: " + id);
+	public SetAccount findById(java.lang.Integer id) {
+		log.debug("getting SetAccount instance with id: " + id);
 		try {
-			BualuangQuoteDaily instance = (BualuangQuoteDaily) sessionFactory
-					.getCurrentSession().get(
-							"com.javath.mapping.BualuangQuoteDaily", id);
+			SetAccount instance = (SetAccount) sessionFactory
+					.getCurrentSession().get("com.javath.mapping.SetAccount",
+							id);
 			if (instance == null) {
 				log.debug("get successful, no instance found");
 			} else {
@@ -109,12 +107,12 @@ public class BualuangQuoteDailyHome {
 		}
 	}
 
-	public List<BualuangQuoteDaily> findByExample(BualuangQuoteDaily instance) {
-		log.debug("finding BualuangQuoteDaily instance by example");
+	public List<SetAccount> findByExample(SetAccount instance) {
+		log.debug("finding SetAccount instance by example");
 		try {
-			List<BualuangQuoteDaily> results = (List<BualuangQuoteDaily>) sessionFactory
+			List<SetAccount> results = (List<SetAccount>) sessionFactory
 					.getCurrentSession()
-					.createCriteria("com.javath.mapping.BualuangQuoteDaily")
+					.createCriteria("com.javath.mapping.SetAccount")
 					.add(create(instance)).list();
 			log.debug("find by example successful, result size: "
 					+ results.size());
