@@ -394,8 +394,6 @@ public class Market extends Instance implements OscillatorLoader, MarketListener
 		//StockScreen.getInstance();
 		Quote.getInstance();
 		//QuoteScreen.getInstance("PTT");
-		QuoteFilterChangeLastScreen.getInstance("PTT");
-		QuoteFilterChangeVolumeScreen.getInstance("PTT");
 		
 		stock.initOscillator();
 		Oscillator.startAll();

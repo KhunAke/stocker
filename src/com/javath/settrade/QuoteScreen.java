@@ -25,7 +25,9 @@ public class QuoteScreen implements QuoteListener {
 	}
 	
 	private QuoteScreen(String symbol) {
-		Quote.getInstance().addSymbolListener(symbol, this);
+		QuoteChangeVolume.getInstance(symbol)
+			.addSymbolListener(symbol, this);
+		//Quote.getInstance().addSymbolListener(symbol, this);
 	}
 	
 	@Override

@@ -23,21 +23,20 @@ import com.javath.util.TaskManager;
 
 public class Quote extends Instance implements QuoteSource, StockListener {
 	
-	private final static Map<String,SettradeQuote> map_quote;
 	private final static Quote instance;
 	
 	static {
-		map_quote = new HashMap<String, SettradeQuote>();
 		instance = new Quote();
 	}
 	
 	public static Quote getInstance() {
 		return instance;
 	}
-	
+	private final Map<String,SettradeQuote> map_quote;
 	private final Map<String,Set<QuoteListener>> map_listeners;
 
 	private Quote() {
+		map_quote = new HashMap<String, SettradeQuote>();
 		map_listeners = new HashMap<String,Set<QuoteListener>>();
 		Stock.addListener(this);
 	}
